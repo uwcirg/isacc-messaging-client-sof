@@ -1,0 +1,88 @@
+{
+  "resourceType": "PlanDefinition",
+  "id": "cc-message-schedule-template",
+  "title": "Default CC Message Schedule",
+  "status": "active",
+  "action": [
+    {
+      "definitionCanonical": "#Wk1Msg"
+    },
+    {
+      "definitionCanonical": "#Wk3Msg"
+    },
+    {
+      "definitionCanonical": "#Wk6Msg"
+    }
+  ],
+  "contained": [
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Wk1Msg",
+      "name": "Week 1 Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 1,
+          "periodUnit": "wk"
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hey ${Patient.name[0].given}, it’s a good week to have a good week! Sending good thoughts and positive energy your way."
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Wk3Msg",
+      "name": "Week 3 Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 3,
+          "periodUnit": "wk"
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hey ${Patient.name[0].given}, hope your day is going well. You are not alone. If you need immediate help, don't forget about the 24/7 National Hotline 1-800-273-8355 and resources on our website: www.stayincontact.org"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Wk6Msg",
+      "name": "Week 6 Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 6,
+          "periodUnit": "wk"
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "You are unique and you are special. There is no one else on earth like you! Best wishes on the rest of your week."
+          }
+        }
+      ]
+    }
+  ]
+}
