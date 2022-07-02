@@ -27,13 +27,13 @@ const addWorkerLoader = config => {
 const addLaunch = config => {
     return edit(
       entries => {
-        // if (!Array.isArray(entries) || entries.filter(e => e.endsWith('/index.js')).length !== 1) {
-        //   console.error('Cannot add launch.js to entry. Unexpected starting value for entry:', entries);
+        // if (!Array.isArray(entries) || entries.filter(e => e.endsWith('/index.tsx')).length !== 1) {
+        //   console.error('Cannot add launch.tsx to entry. Unexpected starting value for entry:', entries);
         //   return entries;
         // }
         return {
           main: entries,
-          launch: entries.replace(/\/index.js$/, '/launch.js')
+          launch: entries.replace(/\/index.tsx$/, '/launch.tsx')
         }
       },
       [['entry']],

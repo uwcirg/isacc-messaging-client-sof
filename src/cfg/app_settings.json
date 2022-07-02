@@ -1,0 +1,11 @@
+{
+  "fhirBaseUrl": "https://stayhome-test-hapi.cirg.washington.edu/hapi-fhir-jpaserver/fhir",
+  "appRootUrl": "http://[::1]:8888",
+  "issuerUrl": "https://keycloak-dev.cirg.washington.edu/auth/realms/Stayhome",
+  "clientId": "stayhome_openid_client",
+  "clientSecret": "f80cc383-bb5b-47b7-a2bf-5b713b0b8a50",
+  "version": "v1.6 17-Apr-2020",
+  "deploymentType": "test",
+  "careplanTemplateId": "1058",
+  "newUserWelcomeMessageTemplateId": "57"
+}
