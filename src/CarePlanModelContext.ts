@@ -2,7 +2,6 @@ import React from "react";
 import {
   getCarePlan,
   getCommunications,
-  getConsents,
   getPatient,
   getQuestionnaireResponses,
   getQuestionnaires,
@@ -309,7 +308,7 @@ export class CarePlanModel {
         this.questionnaireResponses = responses;
       }),
 
-      this._loadConsents()
+      // this._loadConsents()
     ];
     return Promise.all(promises).then((value) => {
       this.rebuildTreatmentPlan();
@@ -344,12 +343,6 @@ export class CarePlanModel {
         this._addQuestionnaireItemAndItsChildren(nestedQuestion);
       });
     }
-  }
-
-  private _loadConsents(): Promise<void> {
-    return getConsents(this.patient).then((responses: Array<Consent>) => {
-      this.consents = new DataSharingConsents(responses);
-    });
   }
 
   private rebuildTreatmentPlan() {

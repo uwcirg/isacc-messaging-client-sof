@@ -4,20 +4,40 @@ import Summary from './components/Summary';
 import './style/App.scss';
 import ScheduleSetup from "./components/ScheduleSetup";
 import {getDefaultMessageSchedule} from "./model/PlanDefinition";
-import {LocalizationProvider} from "@mui/lab";
+import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterMoment} from '@mui/x-date-pickers/AdapterMoment';
+import DemoVersionBanner from "./components/DemoVersionBanner";
+import {IntlProvider} from "react-intl";
+
+import messages_fr from './l10n/intl_fr.json';
+import messages_de from './l10n/intl_de_DE.json';
+import messages_es from './l10n/intl_es.json';
+import messages_mn from './l10n/intl_mn.json';
+import messages_en from './l10n/intl_en.json';
+
+export const intlMessages: any = {
+    'en': messages_en,
+    'fr': messages_fr,
+    'de': messages_de,
+    'es': messages_es,
+    'mn': messages_mn
+}
 
 export default class App extends React.Component<any, any> {
 
-
     render() {
+        const locale = "en";
         return (
-            <LocalizationProvider dateAdapter={AdapterMoment}>
-                <FhirClientProvider>
-                    <Summary/>
-                    <ScheduleSetup planDefinition={getDefaultMessageSchedule()}/>
-                </FhirClientProvider>
-            </LocalizationProvider>
+            <IntlProvider key={locale} locale={locale} messages={intlMessages[locale]}>
+                <LocalizationProvider dateAdapter={AdapterMoment}>
+                    <FhirClientProvider>
+                        <DemoVersionBanner/>
+                        <h3>Patient enrollment</h3>
+                        <Summary/>
+                        <ScheduleSetup planDefinition={getDefaultMessageSchedule()}/>
+                    </FhirClientProvider>
+                </LocalizationProvider>
+            </IntlProvider>
         );
     }
 }

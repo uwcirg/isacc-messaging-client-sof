@@ -4,21 +4,25 @@ import { FhirClientContext } from './FhirClientContext';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Error from './components/Error';
+import Client from "fhirclient/lib/Client";
+interface Props {
+    children: React.ReactNode;
+}
 
-export default function FhirClientProvider (props) {
+export default function FhirClientProvider(props:Props) : JSX.Element {
 
     const [client, setClient] = React.useState(null);
     const [error, setError] = React.useState('');
 
     React.useEffect(() => {
         FHIR.oauth2.ready().then(
-            (client) => setClient(client),
-            (error) => setError(error)
+            (client: Client) => setClient(client),
+            (reason: any) => setError(reason)
         );
     }, []);
   
     return (
-      <FhirClientContext.Provider value={{client:client, error: error} || {}}>
+      <FhirClientContext.Provider value={{client:client, error: error}}>
         <FhirClientContext.Consumer>
           {({ client, error }) => {
             // any auth error that may have been rejected with

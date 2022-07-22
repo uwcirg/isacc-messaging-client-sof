@@ -114,9 +114,7 @@ export default function Summary() {
     return (
         <React.Fragment>
             {error && <Error messge={error}></Error>}
-            {/* write out patient info */}
             {patient && <div>
-                <h2>Hello World SoF App</h2>
                 <div>Name: {patient.name[0].given.join(" ") + patient.name[0].family}</div>
                 <div>DOB: {patient.birthDate}</div>
             </div>}

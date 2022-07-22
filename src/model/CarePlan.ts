@@ -1,6 +1,9 @@
 import {
+    BundleTypeKind,
     CarePlan_DetailStatusKind,
     IAnnotation,
+    IBundle,
+    IBundle_Entry, IBundle_Link,
     ICarePlan,
     ICarePlan_Activity,
     ICarePlan_Detail,
@@ -8,7 +11,6 @@ import {
     IElement,
     IExtension,
     IIdentifier,
-    IMeta,
     INarrative,
     IPeriod,
     IQuantity,
@@ -16,8 +18,13 @@ import {
     IResourceList,
     ITiming
 } from "@ahryman40k/ts-fhir-types/lib/R4";
+// import {fhirclient} from "fhirclient/lib/types";
+// import Meta = fhirclient.FHIR.Meta;
+
+
 
 export default class CarePlan implements ICarePlan {
+
     _created?: IElement;
     _description?: IElement;
     _implicitRules?: IElement;
@@ -46,7 +53,7 @@ export default class CarePlan implements ICarePlan {
     instantiatesUri?: string[];
     intent?: string;
     language?: string;
-    meta?: IMeta;
+    meta?: any;
     modifierExtension?: IExtension[];
     note?: IAnnotation[];
     partOf?: IReference[];
@@ -59,16 +66,36 @@ export default class CarePlan implements ICarePlan {
     text?: INarrative;
     title?: string;
 
-    static from(raw: ICarePlan) : CarePlan {
+    static from(raw: ICarePlan): CarePlan {
         if (!raw) return null;
         let c = Object.assign(new CarePlan(), raw);
         c.activity = c.activity.map((a: any) => CarePlanActivity.from(a));
         return c;
     }
 
+    constructor(intent?: string, status?: string, subject?: IReference) {
+        this.intent = intent;
+        this.status = status;
+        this.subject = subject;
+    }
+
+
     get reference(): string {
         return `${this.resourceType}/${this.id}`;
     }
+}
+
+type Meta = {
+    lastUpdated: string;
+}
+
+export class Bundle implements IBundle {
+    link: IBundle_Link[];
+    entry: IBundle_Entry[];
+    resourceType: "Bundle";
+    meta: Meta;
+    type: BundleTypeKind;
+
 }
 
 export class CarePlanActivity implements ICarePlan_Activity {
@@ -84,11 +111,15 @@ export class CarePlanActivity implements ICarePlan_Activity {
     progress?: IAnnotation[];
     reference?: IReference;
 
-    static from(raw: ICarePlan_Activity) : CarePlanActivity {
+    static from(raw: ICarePlan_Activity): CarePlanActivity {
         if (!raw) return null;
         let a = Object.assign(new CarePlanActivity(), raw);
         a.detail = CarePlanActivityDetail.from(a.detail);
         return a;
+    }
+
+    static withReference(ref: string) {
+        return CarePlanActivity.from({reference: {reference: ref}});
     }
 }
 
@@ -154,7 +185,7 @@ export class CarePlanActivityDetail implements ICarePlan_Detail {
     // statusReason: ICodeableConcept;
 
 
-    static from(raw : ICarePlan_Detail) : CarePlanActivityDetail {
+    static from(raw: ICarePlan_Detail): CarePlanActivityDetail {
         if (!raw) return null;
         return Object.assign(new CarePlanActivityDetail(), raw);
     }
