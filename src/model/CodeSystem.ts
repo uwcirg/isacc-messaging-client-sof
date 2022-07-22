@@ -1,7 +1,5 @@
 import FhirTranslations from "../FhirTranslations";
-import {
-  ICoding, IElement, IExtension, IReference
-} from "@ahryman40k/ts-fhir-types/lib/R4";
+import {ICoding, IElement, IExtension} from "@ahryman40k/ts-fhir-types/lib/R4";
 
 export class Coding implements ICoding {
   _code?: IElement;
@@ -74,22 +72,8 @@ export const ConsentCategory = {
   patientConsent: Coding.make("http://loinc.org", "59284-0")
 }
 
-type OrganizationReference = {
-  scan: IReference; fiuNeighborhoodHelp: IReference; fiu: IReference; publicHealthAgencies: IReference; researchers: IReference; socialDistancingStudy: IReference;
+type OrganizationReferenceType = {
 }
 
-export const OrganizationReference: OrganizationReference = {
-  scan: {
-    reference: "Organization/1463",
-  }, fiuNeighborhoodHelp: {
-    reference: "Organization/1464",
-  }, fiu: {
-    reference: "Organization/1465",
-  }, publicHealthAgencies: {
-    reference: "Organization/1466",
-  }, researchers: {
-    reference: "Organization/1467",
-  }, socialDistancingStudy: {
-    reference: "Organization/1737",
-  },
+export const OrganizationReference: OrganizationReferenceType = {
 }

@@ -1,7 +1,11 @@
 import * as React from "react";
 import CCPlanDefinition, {CCActivityDefinition} from "../model/PlanDefinition";
-import {CircularProgress, Grid, List, TextField} from "@mui/material";
-import {DateTimePicker} from "@mui/lab";
+import {Button, CircularProgress, Grid, List, ListItem, Stack, TextField} from "@mui/material";
+import {DateTimePicker} from "@mui/x-date-pickers";
+import {FhirClientContext, FhirClientContextType} from "../FhirClientContext";
+import Client from "fhirclient/lib/Client";
+import {makeCarePlanBundle} from "../model/modelUtil";
+import {IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
 
 
 interface ScheduleSetupProps {
@@ -14,7 +18,7 @@ type ScheduleSetupState = {
 }
 
 type Message = {
-    text: String,
+    text: string,
     scheduledDateTime: Date
 }
 
@@ -45,50 +49,91 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
     render(): React.ReactNode {
         if (!this.state) return <CircularProgress/>;
 
-        return <List>{
-            this.state.messages.map((message, index) => {
-                    return this._buildMessageItem(message, index);
-                }
-            )
-        }</List>
+        return <>
+            <List>{
+                this.state.messages.map((message, index) => {
+                        return this._buildMessageItem(message, index);
+                    }
+                )
+            }</List>
 
+            <Stack direction={'row'} justifyContent={"space-between"}>
+                <Button variant="outlined">Add message</Button>
+                <FhirClientContext.Consumer>
+                    {(context: FhirClientContextType) => {
+                        return <Button variant="contained" onClick={() => this.saveSchedule(context.client)}>Done</Button>
+                    }}
+                </FhirClientContext.Consumer>
+            </Stack>
+
+        </>
+
+    }
+
+    private saveSchedule(client:Client) {
+        if (!client) {
+            console.log("No client");
+            return;
+        }
+
+        let bundle = makeCarePlanBundle(client.patient, this.props.planDefinition, this.state.messages);
+        client.create(bundle).then(this.onSaved, this.onRejected);
+
+    }
+
+    private onSaved(value: IResource) {
+        console.log("resource saved");
+    }
+
+    private onRejected(reason: any) {
+        console.log("resource rejected");
     }
 
     private _buildMessageItem(message: Message, index: number) {
-        return <Grid container alignItems={"stretch"}
-                     sx={styles.listItem}>
-            <Grid item xs={4}>
-                {/*<TextField*/}
-                {/*    fullWidth*/}
-                {/*    value={message.text ?? ""}*/}
-                {/*    // placeholder={intl.formatMessage({id: 'enter_response'})}*/}
-                {/*    placeholder={"Enter message"}*/}
-                {/*    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {*/}
-                {/*        message.text = event.target.value;*/}
-                {/*        this.setState({messages: this.state.messages});*/}
-                {/*    }}/>*/}
+        return <ListItem key={index}>
+            {/*<TextField*/}
+            {/*    type={"number"}*/}
+            {/*    InputProps={{*/}
+            {/*        endAdornment: <InputAdornment position="end">Weeks</InputAdornment>,*/}
+            {/*    }}*/}
+            {/*/>*/}
+            <Grid container alignItems={"stretch"}
+                  sx={styles.listItem}>
+                <Grid item xs={4}>
+                    {/*<TextField*/}
+                    {/*    fullWidth*/}
+                    {/*    value={message.text ?? ""}*/}
+                    {/*    // placeholder={intl.formatMessage({id: 'enter_response'})}*/}
+                    {/*    placeholder={"Enter message"}*/}
+                    {/*    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {*/}
+                    {/*        message.text = event.target.value;*/}
+                    {/*        this.setState({messages: this.state.messages});*/}
+                    {/*    }}/>*/}
 
-                <DateTimePicker
-                    label="Date & Time"
-                    value={message.scheduledDateTime}
-                    onChange={(newValue: Date | null) => {
-                        message.scheduledDateTime = newValue;
-                        this.setState({messages: this.state.messages});
-                    }}
-                    renderInput={(params) => <TextField {...params} />}
-                />
+                    <DateTimePicker
+                        label="Date & Time"
+                        value={message.scheduledDateTime}
+                        onChange={(newValue: Date | null) => {
+                            message.scheduledDateTime = newValue;
+                            this.setState({messages: this.state.messages});
+                        }}
+                        renderInput={(params) => <TextField {...params} />}/>
+                </Grid>
+                <Grid item xs={8}>
+                    <TextField
+                        label={"Message"}
+                        fullWidth
+                        multiline
+                        value={message.text ?? ""}
+                        // placeholder={intl.formatMessage({id: 'enter_response'})}
+                        placeholder={"Enter message"}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                            message.text = event.target.value;
+                            this.setState({messages: this.state.messages});
+                        }}/>
+                </Grid>
             </Grid>
-            <Grid item xs={8}>
-                <TextField
-                    fullWidth
-                    value={message.text ?? ""}
-                    // placeholder={intl.formatMessage({id: 'enter_response'})}
-                    placeholder={"Enter message"}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                        message.text = event.target.value;
-                        this.setState({messages: this.state.messages});
-                    }}/>
-            </Grid>
-        </Grid>
+        </ListItem>
     }
+
 }
