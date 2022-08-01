@@ -9,8 +9,8 @@ import {
 } from "@ahryman40k/ts-fhir-types/lib/R4";
 import defaultSchedule from "../resource/default_message_schedule.json"
 
-export default class CCPlanDefinition implements IPlanDefinition {
-    activityDefinitions: CCActivityDefinition[];
+export default class PlanDefinition implements IPlanDefinition {
+    activityDefinitions: ActivityDefinition[];
     action: IPlanDefinition_Action[];
     contained: IResourceList[];
     id: string;
@@ -18,13 +18,13 @@ export default class CCPlanDefinition implements IPlanDefinition {
     title: string;
 
 
-    static from(raw: IPlanDefinition): CCPlanDefinition {
+    static from(raw: IPlanDefinition): PlanDefinition {
         if (!raw) return null;
-        let planDefinition = Object.assign(new CCPlanDefinition(), raw);
+        let planDefinition = Object.assign(new PlanDefinition(), raw);
         planDefinition.activityDefinitions = planDefinition.action.map(function (action: IPlanDefinition_Action) {
                 let id = action.definitionCanonical.slice(1);
                 let activityDefinition = planDefinition.contained.find((r: IResourceList) => r.id === id);
-                return CCActivityDefinition.from(activityDefinition);
+                return ActivityDefinition.from(activityDefinition);
             }
         );
         return planDefinition;
@@ -37,7 +37,7 @@ export default class CCPlanDefinition implements IPlanDefinition {
     resourceType: "PlanDefinition";
 }
 
-export class CCActivityDefinition implements IActivityDefinition {
+export class ActivityDefinition implements IActivityDefinition {
     dynamicValue: IActivityDefinition_DynamicValue[];
     id: string;
     kind: string;
@@ -47,9 +47,9 @@ export class CCActivityDefinition implements IActivityDefinition {
     timingTiming: ITiming;
 
 
-    static from(raw: IResourceList): CCActivityDefinition {
+    static from(raw: IResourceList): ActivityDefinition {
         if (!raw) return null;
-        return Object.assign(new CCActivityDefinition(), raw);
+        return Object.assign(new ActivityDefinition(), raw);
     }
 
     occurrenceTimeFromNow(): Date {
@@ -79,7 +79,7 @@ export class CCActivityDefinition implements IActivityDefinition {
 
 }
 
-export function getDefaultMessageSchedule(): CCPlanDefinition {
+export function getDefaultMessageSchedule(): PlanDefinition {
     let raw = defaultSchedule as IPlanDefinition;
-    return CCPlanDefinition.from(raw);
+    return PlanDefinition.from(raw);
 }

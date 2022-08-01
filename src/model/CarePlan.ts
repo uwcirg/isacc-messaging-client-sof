@@ -1,9 +1,6 @@
 import {
-    BundleTypeKind,
     CarePlan_DetailStatusKind,
     IAnnotation,
-    IBundle,
-    IBundle_Entry, IBundle_Link,
     ICarePlan,
     ICarePlan_Activity,
     ICarePlan_Detail,
@@ -18,6 +15,8 @@ import {
     IResourceList,
     ITiming
 } from "@ahryman40k/ts-fhir-types/lib/R4";
+import {IsaccCarePlanCategory} from "./CodeSystem";
+import Patient from "./Patient";
 // import {fhirclient} from "fhirclient/lib/types";
 // import Meta = fhirclient.FHIR.Meta;
 
@@ -73,10 +72,17 @@ export default class CarePlan implements ICarePlan {
         return c;
     }
 
-    constructor(intent?: string, status?: string, subject?: IReference) {
-        this.intent = intent;
-        this.status = status;
-        this.subject = subject;
+    constructor(subject?: Patient, instantiates?: IResourceList, activities?: CarePlanActivity[]) {
+        this.resourceType = "CarePlan";
+        // TODO: populate instantiatesCanonical once the PlanDefinition is loaded from FHIR server rather than defined in-app
+        // if (instantiates !== undefined) {
+        //     this.instantiatesCanonical = [`${instantiates.resourceType}/${instantiates.id}`];
+        // }
+        this.activity = activities;
+        this.intent = "plan";
+        this.status = "active";
+        this.subject = {reference: subject.reference};
+        this.category = [{coding: [IsaccCarePlanCategory.isaccMessagePlan]}]
     }
 
 
@@ -85,18 +91,6 @@ export default class CarePlan implements ICarePlan {
     }
 }
 
-type Meta = {
-    lastUpdated: string;
-}
-
-export class Bundle implements IBundle {
-    link: IBundle_Link[];
-    entry: IBundle_Entry[];
-    resourceType: "Bundle";
-    meta: Meta;
-    type: BundleTypeKind;
-
-}
 
 export class CarePlanActivity implements ICarePlan_Activity {
     _fhir_comments?: IElement[];
@@ -111,10 +105,10 @@ export class CarePlanActivity implements ICarePlan_Activity {
     progress?: IAnnotation[];
     reference?: IReference;
 
-    static from(raw: ICarePlan_Activity): CarePlanActivity {
+    static from(raw: CarePlanActivity): CarePlanActivity {
         if (!raw) return null;
         let a = Object.assign(new CarePlanActivity(), raw);
-        a.detail = CarePlanActivityDetail.from(a.detail);
+        if (a.detail) a.detail = CarePlanActivityDetail.from(a.detail);
         return a;
     }
 

@@ -14,6 +14,9 @@ import messages_de from './l10n/intl_de_DE.json';
 import messages_es from './l10n/intl_es.json';
 import messages_mn from './l10n/intl_mn.json';
 import messages_en from './l10n/intl_en.json';
+import {Typography} from "@mui/material";
+import theme from "./theme";
+import {ThemeProvider} from "@mui/styles";
 
 export const intlMessages: any = {
     'en': messages_en,
@@ -29,14 +32,16 @@ export default class App extends React.Component<any, any> {
         const locale = "en";
         return (
             <IntlProvider key={locale} locale={locale} messages={intlMessages[locale]}>
+                <ThemeProvider theme={theme}>
                 <LocalizationProvider dateAdapter={AdapterMoment}>
                     <FhirClientProvider>
                         <DemoVersionBanner/>
-                        <h3>Patient enrollment</h3>
+                        <Typography variant={"h5"}>Patient enrollment</Typography>
                         <Summary/>
                         <ScheduleSetup planDefinition={getDefaultMessageSchedule()}/>
                     </FhirClientProvider>
                 </LocalizationProvider>
+                </ThemeProvider>
             </IntlProvider>
         );
     }
