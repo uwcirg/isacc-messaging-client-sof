@@ -140,5 +140,7 @@
   "social_distancing_title": "Social Distancing study",
   "social_distancing_body": "You can choose to share your information directly with the Social Distancing study. If you choose to share information, they will have access to:\n- Your symptoms, testing, and health condition information,\n- Your general location information (zip code), AND\n- Your name and contact information (email and/or phone number).",
   "social_distancing_toggle": "Share my information with the Social Distancing study",
-  "enter_response": "Enter response here"
+  "enter_response": "Enter response here",
+  "patient_note": "Patient note IN ENGLISH",
+  "message_schedule": "Message schedule IN ENGLISH"
 }
