@@ -33,7 +33,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hey ${Patient.name[0].given}, it’s a good week to have a good week! Sending good thoughts and positive energy your way."
+            "expression": "Hey {name}, it’s a good week to have a good week! Sending good thoughts and positive energy your way."
           }
         }
       ]
@@ -56,7 +56,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hey ${Patient.name[0].given}, hope your day is going well. You are not alone. If you need immediate help, don't forget about the 24/7 National Hotline 1-800-273-8355 and resources on our website: www.stayincontact.org"
+            "expression": "Hey {name}, hope your day is going well. You are not alone. If you need immediate help, don't forget about the 24/7 National Hotline 1-800-273-8355 and resources on our website: www.stayincontact.org"
           }
         }
       ]
