@@ -9,9 +9,7 @@ import {AdapterMoment} from '@mui/x-date-pickers/AdapterMoment';
 import DemoVersionBanner from "./components/DemoVersionBanner";
 import {IntlProvider} from "react-intl";
 
-import messages_fr from './l10n/intl_fr.json';
 import messages_de from './l10n/intl_de_DE.json';
-import messages_es from './l10n/intl_es.json';
 import messages_mn from './l10n/intl_mn.json';
 import messages_en from './l10n/intl_en.json';
 import {Typography} from "@mui/material";
@@ -20,9 +18,7 @@ import {ThemeProvider} from "@mui/styles";
 
 export const intlMessages: any = {
     'en': messages_en,
-    'fr': messages_fr,
     'de': messages_de,
-    'es': messages_es,
     'mn': messages_mn
 }
 

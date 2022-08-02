@@ -17,8 +17,6 @@ import {
 } from "@ahryman40k/ts-fhir-types/lib/R4";
 import {IsaccCarePlanCategory} from "./CodeSystem";
 import Patient from "./Patient";
-// import {fhirclient} from "fhirclient/lib/types";
-// import Meta = fhirclient.FHIR.Meta;
 
 
 
@@ -147,36 +145,6 @@ export class CarePlanActivityDetail implements ICarePlan_Detail {
     scheduledTiming: ITiming;
     status: CarePlan_DetailStatusKind;
     statusReason: ICodeableConcept;
-
-    // _description: IElement;
-    // _doNotPerform: IElement;
-    // _instantiatesUri: IElement[];
-    // _kind: IElement;
-    // _scheduledString: IElement;
-    // _status: IElement;
-    // code: ICodeableConcept;
-    // dailyAmount: IQuantity;
-    // description: string;
-    // doNotPerform: boolean;
-    // extension: IExtension[];
-    // goal: IReference[];
-    // id: string;
-    // instantiatesCanonical: string[];
-    // instantiatesUri: string[];
-    // kind: string;
-    // location: IReference;
-    // modifierExtension: IExtension[];
-    // performer: IReference[];
-    // productCodeableConcept: ICodeableConcept;
-    // productReference: IReference;
-    // quantity: IQuantity;
-    // reasonCode: ICodeableConcept[];
-    // reasonReference: IReference[];
-    // scheduledPeriod: IPeriod;
-    // scheduledString: string;
-    // scheduledTiming: ITiming;
-    // status: CarePlan_DetailStatusKind;
-    // statusReason: ICodeableConcept;
 
 
     static from(raw: ICarePlan_Detail): CarePlanActivityDetail {
