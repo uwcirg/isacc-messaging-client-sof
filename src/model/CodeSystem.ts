@@ -44,42 +44,6 @@ export class Coding implements ICoding {
   }
 }
 
-export const CommunicationCategory = {
-  systemAnnouncement: Coding.make(
-      "https://stayhome.app/CodeSystem/communication-category",
-      "system-announcement")
-}
-
-export const ConsentContentClass = {
-  location: Coding.make("https://stayhome.app/CodeSystem/consent-content-class",
-      "location"),
-  symptomsTestingConditions: Coding.make(
-      "https://stayhome.app/CodeSystem/consent-content-class",
-      "symptoms-testing-conditions"),
-  contactInformation: Coding.make(
-      "https://stayhome.app/CodeSystem/consent-content-class",
-      "contact-information"),
-  all: Coding.make("https://stayhome.app/CodeSystem/consent-content-class",
-      "location_contact-information_symptoms-testing-conditions"),
-}
-
-export const ConsentScope = {
-  patientPrivacy: Coding.make(
-      "http://terminology.hl7.org/CodeSystem/consentscope", "patient-privacy")
-}
-
-export const ConsentCategory = {
-  patientConsent: Coding.make("http://loinc.org", "59284-0")
-}
-
-type OrganizationReferenceType = {
-}
-
-export const OrganizationReference: OrganizationReferenceType = {
-}
-
-
-
 export const IsaccCarePlanCategory = {
   isaccMessagePlan: Coding.make("https://isacc.app/CodeSystem/careplan-type", "isacc-message-plan")
 }
