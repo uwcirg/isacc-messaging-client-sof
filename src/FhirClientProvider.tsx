@@ -3,7 +3,6 @@ import FHIR from 'fhirclient';
 import {FhirClientContext} from './FhirClientContext';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
-import Error from './components/Error';
 import Client from "fhirclient/lib/Client";
 import {queryPatientIdKey} from "./util/util";
 import Patient from "./model/Patient";
@@ -12,6 +11,7 @@ import {Bundle} from "./model/Bundle";
 import {ICarePlan} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {IsaccCarePlanCategory} from "./model/CodeSystem";
 import Communication from "./model/Communication";
+import LaunchError from "./components/LaunchError";
 
 interface Props {
     children: React.ReactNode;
@@ -25,7 +25,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
     const [carePlan, setCarePlan] = React.useState(null);
     const [communications, setCommunications] = React.useState(null);
 
-    async function getPatient(client: Client) : Promise<Patient> {
+    async function getPatient(client: Client): Promise<Patient> {
         if (!client) return;
         //this is a workaround for when patient id is not embedded within the JWT token
         let queryPatientId = sessionStorage.getItem(queryPatientIdKey);
@@ -39,15 +39,19 @@ export default function FhirClientProvider(props: Props): JSX.Element {
         });
     }
 
-    async function getCarePlan(client: Client, patientId: string) : Promise<CarePlan> {
+    async function getCarePlan(client: Client, patientId: string): Promise<CarePlan> {
         if (!client) return;
         let params = new URLSearchParams({
             "subject": `Patient/${patientId}`,
             "category": IsaccCarePlanCategory.isaccMessagePlan.code,
-            "_sort":"-_lastUpdated"
+            "_sort": "-_lastUpdated"
         }).toString();
         return await client.request(`/CarePlan?${params}`).then((bundle: Bundle) => {
             if (bundle.type === "searchset") {
+                if (!bundle.entry) {
+                    setError("Patient has no ISACC CarePlan. Ensure the patient is enrolled and has a message schedule CarePlan.");
+                    return null;
+                }
                 if (bundle.total > 1) {
                     console.log("Multiple ISACC CarePlans found. Using the most recently updated.", bundle);
                 }
@@ -63,12 +67,12 @@ export default function FhirClientProvider(props: Props): JSX.Element {
                 return null;
             }
         }, (reason: any) => {
-            setError(reason);
+            setError(reason.toString());
             return null;
         });
     }
 
-    async function getCommunications(client: Client, carePlanId: string) : Promise<Communication[]> {
+    async function getCommunications(client: Client, carePlanId: string): Promise<Communication[]> {
         if (!client) return;
         // Communication?part-of=CarePlan/${carePlanId}
         let params = new URLSearchParams({
@@ -77,6 +81,8 @@ export default function FhirClientProvider(props: Props): JSX.Element {
         }).toString();
         return await client.request(`/Communication?${params}`).then((bundle: Bundle) => {
             if (bundle.type === "searchset") {
+                if (!bundle.entry) return [];
+
                 let communications: Communication[] = bundle.entry.map((e) => {
                     if (e.resource.resourceType !== "Communication") {
                         setError("Unexpected resource type returned");
@@ -93,7 +99,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
                 return null;
             }
         }, (reason: any) => {
-            setError(reason);
+            setError(reason.toString());
             return null;
         });
     }
@@ -102,16 +108,20 @@ export default function FhirClientProvider(props: Props): JSX.Element {
         FHIR.oauth2.ready().then(
             (client: Client) => {
                 setClient(client);
-                getPatient(client).then((result: Patient) => {
-                    setPatient(result);
-                    getCarePlan(client, result.id).then((carePlanResult: CarePlan) => {
+                getPatient(client).then((patientResult: Patient) => {
+                    setPatient(patientResult);
+                    console.log(`Loaded ${patientResult.reference}`);
+                    getCarePlan(client, patientResult.id).then((carePlanResult: CarePlan) => {
                         setCarePlan(carePlanResult);
-                        getCommunications(client, carePlanResult.id).then((result: Communication[]) => {
-                            setCommunications(result);
-                        }, (reason: any) => setError(reason)).catch(e => {
-                            console.log("Error fetching Communications", e);
-                            setError(e);
-                        })
+                        if (carePlanResult) {
+                            console.log(`Loaded ${carePlanResult.reference}`);
+                            getCommunications(client, carePlanResult.id).then((result: Communication[]) => {
+                                setCommunications(result);
+                            }, (reason: any) => setError(reason)).catch(e => {
+                                console.log("Error fetching Communications", e);
+                                setError(e);
+                            })
+                        }
                     }, (reason: any) => setError(reason)).catch(e => {
                         console.log("Error fetching CarePlan", e)
                         setError(e);
@@ -126,12 +136,18 @@ export default function FhirClientProvider(props: Props): JSX.Element {
     }, []);
 
     return (
-        <FhirClientContext.Provider value={{client: client, patient: patient, carePlan: carePlan, communications: communications, error: error}}>
+        <FhirClientContext.Provider value={{
+            client: client,
+            patient: patient,
+            carePlan: carePlan,
+            communications: communications,
+            error: error
+        }}>
             <FhirClientContext.Consumer>
                 {({client, patient, carePlan, communications, error}) => {
                     // any auth error that may have been rejected with
                     if (error) {
-                        return <Error message={error.message}></Error>;
+                        return <LaunchError message={error}></LaunchError>;
                     }
 
                     // if client is already available render the subtree

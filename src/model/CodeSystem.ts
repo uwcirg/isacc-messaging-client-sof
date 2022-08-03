@@ -38,9 +38,13 @@ export class Coding implements ICoding {
 
   equals(other: any): boolean {
     if (!other) return false;
-    if (!(other instanceof Coding)) return false;
+    if (!(this.instanceOfCoding(other))) return false;
     let o = other as Coding;
     return o.system === this.system && o.code === this.code;
+  }
+
+  instanceOfCoding(object: any) : object is Coding {
+    return 'system' in object && 'code' in object;
   }
 }
 
@@ -49,8 +53,14 @@ export const IsaccCarePlanCategory = {
 }
 export const IsaccMessageCategory = {
   isaccScheduledMessage: Coding.make("https://isacc.app/CodeSystem/communication-request-type", "isacc-scheduled-message"),
-  isaccSentMessage: Coding.make("https://isacc.app/CodeSystem/communication-type", "isacc-sent-message")
+  isaccAutoSentMessage: Coding.make("https://isacc.app/CodeSystem/communication-type", "isacc-auto-sent-message"),
+  isaccManuallySentMessage: Coding.make("https://isacc.app/CodeSystem/communication-type", "isacc-manually-sent-message"),
+  isaccReceivedMessage: Coding.make("https://isacc.app/CodeSystem/communication-type", "isacc-received-message")
 }
 export const RelationshipCategory = {
   emergencyContact: Coding.make("http://hl7.org/fhir/ValueSet/patient-contactrelationship", "C")
+}
+
+export const Medium = {
+  sms: Coding.make('http://terminology.hl7.org/ValueSet/v3-ParticipationMode','SMSWRIT')
 }

@@ -1,7 +1,15 @@
 import React from 'react';
 import {FhirClientContext} from '../FhirClientContext';
-import Error from './Error';
-import {CircularProgress, Table, TableBody, TableCell, TableContainer, TableRow, Typography} from "@mui/material";
+import {
+    Alert,
+    CircularProgress,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableRow,
+    Typography
+} from "@mui/material";
 import {ICodeableConcept, ICoding, IContactPoint, IPatient_Contact} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {RelationshipCategory} from "../model/CodeSystem";
 import Patient from "../model/Patient";
@@ -25,39 +33,15 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         }
     }
 
-// private async getFhirResources(client, id) {
-    //     const resources = getFHIRResourcePaths(id);
-    //     const requests = resources.map(resource => contextContent.client.request(resource));
-    //     return Promise.all(requests).then(results => {
-    //         results.forEach(result => {
-    //             if (!result) return true;
-    //             if (result.resourceType === 'Bundle' && result.entry) {
-    //                 result.entry.forEach(o => {
-    //                     if (o && o.resource) patientBundle.entry.push({resource: o.resource});
-    //                 });
-    //             } else if (Array.isArray(result)) {
-    //                 result.forEach(o => {
-    //                     if (o.resourceType) patientBundle.entry.push({resource: o});
-    //                 });
-    //             } else {
-    //                 patientBundle.entry.push({resource: result});
-    //             }
-    //         });
-    //         //FHIR resources should be available now via patientBundle.entry
-    //         console.log('FHIR resource bundle entries ', patientBundle.entry);
-    //     });
-    // }
-
-
     render(): React.ReactNode {
         if (!this.state) return <CircularProgress/>;
 
-        if (this.state.error) return <Error message={this.state.error}/>;
+        if (this.state.error) return <Alert severity={"error"}>{this.state.error}</Alert>;
 
         // @ts-ignore
         let patient: Patient = this.context.patient;
 
-        if (!patient) return <Error message={"No patient"}/>;
+        if (!patient) return <Alert severity={"error"}>{"No patient"}</Alert>;
 
         let emergencyContactString = "";
 
