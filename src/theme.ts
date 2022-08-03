@@ -1,10 +1,11 @@
 import {createTheme} from "@mui/material/styles";
+import {lightBlue} from "@mui/material/colors";
 
 
 export default createTheme({
   palette: {
     primary: {
-      main: "#673AB7",
+      main: lightBlue[400],
       contrastText: "#fff"
     },
     secondary: {

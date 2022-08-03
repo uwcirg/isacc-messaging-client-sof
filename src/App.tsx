@@ -2,19 +2,17 @@ import React from 'react';
 import FhirClientProvider from "./FhirClientProvider";
 import Summary from './components/Summary';
 import './style/App.scss';
-import ScheduleSetup from "./components/ScheduleSetup";
-import {getDefaultMessageSchedule} from "./model/PlanDefinition";
+import MessageView from "./components/MessageView";
 import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterMoment} from '@mui/x-date-pickers/AdapterMoment';
-import DemoVersionBanner from "./components/DemoVersionBanner";
 import {IntlProvider} from "react-intl";
 
 import messages_de from './l10n/intl_de_DE.json';
 import messages_mn from './l10n/intl_mn.json';
 import messages_en from './l10n/intl_en.json';
-import {Typography} from "@mui/material";
 import theme from "./theme";
 import {ThemeProvider} from "@mui/styles";
+import {AppPageScaffold} from "./components/AppPage";
 
 export const intlMessages: any = {
     'en': messages_en,
@@ -29,14 +27,14 @@ export default class App extends React.Component<any, any> {
         return (
             <IntlProvider key={locale} locale={locale} messages={intlMessages[locale]}>
                 <ThemeProvider theme={theme}>
-                <LocalizationProvider dateAdapter={AdapterMoment}>
-                    <FhirClientProvider>
-                        <DemoVersionBanner/>
-                        <Typography variant={"h5"}>Patient enrollment</Typography>
-                        <Summary/>
-                        <ScheduleSetup planDefinition={getDefaultMessageSchedule()}/>
-                    </FhirClientProvider>
-                </LocalizationProvider>
+                    <LocalizationProvider dateAdapter={AdapterMoment}>
+                        <FhirClientProvider>
+                            <AppPageScaffold title={"Messages"}>
+                                <Summary/>
+                                <MessageView/>
+                            </AppPageScaffold>
+                        </FhirClientProvider>
+                    </LocalizationProvider>
                 </ThemeProvider>
             </IntlProvider>
         );

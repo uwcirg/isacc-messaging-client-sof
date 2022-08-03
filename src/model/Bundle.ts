@@ -9,5 +9,6 @@ export class Bundle implements IBundle {
     resourceType: "Bundle";
     meta: Meta;
     type: BundleTypeKind;
+    total: number;
 
 }

@@ -7,6 +7,11 @@ import Error from './components/Error';
 import Client from "fhirclient/lib/Client";
 import {queryPatientIdKey} from "./util/util";
 import Patient from "./model/Patient";
+import CarePlan from "./model/CarePlan";
+import {Bundle} from "./model/Bundle";
+import {ICarePlan} from "@ahryman40k/ts-fhir-types/lib/R4";
+import {IsaccCarePlanCategory} from "./model/CodeSystem";
+import Communication from "./model/Communication";
 
 interface Props {
     children: React.ReactNode;
@@ -17,23 +22,10 @@ export default function FhirClientProvider(props: Props): JSX.Element {
     const [client, setClient] = React.useState(null);
     const [error, setError] = React.useState('');
     const [patient, setPatient] = React.useState(null);
+    const [carePlan, setCarePlan] = React.useState(null);
+    const [communications, setCommunications] = React.useState(null);
 
-    React.useEffect(() => {
-        FHIR.oauth2.ready().then(
-            (client: Client) => {
-                setClient(client);
-                getPatient(client).then(result => {
-                    setPatient(result);
-                }).catch(e => {
-                    console.log("Error ", e)
-                    setError(e);
-                });
-            },
-            (reason: any) => setError(reason)
-        );
-    }, []);
-
-    async function getPatient(client: Client) {
+    async function getPatient(client: Client) : Promise<Patient> {
         if (!client) return;
         //this is a workaround for when patient id is not embedded within the JWT token
         let queryPatientId = sessionStorage.getItem(queryPatientIdKey);
@@ -47,10 +39,96 @@ export default function FhirClientProvider(props: Props): JSX.Element {
         });
     }
 
+    async function getCarePlan(client: Client, patientId: string) : Promise<CarePlan> {
+        if (!client) return;
+        let params = new URLSearchParams({
+            "subject": `Patient/${patientId}`,
+            "category": IsaccCarePlanCategory.isaccMessagePlan.code,
+            "_sort":"-_lastUpdated"
+        }).toString();
+        return await client.request(`/CarePlan?${params}`).then((bundle: Bundle) => {
+            if (bundle.type === "searchset") {
+                if (bundle.total > 1) {
+                    console.log("Multiple ISACC CarePlans found. Using the most recently updated.", bundle);
+                }
+                let firstResult = bundle.entry[0].resource;
+                if (firstResult.resourceType === "CarePlan") {
+                    return CarePlan.from(bundle.entry[0].resource as ICarePlan);
+                } else {
+                    setError("Unexpected resource type returned");
+                    return null;
+                }
+            } else {
+                setError("Unexpected bundle type returned");
+                return null;
+            }
+        }, (reason: any) => {
+            setError(reason);
+            return null;
+        });
+    }
+
+    async function getCommunications(client: Client, carePlanId: string) : Promise<Communication[]> {
+        if (!client) return;
+        // Communication?part-of=CarePlan/${carePlanId}
+        let params = new URLSearchParams({
+            "part-of": `CarePlan/${carePlanId}`,
+            "_sort": "sent"
+        }).toString();
+        return await client.request(`/Communication?${params}`).then((bundle: Bundle) => {
+            if (bundle.type === "searchset") {
+                let communications: Communication[] = bundle.entry.map((e) => {
+                    if (e.resource.resourceType !== "Communication") {
+                        setError("Unexpected resource type returned");
+                        return null;
+                    } else {
+                        console.log("Communication loaded:", e);
+                        return Communication.from(e.resource);
+                    }
+                })
+                return communications;
+
+            } else {
+                setError("Unexpected bundle type returned");
+                return null;
+            }
+        }, (reason: any) => {
+            setError(reason);
+            return null;
+        });
+    }
+
+    React.useEffect(() => {
+        FHIR.oauth2.ready().then(
+            (client: Client) => {
+                setClient(client);
+                getPatient(client).then((result: Patient) => {
+                    setPatient(result);
+                    getCarePlan(client, result.id).then((carePlanResult: CarePlan) => {
+                        setCarePlan(carePlanResult);
+                        getCommunications(client, carePlanResult.id).then((result: Communication[]) => {
+                            setCommunications(result);
+                        }, (reason: any) => setError(reason)).catch(e => {
+                            console.log("Error fetching Communications", e);
+                            setError(e);
+                        })
+                    }, (reason: any) => setError(reason)).catch(e => {
+                        console.log("Error fetching CarePlan", e)
+                        setError(e);
+                    });
+                }).catch(e => {
+                    console.log("Error fetching Patient", e)
+                    setError(e);
+                });
+
+            }, (reason: any) => setError(reason)
+        );
+    }, []);
+
     return (
-        <FhirClientContext.Provider value={{client: client, patient: patient, error: error}}>
+        <FhirClientContext.Provider value={{client: client, patient: patient, carePlan: carePlan, communications: communications, error: error}}>
             <FhirClientContext.Consumer>
-                {({client, patient, error}) => {
+                {({client, patient, carePlan, communications, error}) => {
                     // any auth error that may have been rejected with
                     if (error) {
                         return <Error message={error.message}></Error>;
@@ -62,7 +140,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
                     }
 
                     // client is undefined until auth.ready() is fulfilled
-                    return <Box><CircularProgress></CircularProgress> Authorizing...</Box>
+                    return <Box><CircularProgress/> Authorizing...</Box>
                 }}
             </FhirClientContext.Consumer>
         </FhirClientContext.Provider>
