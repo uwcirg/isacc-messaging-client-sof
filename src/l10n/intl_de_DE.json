@@ -1,4 +1,5 @@
 {
+  "demoVersionBannerText": "System ist im {deploymentType}-Modus - nicht für echte Daten vorgesehen.",
   "enter_response": "Antwort hier eingeben",
   "patient_note": "Patientennotiz",
   "message_schedule": "Nachrichtenplan"

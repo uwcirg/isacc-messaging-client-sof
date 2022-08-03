@@ -1,4 +1,5 @@
 {
+  "demoVersionBannerText": "This is a {deploymentType} system - not for real data.",
   "enter_response": "Enter response here",
   "patient_note": "Patient note",
   "message_schedule": "Message schedule"

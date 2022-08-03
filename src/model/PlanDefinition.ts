@@ -7,7 +7,6 @@ import {
     IResourceList, ITiming,
     PlanDefinitionStatusKind
 } from "@ahryman40k/ts-fhir-types/lib/R4";
-import defaultSchedule from "../resource/default_message_schedule.json"
 
 export default class PlanDefinition implements IPlanDefinition {
     activityDefinitions: ActivityDefinition[];
@@ -77,9 +76,4 @@ export class ActivityDefinition implements IActivityDefinition {
         return date;
     }
 
-}
-
-export function getDefaultMessageSchedule(): PlanDefinition {
-    let raw = defaultSchedule as IPlanDefinition;
-    return PlanDefinition.from(raw);
 }

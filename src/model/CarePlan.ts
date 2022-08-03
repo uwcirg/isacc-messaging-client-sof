@@ -70,17 +70,22 @@ export default class CarePlan implements ICarePlan {
         return c;
     }
 
-    constructor(subject?: Patient, instantiates?: IResourceList, activities?: CarePlanActivity[]) {
-        this.resourceType = "CarePlan";
+    static createIsaccCarePlan(subject?: Patient, instantiates?: IResourceList, activities?: CarePlanActivity[]) : CarePlan{
+        let carePlan = new CarePlan();
+        carePlan.resourceType = "CarePlan";
         // TODO: populate instantiatesCanonical once the PlanDefinition is loaded from FHIR server rather than defined in-app
         // if (instantiates !== undefined) {
-        //     this.instantiatesCanonical = [`${instantiates.resourceType}/${instantiates.id}`];
+        //     carePlan.instantiatesCanonical = [`${instantiates.resourceType}/${instantiates.id}`];
         // }
-        this.activity = activities;
-        this.intent = "plan";
-        this.status = "active";
-        this.subject = {reference: subject.reference};
-        this.category = [{coding: [IsaccCarePlanCategory.isaccMessagePlan]}]
+        carePlan.activity = activities;
+        carePlan.intent = "plan";
+        carePlan.status = "active";
+        if (subject) {
+            carePlan.subject = {reference: subject.reference};
+        }
+        carePlan.category = [{coding: [IsaccCarePlanCategory.isaccMessagePlan]}]
+
+        return carePlan
     }
 
 
