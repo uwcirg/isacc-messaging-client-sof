@@ -5,7 +5,8 @@ export default class FhirTranslations {
 
   static extractTranslation(baseString: string, extension: IElement) {
     if (FhirTranslations.languageCode == null || FhirTranslations.languageCode.length === 0) {
-      throw new Error("FhirTranslations error: Language code has not been set.");
+      // throw new Error("FhirTranslations error: Language code has not been set.");
+      FhirTranslations.languageCode = 'en';
     }
     let translationExt: IExtension = extension?.extension?.find(
         (translationExt: IExtension) =>

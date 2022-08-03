@@ -2,7 +2,7 @@ import React from 'react';
 import FHIR from 'fhirclient';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
-import Error from './Error';
+import LaunchError from './LaunchError';
 import {queryPatientIdKey} from '../util/util.js';
 import '../style/App.scss';
 
@@ -23,7 +23,7 @@ export default function Launch() {
         })
         .then(result => {
             if (!result.ok) {
-                throw Error(result.status);
+                throw new Error(result.status.toString());
             }
             return result.json();
         })
@@ -48,7 +48,7 @@ export default function Launch() {
 
     return (
         <React.Fragment>
-            {error && <Error message={error.message}></Error>}
+            {error && <LaunchError message={error.message}></LaunchError>}
             {!error && <Box style={{ padding: "1rem" }}>
                 <CircularProgress></CircularProgress>
                 <span>Launching ...</span>

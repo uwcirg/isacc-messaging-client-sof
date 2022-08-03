@@ -9,7 +9,7 @@ export type FhirClientContextType = {
     patient: Patient;
     carePlan: CarePlan;
     communications: Communication[];
-    error: any;
+    error: string;
 }
 const defaultValue: FhirClientContextType = {
     client: null,
