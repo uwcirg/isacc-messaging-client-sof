@@ -58,36 +58,51 @@ class MessageView extends React.Component<MessageViewProps & WrappedComponentPro
             return <CircularProgress/>
         }
 
-        let messages = <Stack direction={'row'} justifyContent={"flex-end"} sx={{marginTop: 2}}>
+        let messages = <Stack direction={'row'} justifyContent={"flex-end"} sx={{marginTop: 2, maxWidth:600}}>
             <Typography variant={"caption"}>{"No messages"}</Typography>
         </Stack>
 
         if (context.communications && context.communications.length > 0) {
-            messages = <List sx={{maxHeight:600, overflow: 'auto', display: 'flex', flexDirection: 'column-reverse'}}>{
+            messages = <List sx={{
+                maxHeight: 600,
+                maxWidth: 600,
+                overflow: 'auto',
+                display: 'flex',
+                flexDirection: 'column-reverse',
+                border: "1px solid lightgrey",
+                borderRadius:1,
+                paddingLeft:0.5,
+                paddingRight:0.5
+            }}>{
                 context.communications.map((message, index) => this._buildMessageRow(message, index))
-                }</List>
+            }</List>
         }
 
 
         return <Stack direction={"column"}>
             <Typography variant={'h6'} sx={{paddingTop: 2}}>{context.carePlan.reference}</Typography>
 
-            {messages}
+            <Stack direction={"row"} justifyContent={"center"}>
+                <Stack direction={"column"} maxWidth={600}>
+                    {messages}
 
-            <TextField
+                    <TextField
 
-                multiline
-                value={this.state.activeMessage ?? ""}
-                placeholder={"Enter message"}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    this.setState({activeMessage: event.target.value});
-                }}/>
+                        multiline
+                        value={this.state.activeMessage ?? ""}
+                        placeholder={"Enter message"}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                            this.setState({activeMessage: event.target.value});
+                        }}/>
 
 
-            <Stack direction={'row'} justifyContent={"flex-end"} sx={{marginTop: 2}}>
-                <Button variant="contained" onClick={() => this.saveMessage()}>
-                    Send
-                </Button>
+                    <Stack direction={'row'} justifyContent={"flex-end"} sx={{marginTop: 2}}>
+                        <Button variant="contained" onClick={() => this.saveMessage()}>
+                            Send
+                        </Button>
+                    </Stack>
+                </Stack>
+
             </Stack>
         </Stack>
 
@@ -101,7 +116,7 @@ class MessageView extends React.Component<MessageViewProps & WrappedComponentPro
         context.client.create(newMessage).then(
             (savedCommunication: IResource) => {
                 console.log("Saved new Communication:", savedCommunication);
-                context.communications.push(Communication.from(savedCommunication));
+                context.communications.unshift(Communication.from(savedCommunication));
                 this.setState({activeMessage: ""});
             },
             (reason: any) => {

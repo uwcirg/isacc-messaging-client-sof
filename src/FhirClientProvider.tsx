@@ -77,7 +77,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
         // Communication?part-of=CarePlan/${carePlanId}
         let params = new URLSearchParams({
             "part-of": `CarePlan/${carePlanId}`,
-            "_sort": "sent"
+            "_sort": "-sent"
         }).toString();
         return await client.request(`/Communication?${params}`).then((bundle: Bundle) => {
             if (bundle.type === "searchset") {
