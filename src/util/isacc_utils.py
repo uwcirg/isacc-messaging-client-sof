@@ -63,7 +63,11 @@ def getCareplan(db, patientId):
         return None
 
 
-def generateIncomingMessage(patientId, message, time: datetime):
+def generateIncomingMessage(patientId, message, time: datetime, priority='routine'):
+    if priority != "routine" and priority!= "urgent" and priority!= "stat":
+         print(f"Invalid priority given: {priority}. Only routine, urgent, and stat are allowed.")
+         return
+
     db = getDB()
     pt = Patient.read(patientId, db.server)
     carePlan = getCareplan(db, patientId)
@@ -78,7 +82,9 @@ def generateIncomingMessage(patientId, message, time: datetime):
                                 'code': 'SMSWRIT'}]}],
         'sent': time.astimezone().isoformat(),
         'sender': {'reference': f'Patient/{patientId}'},
-        'payload': [{'contentString': message}]
+        'payload': [{'contentString': message}],
+        'priority': priority
+
     }
     c = Communication(m)
     result = c.create(db.server)
@@ -105,6 +111,7 @@ def main(args=None):
     subcommand2_parser.add_argument('--patient', '-p', help="Patient ID")
     subcommand2_parser.add_argument('--message', '-m', help="Message content")
     subcommand2_parser.add_argument('--time', '-t', help="Time sent. ISO format")
+    subcommand2_parser.add_argument('--priority', '-u', help="Priority/urgency of message. routine, urgent, or stat")
 
     args = parser.parse_args(args)
 
@@ -117,7 +124,7 @@ def main(args=None):
             time = datetime.now()
         else:
             time = dateutil.parser(time)
-        generateIncomingMessage(args.patient, args.message, time)
+        generateIncomingMessage(args.patient, args.message, time, args.priority)
     else:
         print("Command not found")
 
