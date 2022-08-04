@@ -13,6 +13,7 @@ import messages_en from './l10n/intl_en.json';
 import theme from "./theme";
 import {ThemeProvider} from "@mui/styles";
 import {AppPageScaffold} from "./components/AppPage";
+import PatientNotes from "./components/PatientNotes";
 
 export const intlMessages: any = {
     'en': messages_en,
@@ -31,6 +32,7 @@ export default class App extends React.Component<any, any> {
                         <FhirClientProvider>
                             <AppPageScaffold title={"Messages"}>
                                 <Summary/>
+                                <PatientNotes />
                                 <MessageView/>
                             </AppPageScaffold>
                         </FhirClientProvider>

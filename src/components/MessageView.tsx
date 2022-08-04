@@ -6,10 +6,11 @@ import {injectIntl, WrappedComponentProps} from "react-intl";
 
 import Communication from "../model/Communication";
 import {ICodeableConcept, ICoding, IReference, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
-import {Box, Button, CircularProgress, List, Stack, TextField, Theme, Typography} from "@mui/material";
-import {grey, indigo, lightBlue} from "@mui/material/colors";
+import {Box, Button, CircularProgress, Grid, List, Stack, TextField, Theme, Typography} from "@mui/material";
+import {grey, lightBlue} from "@mui/material/colors";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import Alert from "@mui/material/Alert";
+import {Error, Warning} from "@mui/icons-material";
 
 const classes = createStyles((theme: Theme) => {
     return {}
@@ -58,53 +59,51 @@ class MessageView extends React.Component<MessageViewProps & WrappedComponentPro
             return <CircularProgress/>
         }
 
-        let messages = <Stack direction={'row'} justifyContent={"flex-end"} sx={{marginTop: 2, maxWidth:600}}>
+        let messageBoxProps = {
+            maxHeight: 600,
+            overflow: 'auto',
+            display: 'flex',
+            flexDirection: 'column-reverse',
+            border: "1px solid lightgrey",
+            borderRadius: 1,
+            paddingLeft: 0.5,
+            paddingRight: 0.5
+        }
+
+        let messages = <Stack direction={'row'} justifyContent={"flex-end"} sx={messageBoxProps}>
             <Typography variant={"caption"}>{"No messages"}</Typography>
         </Stack>
 
         if (context.communications && context.communications.length > 0) {
-            messages = <List sx={{
-                maxHeight: 600,
-                maxWidth: 600,
-                overflow: 'auto',
-                display: 'flex',
-                flexDirection: 'column-reverse',
-                border: "1px solid lightgrey",
-                borderRadius:1,
-                paddingLeft:0.5,
-                paddingRight:0.5
-            }}>{
+            messages = <List sx={messageBoxProps}>{
                 context.communications.map((message, index) => this._buildMessageRow(message, index))
             }</List>
         }
 
 
-        return <Stack direction={"column"}>
+        return <Grid container direction={"column"}>
             <Typography variant={'h6'} sx={{paddingTop: 2}}>{context.carePlan.reference}</Typography>
 
-            <Stack direction={"row"} justifyContent={"center"}>
-                <Stack direction={"column"} maxWidth={600}>
+            <Grid container direction={"row"} justifyContent={"center"}>
+                <Grid item container direction={"column"} xs={12} sm={10} md={8} lg={6}>
                     {messages}
 
                     <TextField
-
                         multiline
                         value={this.state.activeMessage ?? ""}
                         placeholder={"Enter message"}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                             this.setState({activeMessage: event.target.value});
                         }}/>
-
-
                     <Stack direction={'row'} justifyContent={"flex-end"} sx={{marginTop: 2}}>
                         <Button variant="contained" onClick={() => this.saveMessage()}>
                             Send
                         </Button>
                     </Stack>
-                </Stack>
+                </Grid>
 
-            </Stack>
-        </Stack>
+            </Grid>
+        </Grid>
 
     }
 
@@ -147,39 +146,69 @@ class MessageView extends React.Component<MessageViewProps & WrappedComponentPro
             autoMessage = false;
         }
         let bubbleStyle = MessageView.getBubbleStyle(incoming, autoMessage);
-        return this._alignedRow(incoming, msg, timestamp, bubbleStyle);
+        let priority = message.priority;
+        return this._alignedRow(incoming, msg, timestamp, bubbleStyle, priority);
 
     }
 
-    private _alignedRow(incoming: boolean, message: string, timestamp: string, bubbleStyle: object) {
+    private _alignedRow(incoming: boolean, message: string, timestamp: string, bubbleStyle: object, priority: string) {
         let spacer = <Box minWidth={100}/>;
-        let align = incoming ? "flex-start" : "flex-end";
-        if (incoming) {
-            return <Stack direction={"row"} justifyContent={align} spacing={2} sx={{marginTop: 1}}>
-                {this._buildMessageBubble(align, message, timestamp, bubbleStyle)}
-                {spacer}
-            </Stack>
-        } else {
-            return <Stack direction={"row"} justifyContent={align} spacing={2} sx={{marginTop: 1}}>
-                {spacer}
-                {this._buildMessageBubble(align, message, timestamp, bubbleStyle)}
-            </Stack>
-        }
-    }
 
-    private _buildMessageBubble(align: string, message: string, timestamp: string, bubbleStyle: object) {
-        return <Stack maxWidth={800} direction={"column"} alignItems={align}>
-            <Box sx={{
-                borderRadius: "12px",
-                padding: 1,
-                ...bubbleStyle
-            }}>
-                <Typography variant={"body2"}>
-                    {message}
-                </Typography>
-            </Box>
+        let priorityIndicator = null;
+        if (priority === "urgent") {
+            priorityIndicator = <Warning color={"warning"}/>
+        } else if (priority === "stat") {
+            priorityIndicator = <Error color={"error"}/>
+        }
+        let align = incoming ? "flex-start" : "flex-end";
+
+        let box = <Box sx={{
+            borderRadius: "12px",
+            padding: 1,
+            ...(bubbleStyle)
+        }}>
+            <Typography variant={"body2"}>
+                {message}
+            </Typography>
+        </Box>;
+
+        let bubbleAndPriorityRow;
+        if (incoming) { // different order based on message direction
+            bubbleAndPriorityRow = <>
+                {box}
+                {priorityIndicator}
+            </>
+        } else {
+            bubbleAndPriorityRow = <>
+                {priorityIndicator}
+                {box}
+            </>
+        }
+
+        let messageBubble = <Stack direction={"column"} alignItems={align}>
+            <Stack direction={"row"} alignItems={"center"} spacing={1}>
+                {bubbleAndPriorityRow}
+            </Stack>
             <Typography variant={"caption"}>{timestamp}</Typography>
-        </Stack>;
+
+        </Stack>
+
+        let messageAndSpacerRow;
+        if (incoming) { // different order based on message direction
+            messageAndSpacerRow = <>
+                {messageBubble}
+                {spacer}
+            </>;
+        } else {
+            messageAndSpacerRow = <>
+                {spacer}
+                {messageBubble}
+            </>
+        }
+
+        return <Stack direction={"row"} justifyContent={align} alignItems={"center"} spacing={0.5}>
+            {messageAndSpacerRow}
+        </Stack>
     }
 
     private static getBubbleStyle(incoming: boolean, auto: boolean): object {
