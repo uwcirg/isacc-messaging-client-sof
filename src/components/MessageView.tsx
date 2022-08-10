@@ -84,25 +84,21 @@ class MessageView extends React.Component<MessageViewProps & WrappedComponentPro
         return <Grid container direction={"column"}>
             <Typography variant={'h6'} sx={{paddingTop: 2}}>{context.carePlan.reference}</Typography>
 
-            <Grid container direction={"row"} justifyContent={"center"}>
-                <Grid item container direction={"column"} xs={12} sm={10} md={8} lg={6}>
-                    {messages}
+            {messages}
 
-                    <TextField
-                        multiline
-                        value={this.state.activeMessage ?? ""}
-                        placeholder={"Enter message"}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                            this.setState({activeMessage: event.target.value});
-                        }}/>
-                    <Stack direction={'row'} justifyContent={"flex-end"} sx={{marginTop: 2}}>
-                        <Button variant="contained" onClick={() => this.saveMessage()}>
-                            Send
-                        </Button>
-                    </Stack>
-                </Grid>
+            <TextField
+                multiline
+                value={this.state.activeMessage ?? ""}
+                placeholder={"Enter message"}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    this.setState({activeMessage: event.target.value});
+                }}/>
+            <Stack direction={'row'} justifyContent={"flex-end"} sx={{marginTop: 2}}>
+                <Button variant="contained" onClick={() => this.saveMessage()}>
+                    Send
+                </Button>
+            </Stack>
 
-            </Grid>
         </Grid>
 
     }
@@ -147,12 +143,11 @@ class MessageView extends React.Component<MessageViewProps & WrappedComponentPro
         }
         let bubbleStyle = MessageView.getBubbleStyle(incoming, autoMessage);
         let priority = message.priority;
-        return this._alignedRow(incoming, msg, timestamp, bubbleStyle, priority);
+        return this._alignedRow(incoming, msg, timestamp, bubbleStyle, priority, index);
 
     }
 
-    private _alignedRow(incoming: boolean, message: string, timestamp: string, bubbleStyle: object, priority: string) {
-        let spacer = <Box minWidth={100}/>;
+    private _alignedRow(incoming: boolean, message: string, timestamp: string, bubbleStyle: object, priority: string, index: number) {
 
         let priorityIndicator = null;
         if (priority === "urgent") {
@@ -185,13 +180,17 @@ class MessageView extends React.Component<MessageViewProps & WrappedComponentPro
             </>
         }
 
-        let messageBubble = <Stack direction={"column"} alignItems={align}>
-            <Stack direction={"row"} alignItems={"center"} spacing={1}>
-                {bubbleAndPriorityRow}
-            </Stack>
-            <Typography variant={"caption"}>{timestamp}</Typography>
+        let messageBubble = <Grid item xs={11} md={10} lg={8}>
+            <Stack direction={"column"} alignItems={align}>
+                <Stack direction={"row"} alignItems={"center"} spacing={1}>
+                    {bubbleAndPriorityRow}
+                </Stack>
+                <Typography variant={"caption"}>{timestamp}</Typography>
 
-        </Stack>
+            </Stack>
+        </Grid>
+
+        let spacer = <Grid item xs={1} md={2} lg={4}/>;
 
         let messageAndSpacerRow;
         if (incoming) { // different order based on message direction
@@ -206,9 +205,9 @@ class MessageView extends React.Component<MessageViewProps & WrappedComponentPro
             </>
         }
 
-        return <Stack direction={"row"} justifyContent={align} alignItems={"center"} spacing={0.5}>
+        return <Grid container key={index} direction={"row"} justifyContent={align} alignItems={"center"} spacing={0.5}>
             {messageAndSpacerRow}
-        </Stack>
+        </Grid>
     }
 
     private static getBubbleStyle(incoming: boolean, auto: boolean): object {
