@@ -43,8 +43,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
 
         if (!patient) return <Alert severity={"error"}>{"No patient"}</Alert>;
 
-        let emergencyContactString = "";
-
+        let emergencyContactString = "None on file";
         if (patient.contact) {
             let emergencyContact: IPatient_Contact = patient.contact.find((contact: IPatient_Contact) => contact.relationship.find((relationship: ICodeableConcept) => relationship.coding.find((coding: ICoding) => coding === RelationshipCategory.emergencyContact)));
             let contactDetails = emergencyContact.telecom.map((t: IContactPoint) => t.value).join(" / ");

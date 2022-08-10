@@ -151,7 +151,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
                     }
 
                     // if client is already available render the subtree
-                    if (client) {
+                    if (client && patient) {
                         return props.children;
                     }
 
