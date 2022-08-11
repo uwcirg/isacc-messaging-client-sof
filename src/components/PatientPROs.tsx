@@ -120,6 +120,8 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
 
         if (this.state.error) return <Alert severity={"error"}>{this.state.error}</Alert>;
 
+        if (!this.state.mostRecentPhq9) return <CircularProgress/>
+
         return <Stack
             direction={"column"}
             alignItems={"center"}
