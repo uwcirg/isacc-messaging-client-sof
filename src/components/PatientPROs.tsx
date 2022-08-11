@@ -16,7 +16,8 @@ interface PatientPROsProps {
 type PatientPROsState = {
     error: string;
     mostRecentPhq9: Observation,
-    mostRecentCss: Observation
+    mostRecentCss: Observation,
+    loaded: boolean
 }
 
 function colorForPhq9Obs(observation: Observation) {
@@ -48,6 +49,7 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
             error: '',
             mostRecentPhq9: null,
             mostRecentCss: null,
+            loaded: false
         }
     }
 
@@ -71,7 +73,8 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
                 console.log("Loaded Observations:", results);
                 this.setState({
                     mostRecentPhq9: Observation.from(results[0]),
-                    mostRecentCss: Observation.from(results[1])
+                    mostRecentCss: Observation.from(results[1]),
+                    loaded: true
                 });
             },
             (reason: any) => {
@@ -120,7 +123,7 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
 
         if (this.state.error) return <Alert severity={"error"}>{this.state.error}</Alert>;
 
-        if (!this.state.mostRecentPhq9) return <CircularProgress/>
+        if (!this.state.loaded) return <CircularProgress/>
 
         return <Stack
             direction={"column"}
@@ -128,11 +131,11 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
             spacing={2}>
             <LabeledValueBubble
                 title={"PHQ-9"}
-                value={this.state.mostRecentPhq9?.valueDisplay ?? "No recent value"}
+                value={this.state.mostRecentPhq9?.valueDisplay ?? "-"}
                 backgroundColor={colorForPhq9Obs(this.state.mostRecentPhq9)}/>
             <LabeledValueBubble
                 title={"CSS"}
-                value={this.state.mostRecentCss?.valueDisplay ?? "No recent value"}
+                value={this.state.mostRecentCss?.valueDisplay ?? "-"}
                 backgroundColor={colorForCssObs(this.state.mostRecentCss)}/>
 
         </Stack>;
