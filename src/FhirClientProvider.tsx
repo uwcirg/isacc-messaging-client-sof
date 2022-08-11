@@ -1,6 +1,6 @@
 import React from 'react';
 import FHIR from 'fhirclient';
-import {FhirClientContext} from './FhirClientContext';
+import {FhirClientContext, FhirClientContextType} from './FhirClientContext';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Client from "fhirclient/lib/Client";
@@ -144,14 +144,14 @@ export default function FhirClientProvider(props: Props): JSX.Element {
             error: error
         }}>
             <FhirClientContext.Consumer>
-                {({client, patient, carePlan, communications, error}) => {
+                {(context: FhirClientContextType) => {
                     // any auth error that may have been rejected with
-                    if (error) {
-                        return <LaunchError message={error}></LaunchError>;
+                    if (context.error) {
+                        return <LaunchError message={context.error}></LaunchError>;
                     }
 
                     // if client is already available render the subtree
-                    if (client && patient) {
+                    if (context.client && context.patient) {
                         return props.children;
                     }
 
