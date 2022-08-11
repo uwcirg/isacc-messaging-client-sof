@@ -71,16 +71,3 @@ export const CSSAnswerCategories = {
     medium: Coding.make("http://loinc.org", "LA6751-7"),
     high: Coding.make("http://loinc.org", "LA9193-9")
 }
-
-
-
-export const IsaccCarePlanCategory = {
-  isaccMessagePlan: Coding.make("https://isacc.app/CodeSystem/careplan-type", "isacc-message-plan")
-}
-export const IsaccMessageCategory = {
-  isaccScheduledMessage: Coding.make("https://isacc.app/CodeSystem/communication-request-type", "isacc-scheduled-message"),
-  isaccSentMessage: Coding.make("https://isacc.app/CodeSystem/communication-type", "isacc-sent-message")
-}
-export const RelationshipCategory = {
-  emergencyContact: Coding.make("http://hl7.org/fhir/ValueSet/patient-contactrelationship", "C")
-}
