@@ -1,5 +1,4 @@
 import * as React from "react";
-import PlanDefinition from "../model/PlanDefinition";
 import {
     Button,
     CircularProgress,
@@ -19,15 +18,14 @@ import {FhirClientContext} from "../FhirClientContext";
 import {makeCarePlan, makeCommunicationRequests} from "../model/modelUtil";
 import {IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {CommunicationRequest} from "../model/CommunicationRequest";
-import {injectIntl, WrappedComponentProps} from "react-intl";
 import {createStyles, StyledComponentProps, withStyles} from "@mui/styles";
 import Alert from "@mui/material/Alert";
 import Patient from "../model/Patient";
-import LaunchError from "./LaunchError";
+import Summary from "./Summary";
+import PlanDefinition, {getDefaultMessageSchedule} from "../model/PlanDefinition";
 
 
 interface ScheduleSetupProps {
-    planDefinition: PlanDefinition;
 }
 
 type ScheduleSetupState = {
@@ -83,12 +81,12 @@ const styles = createStyles((theme: Theme) => {
 });
 
 
-class ScheduleSetup extends React.Component<ScheduleSetupProps & WrappedComponentProps & StyledComponentProps, ScheduleSetupState> {
+class ScheduleSetup extends React.Component<ScheduleSetupProps & StyledComponentProps, ScheduleSetupState> {
     static contextType = FhirClientContext
-
+    planDefinition: PlanDefinition;
     // declare context: React.ContextType<typeof FhirClientContext>
 
-    constructor(props: Readonly<ScheduleSetupProps & WrappedComponentProps & StyledComponentProps> | (ScheduleSetupProps & WrappedComponentProps & StyledComponentProps)) {
+    constructor(props: Readonly<ScheduleSetupProps & StyledComponentProps>) {
         super(props);
         this.state = {
             messages: null,
@@ -97,76 +95,48 @@ class ScheduleSetup extends React.Component<ScheduleSetupProps & WrappedComponen
             alertText: null,
             alertSeverity: null
         };
+        this.planDefinition = getDefaultMessageSchedule();
     }
 
     componentDidMount() {
-        // @ts-ignore
+        //@ts-ignore
         let patient: Patient = this.context.patient;
-
-        if (!patient) {
-            console.log("Context not available in componentDidMount!");
-            return;
-        }
-
-        const messages: MessageDraft[] = this.props.planDefinition.createMessageList(patient);
+        const messages: MessageDraft[] = this.planDefinition.createMessageList(patient);
         this.setState({messages: messages});
     }
 
     render(): React.ReactNode {
-        if (!this.state) return <CircularProgress/>;
-
-        // @ts-ignore
-        let patient: Patient = this.context.patient;
-
-        if (!patient) return <LaunchError message={"No patient"}/>;
-
-        if (!this.state.messages) {
-            return <CircularProgress/>;
-        }
+        if (!this.state || !this.state.messages) return <CircularProgress/>;
 
         const {classes} = this.props;
-        const {intl} = this.props;
 
         return <>
-            <Typography variant={'h6'}>{intl.formatMessage({id: 'patient_note'})}</Typography>
-            <TextField
-                className={classes.patientNotesField}
-                label={"Patient notes"}
-                fullWidth
-                multiline
-                value={this.state.patientNote ?? ""}
-                placeholder={intl.formatMessage({id: 'patient_note'})}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    this.setState({patientNote: event.target.value});
-                }}/>
-
-            <Typography variant={'h6'}>{intl.formatMessage({id: 'message_schedule'})}</Typography>
-            <Alert severity={"info"}>
-                {"Use {name} to substitute the client's first name"}
-            </Alert>
-
-            <List>{
-                this.state.messages.map((message: MessageDraft, index: number) => {
-                        return this._buildMessageItem(message, index);
-                    }
-                )
-            }</List>
-
-            <Stack direction={'row'} justifyContent={"space-between"}>
-                <Button variant="outlined" onClick={() => {
-                    this.state.messages.push({text: "", scheduledDateTime: new Date()});
-                    this.setState({messages: this.state.messages});
-                }}>
-                    Add message
-                </Button>
-                <Button variant="contained" onClick={() => this.saveSchedule()}>
-                    Done
-                </Button>
-            </Stack>
+            <Grid container spacing={2}>
+                <Grid item xs={6}><Summary/></Grid>
+                <Grid item xs={6}>
+                    <Typography variant={'h6'}>{"Patient note"}</Typography>
+                    <TextField
+                        className={classes.patientNotesField}
+                        sx={{maxHeight: 400, overflow: 'auto'}}
+                        fullWidth
+                        multiline
+                        value={this.state.patientNote ?? ""}
+                        placeholder={"Patient note"}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                            this.setState({patientNote: event.target.value});
+                        }}/>
+                </Grid>
+                <Grid item xs={12}>
+                    <MessageScheduleList
+                        messages={this.state.messages}
+                        onMessagesChanged={(messages: MessageDraft[]) => this.setState({messages: messages})}
+                        saveSchedule={() => this.saveSchedule()}
+                    />
+                </Grid>
+            </Grid>
 
             {this.getSnackbar()}
         </>
-
     }
 
     private showSnackbar(alertSeverity: "error" | "warning" | "info" | "success", alertText: string) {
@@ -185,7 +155,6 @@ class ScheduleSetup extends React.Component<ScheduleSetupProps & WrappedComponen
             </Alert>
         </Snackbar>;
     }
-
 
     private saveSchedule() {
         // @ts-ignore
@@ -208,7 +177,7 @@ class ScheduleSetup extends React.Component<ScheduleSetupProps & WrappedComponen
             return;
         }
 
-        let communicationRequests = makeCommunicationRequests(patient, this.props.planDefinition, this.state.messages);
+        let communicationRequests = makeCommunicationRequests(patient, this.planDefinition, this.state.messages);
         let promises = communicationRequests.map(
             (c: CommunicationRequest) => client.create(c).then(
                 (value: any) => CommunicationRequest.from(value)
@@ -220,7 +189,7 @@ class ScheduleSetup extends React.Component<ScheduleSetupProps & WrappedComponen
                 console.log("resource saved:", v);
             });
             // create CarePlan with the newly created CommunicationRequests
-            let carePlan = makeCarePlan(this.props.planDefinition, patient, communicationRequests, this.state.patientNote);
+            let carePlan = makeCarePlan(this.planDefinition, patient, communicationRequests, this.state.patientNote);
             client.create(carePlan).then((savedCarePlan: IResource) => {
                 this.onSaved(savedCarePlan);
                 let updatePromises = communicationRequests.map((c: CommunicationRequest) => {
@@ -242,17 +211,27 @@ class ScheduleSetup extends React.Component<ScheduleSetupProps & WrappedComponen
     }
 
     private onRejected(reason: any) {
-        console.log("resource rejected");
+        console.log("resource rejected:", reason);
         this.showSnackbar("error", "Schedule could not be created")
     }
 
-    private _buildMessageItem(message: MessageDraft, index: number) {
-        const {classes} = this.props;
+}
+
+
+const MessageScheduleList = (props: {
+    messages: MessageDraft[],
+    onMessagesChanged: (messages: MessageDraft[]) => void,
+    saveSchedule: () => void,
+}) => {
+
+    const buildMessageItem = (message: MessageDraft, index: number) => {
         return <ListItem key={index} sx={{width: '100%'}} secondaryAction={
-            <ClearIcon onClick={() => this.removeMessage(index)}/>
+            <ClearIcon onClick={() => {
+                removeMessage(index);
+            }}/>
         }>
             <Grid container direction={"row"} flexDirection={"row"} spacing={2}
-                  className={classes.listItem}>
+                  sx={{paddingTop: 2}}>
 
                 <Grid item>
                     <DateTimePicker
@@ -260,8 +239,11 @@ class ScheduleSetup extends React.Component<ScheduleSetupProps & WrappedComponen
                         label="Date & Time"
                         value={message.scheduledDateTime}
                         onChange={(newValue: Date | null) => {
-                            message.scheduledDateTime = newValue;
-                            this.setState({messages: this.state.messages});
+                            // message.scheduledDateTime = newValue;
+                            let messages = props.messages;
+                            messages[index].scheduledDateTime = newValue;
+                            props.onMessagesChanged(messages);
+                            // this.setState({messages: this.state.messages});
                         }}
                         renderInput={(params: TextFieldProps) => <TextField {...params} />}/>
                 </Grid>
@@ -273,22 +255,49 @@ class ScheduleSetup extends React.Component<ScheduleSetupProps & WrappedComponen
                         fullWidth
                         multiline
                         value={message.text ?? ""}
-                        // placeholder={intl.formatMessage({id: 'enter_response'})}
                         placeholder={"Enter message"}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                            message.text = event.target.value;
-                            this.setState({messages: this.state.messages});
+                            props.messages[index].text = event.target.value;
+                            props.onMessagesChanged(props.messages);
+                            // this.setState({messages: this.state.messages});
                         }}/>
                 </Grid>
             </Grid>
         </ListItem>
     }
 
-    private removeMessage(index: number) {
-        let messages = this.state.messages;
+    const removeMessage = (index: number) => {
+        let messages = props.messages;
         messages.splice(index, 1);
-        this.setState({messages: messages})
+        props.onMessagesChanged(messages);
     }
+
+    return <><Typography variant={'h6'}>{"Message schedule"}</Typography>
+        <Alert severity={"info"}>
+            {"Use {name} to substitute the client's first name"}
+        </Alert>
+
+        <List>{
+            props.messages.map((message: MessageDraft, index: number) => {
+                    return buildMessageItem(message, index);
+                }
+            )
+        }</List>
+
+        <Stack direction={'row'} justifyContent={"space-between"}>
+            <Button variant="outlined" onClick={() => {
+                props.messages.push({text: "", scheduledDateTime: new Date()});
+                props.onMessagesChanged(props.messages);
+                // this.setState({messages: this.state.messages});
+            }}>
+                Add message
+            </Button>
+            <Button variant="contained" onClick={() => props.saveSchedule()}>
+                Done
+            </Button>
+        </Stack>
+    </>
+
 }
 
-export default injectIntl(withStyles(styles)(ScheduleSetup));
+export default withStyles(styles)(ScheduleSetup);

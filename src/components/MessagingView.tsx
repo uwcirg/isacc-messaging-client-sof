@@ -2,7 +2,6 @@ import * as React from "react";
 
 import {createStyles, StyledComponentProps, withStyles} from "@mui/styles";
 import {FhirClientContext, FhirClientContextType} from "../FhirClientContext";
-import {injectIntl, WrappedComponentProps} from "react-intl";
 
 import Communication from "../model/Communication";
 import {ICodeableConcept, ICoding, IReference, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
@@ -16,24 +15,17 @@ const classes = createStyles((theme: Theme) => {
     return {}
 });
 
-interface MessageViewProps {
-}
-
-type MessageViewState = {
+class MessagingView extends React.Component<{} & StyledComponentProps, {
     // messages: MessageDraft[];
     activeMessage: string;
     error: any;
     // showAlert: boolean;
     // alertSeverity: "error" | "warning" | "info" | "success";
     // alertText: string;
-}
-
-
-class MessageView extends React.Component<MessageViewProps & WrappedComponentProps & StyledComponentProps, MessageViewState> {
+}> {
     static contextType = FhirClientContext
 
-
-    constructor(props: Readonly<MessageViewProps & WrappedComponentProps & StyledComponentProps> | (MessageViewProps & WrappedComponentProps & StyledComponentProps)) {
+    constructor(props: ({})) {
         super(props);
         this.state = {
             activeMessage: null,
@@ -42,11 +34,8 @@ class MessageView extends React.Component<MessageViewProps & WrappedComponentPro
 
     }
 
-
     render(): React.ReactNode {
         if (!this.state) return <CircularProgress/>;
-        /*        const {classes} = this.props;
-                const {intl} = this.props;*/
 
         // @ts-ignore
         let context: FhirClientContextType = this.context;
@@ -125,7 +114,6 @@ class MessageView extends React.Component<MessageViewProps & WrappedComponentPro
     }
 
     private _buildMessageRow(message: Communication, index: number): React.ReactNode {
-        const {intl} = this.props;
 
         let incoming = true;
         if (message.recipient && message.recipient.find((r: IReference) => r.reference.includes("Patient"))) {
@@ -133,7 +121,8 @@ class MessageView extends React.Component<MessageViewProps & WrappedComponentPro
         }
 
         let datetime = new Date(message.sent);
-        let timestamp = `${intl.formatDate(datetime)} ${intl.formatTime(datetime)}`;
+        let timestamp = `${datetime.toLocaleDateString()} ${datetime.toLocaleTimeString()}`;
+        // let timestamp = `${intl.formatDate(datetime)} ${intl.formatTime(datetime)}`;
         let msg = message.displayText();
         let autoMessage = true;
         if (!message.category) {
@@ -141,7 +130,7 @@ class MessageView extends React.Component<MessageViewProps & WrappedComponentPro
         } else if (message.category.find((c: ICodeableConcept) => c.coding.find((coding: ICoding) => IsaccMessageCategory.isaccManuallySentMessage.equals(coding)))) {
             autoMessage = false;
         }
-        let bubbleStyle = MessageView.getBubbleStyle(incoming, autoMessage);
+        let bubbleStyle = MessagingView.getBubbleStyle(incoming, autoMessage);
         let priority = message.priority;
         return this._alignedRow(incoming, msg, timestamp, bubbleStyle, priority, index);
 
@@ -227,4 +216,4 @@ class MessageView extends React.Component<MessageViewProps & WrappedComponentPro
 
 }
 
-export default injectIntl(withStyles(classes)(MessageView));
+export default withStyles(classes)(MessagingView);

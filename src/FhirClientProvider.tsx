@@ -11,7 +11,7 @@ import {Bundle} from "./model/Bundle";
 import {ICarePlan} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {IsaccCarePlanCategory} from "./model/CodeSystem";
 import Communication from "./model/Communication";
-import LaunchError from "./components/LaunchError";
+import ErrorComponent from "./components/LaunchError";
 
 interface Props {
     children: React.ReactNode;
@@ -49,7 +49,6 @@ export default function FhirClientProvider(props: Props): JSX.Element {
         return await client.request(`/CarePlan?${params}`).then((bundle: Bundle) => {
             if (bundle.type === "searchset") {
                 if (!bundle.entry) {
-                    setError("Patient has no ISACC CarePlan. Ensure the patient is enrolled and has a message schedule CarePlan.");
                     return null;
                 }
                 if (bundle.total > 1) {
@@ -147,7 +146,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
                 {(context: FhirClientContextType) => {
                     // any auth error that may have been rejected with
                     if (context.error) {
-                        return <LaunchError message={context.error}></LaunchError>;
+                        return <ErrorComponent message={context.error}></ErrorComponent>;
                     }
 
                     // if client is already available render the subtree

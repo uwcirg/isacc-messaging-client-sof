@@ -99,7 +99,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hi {name} - Hope things go well for you this week. Megan from the MCProject."
+            "expression": "Hi {name} - Hope things go well for you this week. {userName} from the MCProject."
           }
         }
       ]
@@ -151,7 +151,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hey {name}, hope things are going well and you\u2019re having a good week. -Alvin, MCProj.org"
+            "expression": "Hey {name}, hope things are going well and you're having a good week. - {userName}, MCProj.org"
           }
         }
       ]
@@ -177,7 +177,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hey {name}, Hope things are good and you have had a good week. - Jessica, MCproj.org"
+            "expression": "Hey {name}, Hope things are good and you have had a good week. - {userName}, MCproj.org"
           }
         }
       ]
@@ -203,7 +203,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hi {name}, hope life is treating you well. -Megan, MCProj.org"
+            "expression": "Hi {name}, hope life is treating you well. -{userName}, MCProj.org"
           }
         }
       ]
@@ -229,7 +229,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hello again, {name}! Hope things are good -Alvin, MCProj.org"
+            "expression": "Hello again, {name}! Hope things are good -{userName}, MCProj.org"
           }
         }
       ]
@@ -255,7 +255,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "{name}, Hope everything's going well. Megan, MCProj.org"
+            "expression": "{name}, Hope everything's going well. {userName}, MCProj.org"
           }
         }
       ]
@@ -281,7 +281,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "{name}- Hope everything's going well. -Amanda & the MCProj.org team"
+            "expression": "{name}- Hope everything's going well. -{userName} & the MCProj.org team"
           }
         }
       ]
@@ -307,7 +307,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hey {name} - Just wanted to say hello. Hope things are going OK. - Jessica, MCProj.org"
+            "expression": "Hey {name} - Just wanted to say hello. Hope things are going OK. - {userName}, MCProj.org"
           }
         }
       ]
