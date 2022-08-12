@@ -15,6 +15,7 @@ export class CommunicationRequest implements ICommunicationRequest {
     status: string;
     medium: ICodeableConcept[];
     category: ICodeableConcept[];
+    basedOn: IReference[];
 
     get reference(): string {
         return `${this.resourceType}/${this.id}`;
