@@ -12,6 +12,7 @@ import theme from "./theme";
 import {ThemeProvider} from "@mui/styles";
 import {EnrollmentApp} from "./EnrollmentApp";
 import {MessageViewApp} from "./MessageViewApp";
+import {getEnv} from "./util/util";
 
 export const intlMessages: any = {
     'en': messages_en,
@@ -19,7 +20,7 @@ export const intlMessages: any = {
     'mn': messages_mn
 }
 
-const REACT_APP_CLIENT_ID: string = "messaging";
+const REACT_APP_CLIENT_ID: string = getEnv("REACT_APP_CLIENT_ID");
 
 export default class App extends React.Component<any, any> {
     render() {
