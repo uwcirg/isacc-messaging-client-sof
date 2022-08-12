@@ -11,7 +11,7 @@ import {Bundle} from "./model/Bundle";
 import {ICarePlan} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {IsaccCarePlanCategory} from "./model/CodeSystem";
 import Communication from "./model/Communication";
-import ErrorComponent from "./components/LaunchError";
+import ErrorComponent from "./components/ErrorComponent";
 
 interface Props {
     children: React.ReactNode;

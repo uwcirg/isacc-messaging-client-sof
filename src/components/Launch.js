@@ -2,7 +2,7 @@ import React from 'react';
 import FHIR from 'fhirclient';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
-import LaunchError from './LaunchError';
+import ErrorComponent from './ErrorComponent';
 import {queryPatientIdKey} from '../util/util.js';
 import '../style/App.scss';
 
@@ -57,7 +57,7 @@ export default function Launch() {
 
     return (
         <React.Fragment>
-            {error && <LaunchError message={error.message}></LaunchError>}
+            {error && <ErrorComponent message={error.message}></ErrorComponent>}
             {!error && <Box style={{ padding: "1rem" }}>
                 <CircularProgress></CircularProgress>
                 <span>Launching ...</span>
