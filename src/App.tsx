@@ -37,7 +37,7 @@ export default class App extends React.Component<any, any> {
                                     {/*page header*/}
                                     <GridItem sm={8} md={3} lg={3} xl={3}><Summary/></GridItem>
                                     <GridItem sm={4} md={2} lg={2} xl={1}><PatientPROs/></GridItem>
-                                    <GridItem sm={8} md={4} lg={4} xl={5}><PatientNotes/> </GridItem>
+                                    <Grid item sm={8} md={4} lg={4} xl={5}><PatientNotes/> </Grid>
                                     <GridItem sm={4} md={3} lg={3} xl={3}>{"Themes and stuff"} </GridItem>
 
                                     {/*left column*/}

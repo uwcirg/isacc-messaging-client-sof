@@ -63,14 +63,22 @@ def getCareplan(db, patientId):
         return None
 
 
-def generateIncomingMessage(patientId, message, time: datetime, priority='routine'):
-    if priority != "routine" and priority!= "urgent" and priority!= "stat":
+def generateIncomingMessage(message, time: datetime = None, patientId=None, priority=None):
+    if priority is not None and priority != "routine" and priority!= "urgent" and priority!= "stat":
          print(f"Invalid priority given: {priority}. Only routine, urgent, and stat are allowed.")
          return
 
+    if priority is None:
+        priority = "routine"
+
+    if patientId is None:
+        patientId = "2cda5aad-e409-4070-9a15-e1c35c46ed5a" # Geoffrey Abbott
+
     db = getDB()
-    pt = Patient.read(patientId, db.server)
     carePlan = getCareplan(db, patientId)
+
+    if time is None:
+        time = datetime.now()
 
     m = {
         'resourceType': 'Communication',
@@ -117,14 +125,14 @@ def main(args=None):
 
 
     if args.command == "convertCRtoC":
-        convertCommunicationToRequest(args.cr_id)
+        convertCommunicationToRequest(cr_id=args.cr_id)
     elif args.command == "generateMsg":
         time = args.time
         if time is None:
             time = datetime.now()
         else:
             time = dateutil.parser(time)
-        generateIncomingMessage(args.patient, args.message, time, args.priority)
+        generateIncomingMessage(patientId=args.patient, message=args.message, time=time, priority=args.priority)
     else:
         print("Command not found")
 
