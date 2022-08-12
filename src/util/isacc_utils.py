@@ -7,7 +7,7 @@ from fhirclient.models.careplan import CarePlan
 
 import argparse
 from datetime import datetime
-import dateutil
+import dateutil.parser
 
 def createCommunicationFromRequest(cr):
     return {
@@ -171,11 +171,10 @@ def main(args=None):
     if args.command == "convertCRtoC":
         convertCommunicationToRequest(cr_id=args.cr_id)
     elif args.command == "generateMsg":
-        time = dateutil.parser(args.time)
+        time = dateutil.parser.parse(args.time)
         generateIncomingMessage(patientId=args.patient, message=args.message, time=time, priority=args.priority)
     elif args.command == "generateScript":
-        time = dateutil.parser(args.time)
-        generateScript(patientId=args.patient, message=args.message, time=time, priority=args.priority)
+        generateScript(patientId=args.patient)
     else:
         print("Command not found")
 
