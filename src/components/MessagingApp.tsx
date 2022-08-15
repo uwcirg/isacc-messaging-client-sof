@@ -7,6 +7,7 @@ import MessageView from "./MessagingView";
 import React, {PropsWithChildren, useContext} from "react";
 import {FhirClientContext} from "../FhirClientContext";
 import Alert from "@mui/material/Alert";
+import DiagnosisAndCareTeam from "./DiagnosisAndCareTeam";
 
 export const MessagingApp = () => {
     const context = useContext(FhirClientContext);
@@ -22,7 +23,7 @@ export const MessagingApp = () => {
             <GridItem sm={4} md={3} lg={3} xl={3}>{"Themes and stuff"} </GridItem>
 
             {/*left column*/}
-            <GridItem xs={12} md={3} lg={3} xl={3}>{"Diagnoses, Care team"} </GridItem>
+            <GridItem xs={12} md={3} lg={3} xl={3}><DiagnosisAndCareTeam/> </GridItem>
             <GridItem xs={8} md={6} lg={6} xl={6}><MessageView/></GridItem>
             <GridItem xs={4} md={3} lg={3} xl={3}>{"Continuation of themes and stuff"}</GridItem>
 
