@@ -14,7 +14,7 @@ import {
 } from "@ahryman40k/ts-fhir-types/lib/R4";
 import CarePlan from "./CarePlan";
 import Patient from "./Patient";
-import {IsaccMessageCategory, Medium} from "./CodeSystem";
+import {ExtensionUrl, IsaccMessageCategory, Medium} from "./CodeSystem";
 
 export default class Communication implements ICommunication {
     _implicitRules?: IElement;
@@ -83,6 +83,12 @@ export default class Communication implements ICommunication {
         c.recipient = [{reference: patient.reference}];
         c.payload = [CommunicationPayload.from({contentString: messageContent})];
         return c;
+    }
+
+    getThemes(): string[] {
+        let themes: string[] = this.extension?.filter((extension: IExtension) => extension.url === ExtensionUrl.messageThemeUrl)?.map((extension: IExtension) => extension.valueString);
+        if (themes) return themes;
+        return [];
     }
 }
 

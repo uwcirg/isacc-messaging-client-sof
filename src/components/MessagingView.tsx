@@ -5,7 +5,7 @@ import {FhirClientContext, FhirClientContextType} from "../FhirClientContext";
 
 import Communication from "../model/Communication";
 import {ICodeableConcept, ICoding, IReference, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
-import {Box, Button, CircularProgress, Grid, List, Stack, TextField, Theme, Typography} from "@mui/material";
+import {Box, Button, Chip, CircularProgress, Grid, List, Stack, TextField, Theme, Typography} from "@mui/material";
 import {grey, lightBlue} from "@mui/material/colors";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import Alert from "@mui/material/Alert";
@@ -71,7 +71,7 @@ class MessagingView extends React.Component<{} & StyledComponentProps, {
 
 
         return <Grid container direction={"column"}>
-            <Typography variant={'h6'} sx={{paddingTop: 2}}>{context.carePlan.reference}</Typography>
+            <Typography variant={'h6'} sx={{paddingTop: 2}}>{"Messages"}</Typography>
 
             {messages}
 
@@ -132,11 +132,12 @@ class MessagingView extends React.Component<{} & StyledComponentProps, {
         }
         let bubbleStyle = MessagingView.getBubbleStyle(incoming, autoMessage);
         let priority = message.priority;
-        return this._alignedRow(incoming, msg, timestamp, bubbleStyle, priority, index);
+        let themes: string[] = message.getThemes();
+        return this._alignedRow(incoming, msg, timestamp, bubbleStyle, priority, index, themes);
 
     }
 
-    private _alignedRow(incoming: boolean, message: string, timestamp: string, bubbleStyle: object, priority: string, index: number) {
+    private _alignedRow(incoming: boolean, message: string, timestamp: string, bubbleStyle: object, priority: string, index: number, themes: string[]) {
 
         let priorityIndicator = null;
         if (priority === "urgent") {
@@ -169,11 +170,16 @@ class MessagingView extends React.Component<{} & StyledComponentProps, {
             </>
         }
 
-        let messageBubble = <Grid item xs={11} md={10} lg={8}>
-            <Stack direction={"column"} alignItems={align}>
+        let messageGroup = <Grid item xs={11} md={10} lg={8}>
+            <Stack direction={"column"} alignItems={align} paddingBottom={0.5}>
                 <Stack direction={"row"} alignItems={"center"} spacing={1}>
                     {bubbleAndPriorityRow}
                 </Stack>
+                {themes.length>0 && <Stack direction={"row"} spacing={0.5} paddingTop={0.5}>
+                    {themes.map((theme: string) => <Chip size={"small"} variant="outlined" label={theme}
+                                                         onClick={(event) => console.log(event)}/>)}
+                </Stack>
+                }
                 <Typography variant={"caption"}>{timestamp}</Typography>
 
             </Stack>
@@ -184,13 +190,13 @@ class MessagingView extends React.Component<{} & StyledComponentProps, {
         let messageAndSpacerRow;
         if (incoming) { // different order based on message direction
             messageAndSpacerRow = <>
-                {messageBubble}
+                {messageGroup}
                 {spacer}
             </>;
         } else {
             messageAndSpacerRow = <>
                 {spacer}
-                {messageBubble}
+                {messageGroup}
             </>
         }
 

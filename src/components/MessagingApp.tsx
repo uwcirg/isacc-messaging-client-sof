@@ -6,7 +6,6 @@ import PatientNotes from "./PatientNotes";
 import MessageView from "./MessagingView";
 import React, {PropsWithChildren, useContext} from "react";
 import {FhirClientContext} from "../FhirClientContext";
-import ErrorComponent from "./ErrorComponent";
 import Alert from "@mui/material/Alert";
 
 export const MessagingApp = () => {

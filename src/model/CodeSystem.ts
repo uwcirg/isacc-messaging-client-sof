@@ -71,3 +71,7 @@ export const CSSAnswerCategories = {
     medium: Coding.make("http://loinc.org", "LA6751-7"),
     high: Coding.make("http://loinc.org", "LA9193-9")
 }
+
+export const ExtensionUrl = {
+    messageThemeUrl: "isacc.app/message-theme"
+}

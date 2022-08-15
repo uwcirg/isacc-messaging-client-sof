@@ -63,7 +63,7 @@ def getCareplan(db, patientId):
         return None
 
 
-def generateIncomingMessage(message, time: datetime = None, patientId=None, priority=None):
+def generateIncomingMessage(message, time: datetime = None, patientId=None, priority=None, themes=None):
     if priority is not None and priority != "routine" and priority!= "urgent" and priority!= "stat":
          print(f"Invalid priority given: {priority}. Only routine, urgent, and stat are allowed.")
          return
@@ -80,6 +80,9 @@ def generateIncomingMessage(message, time: datetime = None, patientId=None, prio
     if time is None:
         time = datetime.now()
 
+    if themes is None:
+        themes = []
+
     m = {
         'resourceType': 'Communication',
         'partOf': [{'reference': f'CarePlan/{carePlan.id}'}],
@@ -91,8 +94,10 @@ def generateIncomingMessage(message, time: datetime = None, patientId=None, prio
         'sent': time.astimezone().isoformat(),
         'sender': {'reference': f'Patient/{patientId}'},
         'payload': [{'contentString': message}],
-        'priority': priority
-
+        'priority': priority,
+        'extension': [
+            {"url": "isacc.app/message-theme",'valueString': t} for t in themes
+        ]
     }
     c = Communication(m)
     result = c.create(db.server)
@@ -137,7 +142,8 @@ def generateScript(patientId=None):
     generateIncomingMessage("Thank you! :)", patientId=patientId)
     convertCommunicationToRequest(carePlan.activity[1].reference.reference.replace('CommunicationRequest/',''))
     generateIncomingMessage("I'm okay. How are you?", patientId=patientId)
-
+    generateManualOutgoingMessage("I'm doing well, thanks for asking")
+    generateIncomingMessage("I feel trapped and there's nothing I can do to help myself",themes=['entrapment', 'hopelessness'], priority='stat')
 
 
 def getDB():
@@ -161,6 +167,7 @@ def main(args=None):
     subcommand2_parser.add_argument('--message', '-m', help="Message content")
     subcommand2_parser.add_argument('--time', '-t', help="Time sent. ISO format", default=datetime.now().isoformat())
     subcommand2_parser.add_argument('--priority', '-u', help="Priority/urgency of message. routine, urgent, or stat")
+    subcommand2_parser.add_argument('--themes', help="Priority/urgency of message. routine, urgent, or stat", nargs="+")
 
     subcommand3_parser = subparsers.add_parser("generateScript", help="Generate messages from CarePlan")
     subcommand3_parser.add_argument('--patient', '-p', help="Patient ID", default="2cda5aad-e409-4070-9a15-e1c35c46ed5a")
@@ -172,7 +179,7 @@ def main(args=None):
         convertCommunicationToRequest(cr_id=args.cr_id)
     elif args.command == "generateMsg":
         time = dateutil.parser.parse(args.time)
-        generateIncomingMessage(patientId=args.patient, message=args.message, time=time, priority=args.priority)
+        generateIncomingMessage(patientId=args.patient, message=args.message, time=time, priority=args.priority, themes=args.themes)
     elif args.command == "generateScript":
         generateScript(patientId=args.patient)
     else:
