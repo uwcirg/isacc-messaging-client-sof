@@ -123,8 +123,7 @@ def generateManualOutgoingMessage(message, time: datetime = None, patientId=None
                                 'code': 'SMSWRIT'}]}],
         'sent': time.astimezone().isoformat(),
         'sender': {'reference': f'Patient/{patientId}'},
-        'payload': [{'contentString': message}],
-        'priority': priority
+        'payload': [{'contentString': message}]
 
     }
     c = Communication(m)
@@ -142,7 +141,7 @@ def generateScript(patientId=None):
     generateIncomingMessage("Thank you! :)", patientId=patientId)
     convertCommunicationToRequest(carePlan.activity[1].reference.reference.replace('CommunicationRequest/',''))
     generateIncomingMessage("I'm okay. How are you?", patientId=patientId)
-    generateManualOutgoingMessage("I'm doing well, thanks for asking")
+    generateManualOutgoingMessage("I'm doing well, thanks for asking.")
     generateIncomingMessage("I feel trapped and there's nothing I can do to help myself",themes=['entrapment', 'hopelessness'], priority='stat')
 
 
