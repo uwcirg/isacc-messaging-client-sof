@@ -31,7 +31,9 @@ export default function FhirClientProvider(props: Props): JSX.Element {
         let queryPatientId = sessionStorage.getItem(queryPatientIdKey);
         if (queryPatientId) {
             console.log('Using stored patient id ', queryPatientId);
-            return client.request('/Patient/' + queryPatientId);
+            return client.request('/Patient/' + queryPatientId).then((value: any) => {
+                return Patient.from(value);
+            });
         }
         // Get the Patient resource
         return await client.patient.read().then((value: any) => {
