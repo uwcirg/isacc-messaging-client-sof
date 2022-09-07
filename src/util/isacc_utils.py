@@ -118,11 +118,11 @@ def generateManualOutgoingMessage(message, time: datetime = None, patientId=None
         'partOf': [{'reference': f'CarePlan/{carePlan.id}'}],
         'status': 'completed',
         'category': [{'coding': [{'system': 'https://isacc.app/CodeSystem/communication-type',
-                                  'code': 'isacc-received-message'}]}],
+                                  'code': 'isacc-manually-sent-message'}]}],
         'medium': [{'coding': [{'system': 'http://terminology.hl7.org/ValueSet/v3-ParticipationMode',
                                 'code': 'SMSWRIT'}]}],
         'sent': time.astimezone().isoformat(),
-        'sender': {'reference': f'Patient/{patientId}'},
+        'recipient': [{'reference': f'Patient/{patientId}'}],
         'payload': [{'contentString': message}]
 
     }
