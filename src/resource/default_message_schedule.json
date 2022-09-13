@@ -1,0 +1,332 @@
+{
+  "resourceType": "PlanDefinition",
+  "id": "cc-message-schedule-template",
+  "title": "Default CC Message Schedule",
+  "status": "active",
+  "action": [
+    {
+      "definitionCanonical": "#Day1Msg"
+    },
+    {
+      "definitionCanonical": "#Week1Msg"
+    },
+    {
+      "definitionCanonical": "#Month1Msg"
+    },
+    {
+      "definitionCanonical": "#Month2Msg"
+    },
+    {
+      "definitionCanonical": "#Month3Msg"
+    },
+    {
+      "definitionCanonical": "#Month4Msg"
+    },
+    {
+      "definitionCanonical": "#Month6Msg"
+    },
+    {
+      "definitionCanonical": "#Month8Msg"
+    },
+    {
+      "definitionCanonical": "#Month10Msg"
+    },
+    {
+      "definitionCanonical": "#Month12Msg"
+    },
+    {
+      "definitionCanonical": "#BirthdayMsg",
+      "trigger": [
+        {
+          "type": "named-event",
+          "name": "birthday",
+          "timingTiming": {
+            "repeat": {
+              "timeOfDay": [
+                "10:08:00"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "contained": [
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day1Msg",
+      "name": "Day 1 Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 0,
+          "periodUnit": "wk",
+          "timeOfDay": [
+            "09:34:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "{name} - Good to meet you last Thursday. Hope the resources are helpful."
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Week1Msg",
+      "name": "Week 1 Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 1,
+          "periodUnit": "wk",
+          "timeOfDay": [
+            "10:39:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hi {name} - Hope things go well for you this week. {userName}"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Month1Msg",
+      "name": "Month 1 Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 4,
+          "periodUnit": "wk",
+          "timeOfDay": [
+            "08:59:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hi there {name}, hope you're having a good day today."
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Month2Msg",
+      "name": "Month 2 Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 8,
+          "periodUnit": "wk",
+          "timeOfDay": [
+            "10:51:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hey {name}, hope things are going well and you're having a good week. - {userName}"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Month3Msg",
+      "name": "Month 3 Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 12,
+          "periodUnit": "wk",
+          "timeOfDay": [
+            "10:19:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hey {name}, Hope things are good and you have had a good week. - {userName}"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Month4Msg",
+      "name": "Month 4 Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 16,
+          "periodUnit": "wk",
+          "timeOfDay": [
+            "10:12:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hi {name}, hope life is treating you well. -{userName}"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Month6Msg",
+      "name": "Month 6 Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 24,
+          "periodUnit": "wk",
+          "timeOfDay": [
+            "09:30:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hello again, {name}! Hope things are good -{userName}"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Month8Msg",
+      "name": "Month 8 Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 32,
+          "periodUnit": "wk",
+          "timeOfDay": [
+            "08:17:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "{name}, Hope everything's going well. {userName}"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Month10Msg",
+      "name": "Month 10 Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 40,
+          "periodUnit": "wk",
+          "timeOfDay": [
+            "08:07:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "{name}- Hope everything's going well. -{userName}"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Month12Msg",
+      "name": "Month 12 Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 48,
+          "periodUnit": "wk",
+          "timeOfDay": [
+            "08:41:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hey {name} - Just wanted to say hello. Hope things are going OK. - {userName}"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "BirthdayMsg",
+      "name": "Birthday Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Happy Birthday, {name}! Hope the day brings you happiness and next year holds good things for you."
+          }
+        }
+      ]
+    }
+  ]
+}
