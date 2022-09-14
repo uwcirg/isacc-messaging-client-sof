@@ -1,6 +1,6 @@
 import React from 'react';
 import FHIR from 'fhirclient';
-import {FhirClientContext} from './FhirClientContext';
+import {FhirClientContext, FhirClientContextType} from './FhirClientContext';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Client from "fhirclient/lib/Client";
@@ -11,7 +11,7 @@ import {Bundle} from "./model/Bundle";
 import {ICarePlan} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {IsaccCarePlanCategory} from "./model/CodeSystem";
 import Communication from "./model/Communication";
-import LaunchError from "./components/LaunchError";
+import ErrorComponent from "./components/ErrorComponent";
 
 interface Props {
     children: React.ReactNode;
@@ -31,7 +31,9 @@ export default function FhirClientProvider(props: Props): JSX.Element {
         let queryPatientId = sessionStorage.getItem(queryPatientIdKey);
         if (queryPatientId) {
             console.log('Using stored patient id ', queryPatientId);
-            return client.request('/Patient/' + queryPatientId);
+            return client.request('/Patient/' + queryPatientId).then((value: any) => {
+                return Patient.from(value);
+            });
         }
         // Get the Patient resource
         return await client.patient.read().then((value: any) => {
@@ -49,7 +51,6 @@ export default function FhirClientProvider(props: Props): JSX.Element {
         return await client.request(`/CarePlan?${params}`).then((bundle: Bundle) => {
             if (bundle.type === "searchset") {
                 if (!bundle.entry) {
-                    setError("Patient has no ISACC CarePlan. Ensure the patient is enrolled and has a message schedule CarePlan.");
                     return null;
                 }
                 if (bundle.total > 1) {
@@ -144,14 +145,14 @@ export default function FhirClientProvider(props: Props): JSX.Element {
             error: error
         }}>
             <FhirClientContext.Consumer>
-                {({client, patient, carePlan, communications, error}) => {
+                {(context: FhirClientContextType) => {
                     // any auth error that may have been rejected with
-                    if (error) {
-                        return <LaunchError message={error}></LaunchError>;
+                    if (context.error) {
+                        return <ErrorComponent message={context.error}></ErrorComponent>;
                     }
 
                     // if client is already available render the subtree
-                    if (client && patient) {
+                    if (context.client && context.patient) {
                         return props.children;
                     }
 

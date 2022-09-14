@@ -7,6 +7,11 @@ import {
     IResourceList, ITiming,
     PlanDefinitionStatusKind
 } from "@ahryman40k/ts-fhir-types/lib/R4";
+import defaultSchedule from "../resource/default_message_schedule.json"
+import {ITriggerDefinition} from "@ahryman40k/ts-fhir-types/lib/R4/Resource/RTTI_TriggerDefinition";
+import Patient from "./Patient";
+import {birthdaysBetweenDates} from "../util/isacc_util";
+import {MessageDraft} from "../components/ScheduleSetup";
 
 export default class PlanDefinition implements IPlanDefinition {
     activityDefinitions: ActivityDefinition[];
@@ -29,11 +34,61 @@ export default class PlanDefinition implements IPlanDefinition {
         return planDefinition;
     }
 
+    triggerForActivityDefinition(activityDefinitionId: string): ITriggerDefinition[] {
+        return this.action.find((action: IPlanDefinition_Action) => action.definitionCanonical.slice(1) === activityDefinitionId)?.trigger;
+    }
+
     get reference(): string {
         return `${this.resourceType}/${this.id}`;
     }
 
     resourceType: "PlanDefinition";
+
+    createMessageList(patient: Patient): MessageDraft[] {
+        // regular messages
+        const messages: MessageDraft[] = this.activityDefinitions.map(
+            (activityDef: ActivityDefinition) => {
+                if (activityDef.timingTiming) {
+                    let contentString = activityDef.payloadText;
+                    let date = activityDef.occurrenceTimeFromNow();
+                    return {
+                        text: contentString,
+                        scheduledDateTime: date
+                    } as MessageDraft;
+                }
+                return null;
+            }).filter(m => m != null);
+
+        // add birthday messages
+        let messageDates = messages.map((m: MessageDraft) => m.scheduledDateTime).sort(((a, b) => a < b ? -1 : 1));
+        if (messageDates.length > 0) {
+            let programStart = messageDates[0];
+            let programEnd = messageDates[messageDates.length - 1];
+
+            let birthdayMessageAction = this.action.find(
+                (action: IPlanDefinition_Action) => action.trigger?.find(
+                    (t: ITriggerDefinition) => t.type === "named-event" && t.name === "birthday"
+                )
+            );
+            let birthdayMessageTrigger = birthdayMessageAction?.trigger?.find(
+                (t: ITriggerDefinition) => t.type === "named-event" && t.name === "birthday"
+            );
+            let birthdayMessageActivityDefinition = this.activityDefinitions.find(
+                (activityDef: ActivityDefinition) => activityDef.id === birthdayMessageAction.definitionCanonical.slice(1)
+            );
+            if (birthdayMessageAction && birthdayMessageTrigger && birthdayMessageActivityDefinition) {
+                let birthdays = birthdaysBetweenDates(programStart, programEnd, new Date(patient.birthDate));
+                birthdays.forEach((d: Date) => messages.push({
+                    text: birthdayMessageActivityDefinition.payloadText,
+                    scheduledDateTime: birthdayMessageActivityDefinition.nextOccurrenceTimeAtDate(d, birthdayMessageTrigger.timingTiming),
+                }));
+            }
+        }
+
+        //TODO: Add holidays
+
+        return messages.sort((a, b) => a.scheduledDateTime < b.scheduledDateTime ? -1 : 1);
+    }
 }
 
 export class ActivityDefinition implements IActivityDefinition {
@@ -63,17 +118,40 @@ export class ActivityDefinition implements IActivityDefinition {
             return date;
         }
 
-        if (this.timingTiming.repeat.timeOfDay.length > 1) {
-            throw Error("More than one timeOfDay in timingTiming");
-        }
-
-        const components: Array<string> = this.timingTiming.repeat.timeOfDay[0].split(":");
-        const hours = parseFloat(components[0]) * 60 * 60 * 1000;
-        const minutes = parseFloat(components[1]) * 60 * 1000;
-        const seconds = parseFloat(components[1]) * 1000;
-        date.setTime(hours + minutes + seconds);
+        ActivityDefinition.setTimeOfDay(date, this.timingTiming);
 
         return date;
     }
 
+    private static setTimeOfDay(date: Date, timingTiming: ITiming) {
+        if (timingTiming.repeat.timeOfDay.length > 1) {
+            throw Error("More than one timeOfDay in timingTiming");
+        }
+
+        const components: Array<string> = timingTiming.repeat.timeOfDay[0].split(":");
+        date.setHours(parseFloat(components[0]));
+        date.setMinutes(parseFloat(components[1]));
+        date.setSeconds(parseFloat(components[2]));
+
+        return date;
+    }
+
+    nextOccurrenceTimeAtDate(date: Date, timingTiming: ITiming) {
+        if (!timingTiming.repeat.timeOfDay) {
+            throw Error("No timeOfDay given in timingTiming");
+        }
+        ActivityDefinition.setTimeOfDay(date, timingTiming);
+        return date;
+    }
+
+    get payloadText() {
+        return this.dynamicValue.find(
+            (dynVal) => dynVal.path === "payload.contentString"
+        ).expression.expression
+    }
+}
+
+export function getDefaultMessageSchedule(): PlanDefinition {
+    let raw = defaultSchedule as IPlanDefinition;
+    return PlanDefinition.from(raw);
 }

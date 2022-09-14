@@ -7,7 +7,7 @@ from fhirclient.models.careplan import CarePlan
 
 import argparse
 from datetime import datetime
-import dateutil
+import dateutil.parser
 
 def createCommunicationFromRequest(cr):
     return {
@@ -63,14 +63,25 @@ def getCareplan(db, patientId):
         return None
 
 
-def generateIncomingMessage(patientId, message, time: datetime, priority='routine'):
-    if priority != "routine" and priority!= "urgent" and priority!= "stat":
+def generateIncomingMessage(message, time: datetime = None, patientId=None, priority=None, themes=None):
+    if priority is not None and priority != "routine" and priority!= "urgent" and priority!= "stat":
          print(f"Invalid priority given: {priority}. Only routine, urgent, and stat are allowed.")
          return
 
+    if priority is None:
+        priority = "routine"
+
+    if patientId is None:
+        patientId = "2cda5aad-e409-4070-9a15-e1c35c46ed5a" # Geoffrey Abbott
+
     db = getDB()
-    pt = Patient.read(patientId, db.server)
     carePlan = getCareplan(db, patientId)
+
+    if time is None:
+        time = datetime.now()
+
+    if themes is None:
+        themes = []
 
     m = {
         'resourceType': 'Communication',
@@ -83,12 +94,55 @@ def generateIncomingMessage(patientId, message, time: datetime, priority='routin
         'sent': time.astimezone().isoformat(),
         'sender': {'reference': f'Patient/{patientId}'},
         'payload': [{'contentString': message}],
-        'priority': priority
+        'priority': priority,
+        'extension': [
+            {"url": "isacc.app/message-theme",'valueString': t} for t in themes
+        ]
+    }
+    c = Communication(m)
+    result = c.create(db.server)
+    print(result)
+
+def generateManualOutgoingMessage(message, time: datetime = None, patientId=None):
+    if patientId is None:
+        patientId = "2cda5aad-e409-4070-9a15-e1c35c46ed5a" # Geoffrey Abbott
+
+    db = getDB()
+    carePlan = getCareplan(db, patientId)
+
+    if time is None:
+        time = datetime.now()
+
+    m = {
+        'resourceType': 'Communication',
+        'partOf': [{'reference': f'CarePlan/{carePlan.id}'}],
+        'status': 'completed',
+        'category': [{'coding': [{'system': 'https://isacc.app/CodeSystem/communication-type',
+                                  'code': 'isacc-manually-sent-message'}]}],
+        'medium': [{'coding': [{'system': 'http://terminology.hl7.org/ValueSet/v3-ParticipationMode',
+                                'code': 'SMSWRIT'}]}],
+        'sent': time.astimezone().isoformat(),
+        'recipient': [{'reference': f'Patient/{patientId}'}],
+        'payload': [{'contentString': message}]
 
     }
     c = Communication(m)
     result = c.create(db.server)
     print(result)
+
+
+def generateScript(patientId=None):
+    if patientId is None:
+        patientId = "2cda5aad-e409-4070-9a15-e1c35c46ed5a" # Geoffrey Abbott
+
+    db = getDB()
+    carePlan = getCareplan(db, patientId)
+    convertCommunicationToRequest(carePlan.activity[0].reference.reference.replace('CommunicationRequest/',''))
+    generateIncomingMessage("Thank you! :)", patientId=patientId)
+    convertCommunicationToRequest(carePlan.activity[1].reference.reference.replace('CommunicationRequest/',''))
+    generateIncomingMessage("I'm okay. How are you?", patientId=patientId)
+    generateManualOutgoingMessage("I'm doing well, thanks for asking.")
+    generateIncomingMessage("I feel trapped and there's nothing I can do to help myself",themes=['entrapment', 'hopelessness'], priority='stat')
 
 
 def getDB():
@@ -108,23 +162,25 @@ def main(args=None):
     subcommand1_parser.add_argument('--cr_id', '-c', help="CommunicationRequest ID")
 
     subcommand2_parser = subparsers.add_parser("generateMsg", help="Generate incoming message")
-    subcommand2_parser.add_argument('--patient', '-p', help="Patient ID")
+    subcommand2_parser.add_argument('--patient', '-p', help="Patient ID", default="2cda5aad-e409-4070-9a15-e1c35c46ed5a")
     subcommand2_parser.add_argument('--message', '-m', help="Message content")
-    subcommand2_parser.add_argument('--time', '-t', help="Time sent. ISO format")
+    subcommand2_parser.add_argument('--time', '-t', help="Time sent. ISO format", default=datetime.now().isoformat())
     subcommand2_parser.add_argument('--priority', '-u', help="Priority/urgency of message. routine, urgent, or stat")
+    subcommand2_parser.add_argument('--themes', help="Priority/urgency of message. routine, urgent, or stat", nargs="+")
+
+    subcommand3_parser = subparsers.add_parser("generateScript", help="Generate messages from CarePlan")
+    subcommand3_parser.add_argument('--patient', '-p', help="Patient ID", default="2cda5aad-e409-4070-9a15-e1c35c46ed5a")
 
     args = parser.parse_args(args)
 
 
     if args.command == "convertCRtoC":
-        convertCommunicationToRequest(args.cr_id)
+        convertCommunicationToRequest(cr_id=args.cr_id)
     elif args.command == "generateMsg":
-        time = args.time
-        if time is None:
-            time = datetime.now()
-        else:
-            time = dateutil.parser(time)
-        generateIncomingMessage(args.patient, args.message, time, args.priority)
+        time = dateutil.parser.parse(args.time)
+        generateIncomingMessage(patientId=args.patient, message=args.message, time=time, priority=args.priority, themes=args.themes)
+    elif args.command == "generateScript":
+        generateScript(patientId=args.patient)
     else:
         print("Command not found")
 

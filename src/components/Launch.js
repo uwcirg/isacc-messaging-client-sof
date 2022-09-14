@@ -2,7 +2,7 @@ import React from 'react';
 import FHIR from 'fhirclient';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
-import LaunchError from './LaunchError';
+import ErrorComponent from './ErrorComponent';
 import {queryPatientIdKey} from '../util/util.js';
 import '../style/App.scss';
 
@@ -11,13 +11,17 @@ export default function Launch() {
     const [error, setError] = React.useState('');
 
     React.useEffect(() => {
-
+        let authURL = 'launch-context.json';
+        if (process.env.REACT_APP_BACKEND_URL) {
+            authURL = `${process.env.REACT_APP_BACKEND_URL}/auth/auth-info`;
+        }
         const urlParams = new URLSearchParams(window.location.search);
          //retrieve patient id from URL querystring if any
         let patientId = urlParams.get('patient');
         console.log("patient id from url query string: ", patientId);
-    
-        fetch('launch-context.json', {
+        console.log("authURL: ", authURL);
+
+        fetch(authURL, {
             // include cookies in request
             credentials: 'include'
         })
@@ -48,7 +52,7 @@ export default function Launch() {
 
     return (
         <React.Fragment>
-            {error && <LaunchError message={error.message}></LaunchError>}
+            {error && <ErrorComponent message={error.message}></ErrorComponent>}
             {!error && <Box style={{ padding: "1rem" }}>
                 <CircularProgress></CircularProgress>
                 <span>Launching ...</span>

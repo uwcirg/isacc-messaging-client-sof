@@ -1,6 +1,23 @@
 import React from 'react';
-import {FhirClientContext} from '../FhirClientContext';
-import {Alert, CircularProgress, Typography} from "@mui/material";
+import {FhirClientContext, FhirClientContextType} from '../FhirClientContext';
+import {
+    Alert,
+    Button,
+    Card,
+    CardActions,
+    CardContent,
+    CircularProgress,
+    TextField,
+    Theme,
+    Typography
+} from "@mui/material";
+import CarePlan from "../model/CarePlan";
+import {ICarePlan} from "@ahryman40k/ts-fhir-types/lib/R4";
+import {createStyles, StyledComponentProps, withStyles} from "@mui/styles";
+
+const classes = createStyles((theme: Theme) => ({
+    patientNotesEditField: {...theme.typography.body2}
+}));
 
 interface PatientNotesProps {
 
@@ -8,16 +25,21 @@ interface PatientNotesProps {
 
 type PatientNotesState = {
     error: string;
+    editable: boolean;
+    updatedPatientNote: string;
+    updateAlert: { text: string, error: boolean }
 }
 
-export default class PatientNotes extends React.Component<PatientNotesProps, PatientNotesState> {
+class PatientNotes extends React.Component<PatientNotesProps & StyledComponentProps, PatientNotesState> {
     static contextType = FhirClientContext
-
 
     constructor(props: Readonly<PatientNotesProps> | PatientNotesProps) {
         super(props);
         this.state = {
-            error: ''
+            error: null,
+            editable: false,
+            updatedPatientNote: null,
+            updateAlert: null
         }
     }
 
@@ -31,9 +53,71 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
 
         if (!carePlan) return null;
 
-        return <React.Fragment>
-            <Typography variant={"h6"}>Patient notes</Typography>
-            <Typography variant={"body2"}>{carePlan.description}</Typography>
-        </React.Fragment>;
+        const {classes} = this.props;
+
+        return <Card variant={"outlined"}>
+            <CardContent>
+                <Typography variant={"h6"}>Patient notes</Typography>
+                {this.state.editable ?
+                    <TextField
+                        InputProps={{className: classes.patientNotesEditField}}
+                        multiline
+                        fullWidth
+                        value={this.state.updatedPatientNote ?? ""}
+                        placeholder={"Enter patient note"}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                            this.setState({updatedPatientNote: event.target.value});
+                        }}
+                    /> :
+                    <Typography variant={"body2"}>{carePlan.description}</Typography>
+                }
+                {this._updateError()}
+            </CardContent>
+            <CardActions>
+                <Button onClick={() => {
+                    if (this.state.editable) {
+                        this.updateNote(this.state.updatedPatientNote)
+                    } else {
+                        this.setState({updatedPatientNote: carePlan.description, editable: true});
+                    }
+                }}>{this.state.editable ? "Done" : "Update"}</Button>
+
+            </CardActions>
+
+
+        </Card>;
+    }
+
+    private _updateError() {
+        if (this.state.updateAlert != null) {
+            return <Alert
+                severity={this.state.updateAlert.error ? "error" : "success"}
+            >{this.state.updateAlert.text}</Alert>;
+        }
+        return null;
+    }
+
+    private updateNote(updatedPatientNote: string) {
+        // @ts-ignore
+        let context: FhirClientContextType = this.context;
+        let carePlan = context.carePlan;
+        carePlan.description = updatedPatientNote;
+        context.client.update(carePlan).then(
+            (result: any) => {
+                context.carePlan = CarePlan.from(result as ICarePlan);
+                console.log("Updated CarePlan:", context.carePlan);
+                this.setState({
+                    editable: false,
+                    updatedPatientNote: null
+                });
+            },
+            (error) => {
+                console.log("Error updating carePlan description:", error);
+                this.setState({
+                    updateAlert: {text: "Error updating", error: true}
+                });
+            });
     }
 }
+
+export default withStyles(classes)(PatientNotes);
