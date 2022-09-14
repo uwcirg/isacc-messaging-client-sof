@@ -3,11 +3,11 @@ import FhirClientProvider from "./FhirClientProvider";
 import './style/App.scss';
 import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterMoment} from '@mui/x-date-pickers/AdapterMoment';
-import theme from "./theme";
-import {ThemeProvider} from "@mui/styles";
 import {EnrollmentApp} from "./components/EnrollmentApp";
 import {MessagingApp} from "./components/MessagingApp";
 import {getEnv} from "./util/util";
+import {theme} from "./theme";
+import {ThemeProvider} from '@mui/material/styles';
 
 const REACT_APP_CLIENT_ID: string = getEnv("REACT_APP_CLIENT_ID");
 

@@ -9,7 +9,6 @@ import {
     Stack,
     TextField,
     TextFieldProps,
-    Theme,
     Typography
 } from "@mui/material";
 import ClearIcon from '@mui/icons-material/Clear';
@@ -18,11 +17,15 @@ import {FhirClientContext} from "../FhirClientContext";
 import {makeCarePlan, makeCommunicationRequests} from "../model/modelUtil";
 import {IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {CommunicationRequest} from "../model/CommunicationRequest";
-import {createStyles, StyledComponentProps, withStyles} from "@mui/styles";
 import Alert from "@mui/material/Alert";
 import Patient from "../model/Patient";
 import Summary from "./Summary";
 import PlanDefinition, {getDefaultMessageSchedule} from "../model/PlanDefinition";
+import {getEnv} from "../util/util";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogActions from "@mui/material/DialogActions";
+import Dialog from "@mui/material/Dialog";
 
 
 interface ScheduleSetupProps {
@@ -42,51 +45,20 @@ export type MessageDraft = {
 }
 
 
-const styles = createStyles((theme: Theme) => {
-    return {
-        questionTitle: {},
-        questionSectionTitle: {
-            color: theme.palette.primary.main,
-            fontWeight: "bolder",
-            paddingTop: 8
-        },
-        helpText: {
-            color: theme.palette.text.secondary
-        },
-        cardPageMargins: {
-            padding: 8
-        },
-        paddingTop: {
-            paddingTop: 8
-        },
-        chip: {
-            flex: 1,
-            textAlign: "center",
-        },
-        bubble: {
-            padding: 4
-        },
-        list: {
-            padding: 0
-        },
-        listItem: {
-            paddingTop: 2
-        },
+const styles = {
         patientNotesField: {
             margin: 2
-            // paddingTop: 2,
-            // paddingBottom: 2,
         }
-    }
-});
+    };
 
 
-class ScheduleSetup extends React.Component<ScheduleSetupProps & StyledComponentProps, ScheduleSetupState> {
+export default class ScheduleSetup extends React.Component<ScheduleSetupProps, ScheduleSetupState> {
     static contextType = FhirClientContext
     planDefinition: PlanDefinition;
+
     // declare context: React.ContextType<typeof FhirClientContext>
 
-    constructor(props: Readonly<ScheduleSetupProps & StyledComponentProps>) {
+    constructor(props: ScheduleSetupProps) {
         super(props);
         this.state = {
             messages: null,
@@ -108,16 +80,13 @@ class ScheduleSetup extends React.Component<ScheduleSetupProps & StyledComponent
     render(): React.ReactNode {
         if (!this.state || !this.state.messages) return <CircularProgress/>;
 
-        const {classes} = this.props;
-
         return <>
             <Grid container spacing={2}>
                 <Grid item xs={6}><Summary/></Grid>
                 <Grid item xs={6}>
                     <Typography variant={'h6'}>{"Patient note"}</Typography>
                     <TextField
-                        className={classes.patientNotesField}
-                        sx={{maxHeight: 400, overflow: 'auto'}}
+                        sx={{maxHeight: 400, overflow: 'auto', ...styles.patientNotesField}}
                         fullWidth
                         multiline
                         value={this.state.patientNote ?? ""}
@@ -144,11 +113,29 @@ class ScheduleSetup extends React.Component<ScheduleSetupProps & StyledComponent
     }
 
     private getSnackbar() {
+        let clearSessionLink = getEnv("REACT_APP_DASHBOARD_URL") + "/clear_session";
+        let onClose = () => this.setState({showAlert: false});
+
+        if (this.state.alertSeverity === 'success') {
+            return <Dialog open={this.state.showAlert}
+                           onClose={onClose}>
+                <DialogContent>
+                    <DialogContentText>{this.state.alertText}</DialogContentText>
+                    <DialogActions>
+                        <Button
+                            onClick={onClose}
+                            href={clearSessionLink} autoFocus>Close schedule planner</Button>
+
+                    </DialogActions>
+                </DialogContent>
+            </Dialog>;
+        }
         return <Snackbar open={this.state.showAlert}
                          autoHideDuration={6000}
-                         onClose={() => this.setState({showAlert: false})}>
+                         onClose={onClose}>
             <Alert
-                onClose={() => this.setState({showAlert: false})}
+                onClose={onClose}
+                action={<Button href={clearSessionLink}>Close schedule planner</Button>}
                 severity={this.state.alertSeverity}
                 sx={{width: '100%'}}>
                 {this.state.alertText}
@@ -299,5 +286,3 @@ const MessageScheduleList = (props: {
     </>
 
 }
-
-export default withStyles(styles)(ScheduleSetup);
