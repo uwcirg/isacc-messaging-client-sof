@@ -1,21 +1,16 @@
 import * as React from "react";
 
-import {createStyles, StyledComponentProps, withStyles} from "@mui/styles";
 import {FhirClientContext, FhirClientContextType} from "../FhirClientContext";
 
 import Communication from "../model/Communication";
 import {ICodeableConcept, ICoding, IReference, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
-import {Box, Button, Chip, CircularProgress, Grid, List, Stack, TextField, Theme, Typography} from "@mui/material";
+import {Box, Button, Chip, CircularProgress, Grid, List, Stack, TextField, Typography} from "@mui/material";
 import {grey, lightBlue} from "@mui/material/colors";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import Alert from "@mui/material/Alert";
 import {Error, Warning} from "@mui/icons-material";
 
-const classes = createStyles((theme: Theme) => {
-    return {}
-});
-
-class MessagingView extends React.Component<{} & StyledComponentProps, {
+export default class MessagingView extends React.Component<{}, {
     // messages: MessageDraft[];
     activeMessage: string;
     error: any;
@@ -221,5 +216,3 @@ class MessagingView extends React.Component<{} & StyledComponentProps, {
     }
 
 }
-
-export default withStyles(classes)(MessagingView);

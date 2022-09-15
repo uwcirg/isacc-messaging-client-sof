@@ -2,6 +2,8 @@ import React, {FunctionComponent} from "react";
 import DemoVersionBanner from "./DemoVersionBanner";
 import {makeStyles} from "@mui/styles";
 import {Divider, Theme, Typography} from "@mui/material";
+import VersionString from "./VersionString";
+import AppBanner from "./AppBanner";
 
 const useStyles = makeStyles((theme: Theme) => ({
   root: {
@@ -61,8 +63,10 @@ export const AppPageScaffold: FunctionComponent<React.PropsWithChildren & AppPag
 
   return (
       <div>
+        <AppBanner/>
         <DemoVersionBanner/>
         {_content()}
+        <VersionString/>
       </div>
   );
 }

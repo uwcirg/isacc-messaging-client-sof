@@ -1,23 +1,8 @@
 import React from 'react';
 import {FhirClientContext, FhirClientContextType} from '../FhirClientContext';
-import {
-    Alert,
-    Button,
-    Card,
-    CardActions,
-    CardContent,
-    CircularProgress,
-    TextField,
-    Theme,
-    Typography
-} from "@mui/material";
+import {Alert, Button, Card, CardActions, CardContent, CircularProgress, TextField, Typography} from "@mui/material";
 import CarePlan from "../model/CarePlan";
 import {ICarePlan} from "@ahryman40k/ts-fhir-types/lib/R4";
-import {createStyles, StyledComponentProps, withStyles} from "@mui/styles";
-
-const classes = createStyles((theme: Theme) => ({
-    patientNotesEditField: {...theme.typography.body2}
-}));
 
 interface PatientNotesProps {
 
@@ -30,7 +15,7 @@ type PatientNotesState = {
     updateAlert: { text: string, error: boolean }
 }
 
-class PatientNotes extends React.Component<PatientNotesProps & StyledComponentProps, PatientNotesState> {
+export default class PatientNotes extends React.Component<PatientNotesProps, PatientNotesState> {
     static contextType = FhirClientContext
 
     constructor(props: Readonly<PatientNotesProps> | PatientNotesProps) {
@@ -53,14 +38,12 @@ class PatientNotes extends React.Component<PatientNotesProps & StyledComponentPr
 
         if (!carePlan) return null;
 
-        const {classes} = this.props;
-
         return <Card variant={"outlined"}>
             <CardContent>
                 <Typography variant={"h6"}>Patient notes</Typography>
                 {this.state.editable ?
                     <TextField
-                        InputProps={{className: classes.patientNotesEditField}}
+                        InputProps={{sx: {typography: 'body2'}}}
                         multiline
                         fullWidth
                         value={this.state.updatedPatientNote ?? ""}
@@ -119,5 +102,3 @@ class PatientNotes extends React.Component<PatientNotesProps & StyledComponentPr
             });
     }
 }
-
-export default withStyles(classes)(PatientNotes);
