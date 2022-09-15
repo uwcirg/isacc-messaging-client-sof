@@ -50,14 +50,21 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             emergencyContactString = `${emergencyContact.name.given} ${emergencyContact.name.family} (${contactDetails})`;
         }
 
+        let contactInformation: { label: string, value: string }[] = [{
+            label: 'Contact information',
+            value: 'None on file'
+        }];
+        if (patient.telecom) {
+            contactInformation = patient.telecom?.map((t: IContactPoint) => {
+                return {label: 'Contact information', value: t.value}
+            });
+        }
         let rows = [
             {label: 'First name', value: patient.name[0].given},
             {label: 'Last name', value: patient.name[0].family},
             {label: 'Gender', value: patient.gender},
             {label: 'DOB', value: patient.birthDate},
-            ...patient.telecom.map((t: IContactPoint) => {
-                return {label: 'Contact information', value: t.value}
-            }),
+            ...contactInformation,
             {label: 'Emergency contact', value: emergencyContactString}
         ]
 
