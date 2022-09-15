@@ -7,8 +7,9 @@ import theme from "./theme";
 import {ThemeProvider} from "@mui/styles";
 import {EnrollmentApp} from "./components/EnrollmentApp";
 import {MessagingApp} from "./components/MessagingApp";
-import {getEnv} from "./util/util";
+import {fetchEnvData, getEnv} from "./util/util";
 
+fetchEnvData();
 const REACT_APP_CLIENT_ID: string = getEnv("REACT_APP_CLIENT_ID");
 
 export default class App extends React.Component<any, any> {
