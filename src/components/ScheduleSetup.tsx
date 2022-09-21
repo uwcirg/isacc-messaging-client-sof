@@ -37,6 +37,7 @@ type ScheduleSetupState = {
     showAlert: boolean;
     alertSeverity: "error" | "warning" | "info" | "success";
     alertText: string;
+    savingInProgress: boolean;
 }
 
 export type MessageDraft = {
@@ -46,10 +47,10 @@ export type MessageDraft = {
 
 
 const styles = {
-        patientNotesField: {
-            margin: 2
-        }
-    };
+    patientNotesField: {
+        margin: 2
+    }
+};
 
 
 export default class ScheduleSetup extends React.Component<ScheduleSetupProps, ScheduleSetupState> {
@@ -65,7 +66,8 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
             patientNote: '',
             showAlert: false,
             alertText: null,
-            alertSeverity: null
+            alertSeverity: null,
+            savingInProgress: false
         };
         this.planDefinition = getDefaultMessageSchedule();
     }
@@ -109,12 +111,21 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
     }
 
     private showSnackbar(alertSeverity: "error" | "warning" | "info" | "success", alertText: string) {
-        this.setState({showAlert: true, alertSeverity: alertSeverity, alertText: alertText});
+        this.setState({showAlert: true, alertSeverity: alertSeverity, alertText: alertText, savingInProgress: false});
     }
 
     private getSnackbar() {
         let clearSessionLink = getEnv("REACT_APP_DASHBOARD_URL") + "/clear_session";
         let onClose = () => this.setState({showAlert: false});
+
+        if (this.state.savingInProgress) {
+            return <Dialog open={this.state.savingInProgress}>
+                <DialogContent>
+                    <CircularProgress/>
+                    <DialogContentText>{"Saving..."}</DialogContentText>
+                </DialogContent>
+            </Dialog>;
+        }
 
         if (this.state.alertSeverity === 'success') {
             return <Dialog open={this.state.showAlert}
@@ -158,6 +169,7 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
             console.log("no patient");
             return;
         }
+        this.setState({savingInProgress: true});
 
         if (this.state.messages.find((m: MessageDraft) => m.text.length === 0)) {
             this.showSnackbar("error", "Messages cannot be empty");
