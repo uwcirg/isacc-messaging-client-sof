@@ -78,7 +78,7 @@ export default class DiagnosisAndCareTeam extends React.Component<{}, {
     render() {
         if (!this.state || !this.state.ready) return <CircularProgress/>;
 
-        let infoRows = this.state.conditions.map((condition: Condition) => {
+        let infoRows = this.state.conditions?.map((condition: Condition) => {
             return {
                 title: condition.code.coding[0].display,
                 info: [
@@ -88,7 +88,7 @@ export default class DiagnosisAndCareTeam extends React.Component<{}, {
             };
         });
 
-        let careteamRows = this.state.careTeam.participant?.map((participant: ICareTeam_Participant) => {
+        let careteamRows = this.state.careTeam?.participant?.map((participant: ICareTeam_Participant) => {
             return {
                 title: participant.member.display,
                 info: [
@@ -97,16 +97,22 @@ export default class DiagnosisAndCareTeam extends React.Component<{}, {
             }
         });
 
-        if (infoRows.length === 0 && careteamRows.length === 0) return <>
-            <Typography variant={"h6"}>Patient info</Typography>
-            <Typography variant={"caption"}>{"No diagnosis or care team information on file"}</Typography>
-        </>;
+        if (!infoRows && !careteamRows) {
+            return <>
+                <Typography variant={"h6"}>Patient info</Typography>
+                <Typography variant={"caption"}>{"No diagnosis or care team information on file"}</Typography>
+            </>;
+        }
 
         return <>
             <Typography variant={"h6"}>Diagnoses</Typography>
-            {infoRows.map((row) => <DisplayRow item={row}/>)}
+            {!infoRows ?
+                <Typography variant={"caption"}>{"No diagnoses on file"}</Typography> :
+                infoRows.map((row) => <DisplayRow item={row}/>)}
             <Typography variant={"h6"}>Care team</Typography>
-            {careteamRows.map((row) => <DisplayRow item={row}/>)}
+            {!careteamRows ?
+                <Typography variant={"caption"}>{"No care team information on file"}</Typography> :
+                careteamRows.map((row) => <DisplayRow item={row}/>)}
         </>
 
     }
