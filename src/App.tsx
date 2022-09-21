@@ -8,6 +8,7 @@ import {MessagingApp} from "./components/MessagingApp";
 import {fetchEnvData, getEnv} from "./util/util";
 import {theme} from "./theme";
 import {ThemeProvider} from '@mui/material/styles';
+import SizeIndicator from "./components/SizeIndicator";
 
 fetchEnvData();
 const REACT_APP_CLIENT_ID = getEnv("REACT_APP_CLIENT_ID");
@@ -23,6 +24,7 @@ export default class App extends React.Component<any, any> {
                                 <EnrollmentApp/> :
                                 <MessagingApp/>
                         }
+                        <SizeIndicator/>
                     </FhirClientProvider>
                 </LocalizationProvider>
             </ThemeProvider>
