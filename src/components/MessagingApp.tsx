@@ -16,22 +16,25 @@ export const MessagingApp = () => {
         content = <Alert
             severity="error">{"Patient has no ISACC CarePlan. Ensure the patient is enrolled and has a message schedule CarePlan."}</Alert>;
     } else {
-        content = <Grid container direction="column"
-                        alignItems="stretch" display={"flex"} flexGrow={1}>
-            {/*page header*/}
-            <Grid container direction={"row"} alignItems={"stretch"}>
-                <GridItem xs={12} sm={8} md={3} lg={3} xl={3}><Summary/></GridItem>
-                <Grid item xs={12} sm={4} md={2} lg={2} xl={1}><PatientPROs/></Grid>
-                <Grid item xs={12} sm={8} md={4} lg={4} xl={5} display={"flex"} direction={"row"}><PatientNotes/> </Grid>
-                <GridItem xs={12} sm={4} md={3} lg={3} xl={3}><DiagnosisAndCareTeam/> </GridItem>
-                {/*<GridItem sm={4} md={3} lg={3} xl={3}>{"Themes and stuff"} </GridItem>*/}
-            </Grid>
-            <Grid container direction={"row"} alignItems={"stretch"}>
-                {/*left column*/}
-                <Grid item xs={12} md={3} lg={3} xl={3}> </Grid>
-                <GridItem xs={12} md={6} lg={6} xl={6}><MessageView/></GridItem>
-                {/*<GridItem xs={4} md={3} lg={3} xl={3}>{"Continuation of themes and stuff"}</GridItem>*/}
-            </Grid>
+        content = <Grid container direction={"row"} justifyContent={"center"}>
+            <GridItemWithCard xs={12} sm={8} md={3} lg={3} xl={3}>
+                <Summary/>
+            </GridItemWithCard>
+            <GridItemWithCard item xs={12} sm={4} md={2} lg={2} xl={1}>
+                <PatientPROs/>
+            </GridItemWithCard>
+            <GridItemWithoutCardContent xs={12} sm={8} md={4} lg={4} xl={5}>
+                <PatientNotes/>
+            </GridItemWithoutCardContent>
+            <GridItemWithCard xs={12} sm={4} md={3} lg={3} xl={3}>
+                <DiagnosisAndCareTeam/>
+            </GridItemWithCard>
+            {/*<GridItemWithCard sm={4} md={3} lg={3} xl={3}>{"Themes and stuff"} </GridItemWithCard>*/}
+            {/*left column*/}
+            <GridItemWithCard xs={12} md={6} lg={6} xl={6}>
+                <MessageView/>
+            </GridItemWithCard>
+            {/*<GridItemWithCard xs={4} md={3} lg={3} xl={3}>{"Continuation of themes and stuff"}</GridItemWithCard>*/}
         </Grid>
     }
     return <AppPageScaffold title={"Messages"}>
@@ -39,9 +42,18 @@ export const MessagingApp = () => {
     </AppPageScaffold>;
 }
 
-const GridItem = ({children, ...rest}: PropsWithChildren & GridProps) =>
-    <Grid item {...rest} display={"flex"} direction={"row"}>
-        <Card variant={"outlined"}>
+const GridItemWithoutCardContent = ({children, ...rest}: PropsWithChildren & GridProps) =>
+    <Grid item {...rest} flexGrow={1} display={"flex"}>
+        <Card variant={"outlined"} sx={{'flex-grow':"1"}}>
+            {children}
+        </Card>
+    </Grid>
+
+const GridItemWithCard = ({children, ...rest}: PropsWithChildren & GridProps) =>
+    <Grid item {...rest} flexGrow={1} display={"flex"}>
+        <Card variant={"outlined"} sx={{
+            'flex-grow':"1"
+        }}>
             <CardContent>{children}</CardContent>
         </Card>
     </Grid>

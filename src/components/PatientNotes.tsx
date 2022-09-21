@@ -38,7 +38,7 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
 
         if (!carePlan) return null;
 
-        return <Card variant={"outlined"}>
+        return <>
             <CardContent>
                 <Typography variant={"h6"}>Patient notes</Typography>
                 {this.state.editable ?
@@ -66,9 +66,7 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
                 }}>{this.state.editable ? "Done" : "Update"}</Button>
 
             </CardActions>
-
-
-        </Card>;
+        </>;
     }
 
     private _updateError() {
