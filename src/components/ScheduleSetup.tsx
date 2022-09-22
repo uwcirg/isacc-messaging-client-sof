@@ -26,6 +26,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import Dialog from "@mui/material/Dialog";
+import Client from "fhirclient/lib/Client";
 
 
 interface ScheduleSetupProps {
@@ -75,6 +76,12 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
     componentDidMount() {
         //@ts-ignore
         let patient: Patient = this.context.patient;
+        //@ts-ignore
+        let client: Client = this.context.client;
+
+        client.user.read().then((result: any) => {
+            console.log("User:", result);
+        });
         const messages: MessageDraft[] = this.planDefinition.createMessageList(patient);
         this.setState({messages: messages});
     }
@@ -106,7 +113,7 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
                 </Grid>
             </Grid>
 
-            {this.getSnackbar()}
+            {this.getAlert()}
         </>
     }
 
@@ -114,7 +121,7 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
         this.setState({showAlert: true, alertSeverity: alertSeverity, alertText: alertText, savingInProgress: false});
     }
 
-    private getSnackbar() {
+    private getAlert() {
         let clearSessionLink = getEnv("REACT_APP_DASHBOARD_URL") + "/clear_session";
         let onClose = () => this.setState({showAlert: false});
 
@@ -156,9 +163,9 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
 
     private saveSchedule() {
         // @ts-ignore
-        let client = this.context.client;
+        let client: Client = this.context.client;
         // @ts-ignore
-        let patient = this.context.patient;
+        let patient: Patient = this.context.patient;
 
         if (!client) {
             console.log("No client");
