@@ -34,8 +34,11 @@ export default class PlanDefinition implements IPlanDefinition {
         return planDefinition;
     }
 
-    triggerForActivityDefinition(activityDefinitionId: string): ITriggerDefinition[] {
-        return this.action.find((action: IPlanDefinition_Action) => action.definitionCanonical.slice(1) === activityDefinitionId)?.trigger;
+    isBirthdayMessage(activityDefinitionId: string): boolean {
+        return this.action.find(
+            (action: IPlanDefinition_Action) => action.definitionCanonical.slice(1) === activityDefinitionId)?.trigger?.find(
+            (trigger: ITriggerDefinition) => trigger.type === 'named-event' && trigger.name === 'birthday'
+        ) != null;
     }
 
     get reference(): string {
@@ -48,7 +51,7 @@ export default class PlanDefinition implements IPlanDefinition {
         // regular messages
         const messages: MessageDraft[] = this.activityDefinitions.map(
             (activityDef: ActivityDefinition) => {
-                if (activityDef.timingTiming) {
+                if (!this.isBirthdayMessage(activityDef.id) && activityDef.timingTiming) {
                     let contentString = activityDef.payloadText;
                     if (replacements) {
                         for (const [key, value] of Object.entries(replacements)) {
@@ -75,17 +78,14 @@ export default class PlanDefinition implements IPlanDefinition {
                     (t: ITriggerDefinition) => t.type === "named-event" && t.name === "birthday"
                 )
             );
-            let birthdayMessageTrigger = birthdayMessageAction?.trigger?.find(
-                (t: ITriggerDefinition) => t.type === "named-event" && t.name === "birthday"
-            );
             let birthdayMessageActivityDefinition = this.activityDefinitions.find(
                 (activityDef: ActivityDefinition) => activityDef.id === birthdayMessageAction.definitionCanonical.slice(1)
             );
-            if (birthdayMessageAction && birthdayMessageTrigger && birthdayMessageActivityDefinition) {
+            if (birthdayMessageAction && birthdayMessageActivityDefinition) {
                 let birthdays = birthdaysBetweenDates(programStart, programEnd, new Date(patient.birthDate));
                 birthdays.forEach((d: Date) => messages.push({
                     text: birthdayMessageActivityDefinition.payloadText,
-                    scheduledDateTime: birthdayMessageActivityDefinition.nextOccurrenceTimeAtDate(d, birthdayMessageTrigger.timingTiming),
+                    scheduledDateTime: birthdayMessageActivityDefinition.nextOccurrenceTimeAtDate(d),
                 }));
             }
         }
@@ -112,7 +112,10 @@ export class ActivityDefinition implements IActivityDefinition {
     }
 
     occurrenceTimeFromNow(): Date {
-        if (this.timingTiming.repeat.periodUnit !== 'wk') {
+        if (!this.timingTiming?.repeat) {
+            throw Error("No timing or repeat specified in ActivityDefinition")
+        }
+        if (this.timingTiming.repeat.periodUnit && this.timingTiming.repeat.periodUnit !== 'wk') {
             throw Error("Unhandled time unit in timingTiming");
         }
 
@@ -141,11 +144,11 @@ export class ActivityDefinition implements IActivityDefinition {
         return date;
     }
 
-    nextOccurrenceTimeAtDate(date: Date, timingTiming: ITiming) {
-        if (!timingTiming.repeat.timeOfDay) {
+    nextOccurrenceTimeAtDate(date: Date) {
+        if (!this.timingTiming.repeat.timeOfDay) {
             throw Error("No timeOfDay given in timingTiming");
         }
-        ActivityDefinition.setTimeOfDay(date, timingTiming);
+        ActivityDefinition.setTimeOfDay(date, this.timingTiming);
         return date;
     }
 

@@ -39,14 +39,7 @@
       "trigger": [
         {
           "type": "named-event",
-          "name": "birthday",
-          "timingTiming": {
-            "repeat": {
-              "timeOfDay": [
-                "10:08:00"
-              ]
-            }
-          }
+          "name": "birthday"
         }
       ]
     }
@@ -318,6 +311,13 @@
       "name": "Birthday Message",
       "status": "active",
       "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "timeOfDay": [
+            "10:08:00"
+          ]
+        }
+      },
       "dynamicValue": [
         {
           "path": "payload.contentString",
