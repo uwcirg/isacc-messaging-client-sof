@@ -80,8 +80,11 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
         //@ts-ignore
         let client: Client = this.context.client;
 
+        let replacements: { [key: string]: number } = {};
         let preferred_username = getUsername(client);
-        let replacements = {'{userName}': preferred_username};
+        if (preferred_username) {
+            replacements['{userName}'] = preferred_username;
+        }
 
         const messages: MessageDraft[] = this.planDefinition.createMessageList(patient, replacements);
         this.setState({messages: messages});
