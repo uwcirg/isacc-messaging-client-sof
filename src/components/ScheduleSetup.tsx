@@ -27,6 +27,7 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import Dialog from "@mui/material/Dialog";
 import Client from "fhirclient/lib/Client";
+import {getUsername} from "../util/isacc_util";
 
 
 interface ScheduleSetupProps {
@@ -79,10 +80,10 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
         //@ts-ignore
         let client: Client = this.context.client;
 
-        client.user.read().then((result: any) => {
-            console.log("User:", result);
-        });
-        const messages: MessageDraft[] = this.planDefinition.createMessageList(patient);
+        let preferred_username = getUsername(client);
+        let replacements = {'{userName}': preferred_username};
+
+        const messages: MessageDraft[] = this.planDefinition.createMessageList(patient, replacements);
         this.setState({messages: messages});
     }
 

@@ -44,12 +44,17 @@ export default class PlanDefinition implements IPlanDefinition {
 
     resourceType: "PlanDefinition";
 
-    createMessageList(patient: Patient): MessageDraft[] {
+    createMessageList(patient: Patient, replacements: object): MessageDraft[] {
         // regular messages
         const messages: MessageDraft[] = this.activityDefinitions.map(
             (activityDef: ActivityDefinition) => {
                 if (activityDef.timingTiming) {
                     let contentString = activityDef.payloadText;
+                    if (replacements) {
+                        for (const [key, value] of Object.entries(replacements)) {
+                            contentString = contentString.replace(key, value);
+                        }
+                    }
                     let date = activityDef.occurrenceTimeFromNow();
                     return {
                         text: contentString,
