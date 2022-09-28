@@ -1,8 +1,11 @@
-import React from 'react';
+import React, {ReactNode} from 'react';
 import {FhirClientContext} from '../FhirClientContext';
 import {
     Alert,
     CircularProgress,
+    FormControl,
+    MenuItem,
+    Select,
     Table,
     TableBody,
     TableCell,
@@ -50,7 +53,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             emergencyContactString = `${emergencyContact.name.given} ${emergencyContact.name.family} (${contactDetails})`;
         }
 
-        let contactInformation: { label: string, value: string }[] = [{
+        let contactInformation: { label: string, value: ReactNode }[] = [{
             label: 'Contact information',
             value: 'None on file'
         }];
@@ -59,13 +62,27 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 return {label: 'Contact information', value: t.value}
             });
         }
+
+        let ccContactMethodPreference = "SMS";
+        let ccContactMethodSelector = <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+            <Select
+                value={ccContactMethodPreference}
+                // onChange={handleChange}
+
+            >
+                <MenuItem value={"SMS"}>SMS</MenuItem>
+                <MenuItem value={"Email"}>Email</MenuItem>
+            </Select>
+        </FormControl>
+
         let rows = [
             {label: 'First name', value: patient.name[0].given},
             {label: 'Last name', value: patient.name[0].family},
             {label: 'Gender', value: patient.gender},
             {label: 'DOB', value: patient.birthDate},
             ...contactInformation,
-            {label: 'Emergency contact', value: emergencyContactString}
+            {label: 'Emergency contact', value: emergencyContactString},
+            {label: 'Send Caring Contacts via:', value: ccContactMethodSelector},
         ]
 
 
