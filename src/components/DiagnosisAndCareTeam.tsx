@@ -4,12 +4,13 @@ import {Bundle} from "../model/Bundle";
 import {Condition} from "../model/Condition";
 import {Stack, Typography} from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
-import {ICareTeam, ICareTeam_Participant} from "@ahryman40k/ts-fhir-types/lib/R4";
+import {ICareTeam, ICareTeam_Participant, IContactPoint, IPractitioner} from "@ahryman40k/ts-fhir-types/lib/R4";
 
 
 export default class DiagnosisAndCareTeam extends React.Component<{}, {
     conditions: Condition[],
     careTeam: ICareTeam,
+    practitioners: IPractitioner[],
     ready: boolean
 }> {
     static contextType = FhirClientContext;
@@ -55,7 +56,8 @@ export default class DiagnosisAndCareTeam extends React.Component<{}, {
             "subject": `Patient/${context.patient.id}`,
             "status": "active",
             "_sort": "-_lastUpdated",
-            "_count": "1"
+            "_count": "1",
+            "_include": "CareTeam:participant"
         });
 
         return context.client.request(`CareTeam?${params.toString()}`).then(
@@ -64,7 +66,15 @@ export default class DiagnosisAndCareTeam extends React.Component<{}, {
                     console.log("No CareTeam found");
                 } else {
                     let careTeam = bundle.entry[0].resource as ICareTeam;
-                    this.setState({careTeam: careTeam})
+                    let practitioners: IPractitioner[] = [];
+                    if (bundle.entry.length > 1) {
+                        practitioners = bundle.entry.slice(1).filter(
+                            (e) => e.resource.resourceType === "Practitioner"
+                        ).map(
+                            (e) => e.resource as IPractitioner
+                        );
+                    }
+                    this.setState({careTeam: careTeam, practitioners: practitioners});
                 }
             },
             (reason: any) => {
@@ -84,7 +94,7 @@ export default class DiagnosisAndCareTeam extends React.Component<{}, {
                 info: [
                     {label: "Onset", value: new Date(condition.onsetDateTime)?.toLocaleDateString()},
                     {label: "Status", value: condition.clinicalStatus.coding[0].code}
-                ]
+                ].filter((row) => row.value !== undefined)
             };
         });
 
@@ -92,8 +102,15 @@ export default class DiagnosisAndCareTeam extends React.Component<{}, {
             return {
                 title: participant.member.display,
                 info: [
-                    {label: "Role", value: participant.role[0].coding[0].display}
-                ]
+                    {label: "Role", value: participant.role[0].coding[0].display},
+                    {
+                        label: "Contact", value: this.state.practitioners?.find(
+                            (value: IPractitioner) => value.id === participant.member.reference.split('/')[1]
+                        )?.telecom?.map(
+                            (c: IContactPoint) => `${c.value} (${c.system})`
+                        )?.join(", ")
+                    }
+                ].filter((row) => row.value !== undefined)
             }
         });
 
