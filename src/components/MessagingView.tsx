@@ -92,19 +92,19 @@ export default class MessagingView extends React.Component<{}, {
         // @ts-ignore
         let context: FhirClientContextType = this.context;
         let newMessage: CommunicationRequest = CommunicationRequest.createNewOutgoingMessage(this.state.activeMessage, context.patient, context.carePlan);
-        console.log("Attempting to save new Communication:", newMessage);
+        console.log("Attempting to save new CommunicationRequest:", newMessage);
         context.client.create(newMessage).then(
             (savedCommunication: IResource) => {
-                console.log("Saved new Communication:", savedCommunication);
+                console.log("Saved new CommunicationRequest:", savedCommunication);
                 context.communications.unshift(Communication.from(savedCommunication));
                 this.setState({activeMessage: ""});
             },
             (reason: any) => {
-                console.log("Failed to create new Communication:", reason);
+                console.log("Failed to create new CommunicationRequest:", reason);
                 this.setState({error: reason});
             }
         ).catch((reason: any) => {
-            console.log("Failed to create new Communication:", reason);
+            console.log("Failed to create new CommunicationRequest:", reason);
             this.setState({error: reason});
         });
     }
