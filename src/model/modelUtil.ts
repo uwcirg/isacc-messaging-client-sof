@@ -1,7 +1,7 @@
 import PlanDefinition from "./PlanDefinition";
 import CarePlan, {CarePlanActivity} from "./CarePlan";
 
-import {Coding} from "./CodeSystem";
+import {Medium} from "./CodeSystem";
 import {CommunicationRequest} from "./CommunicationRequest";
 
 import Patient from "./Patient";
@@ -16,13 +16,13 @@ export function makeCommunicationRequests(patient: Patient, planDefinition: Plan
         let c = new CommunicationRequest();
         c.payload = [{contentString: str}];
         c.occurrenceDateTime = message.scheduledDateTime.toISOString();
-        c.recipient = [{reference: `Patient/${patient.id}`}]; // TODO: Reference to RelatedPerson
-        c.medium = [Coding.make("http://terminology.hl7.org/ValueSet/v3-ParticipationMode", "SMSWRIT")];
+        c.recipient = [{reference: patient.reference}]; // TODO: Reference to RelatedPerson
+        c.medium = [Medium.sms];
         return c;
     });
 }
 
-export function makeCarePlan(planDefinition: PlanDefinition, patient: Patient, communicationRequests: CommunicationRequest[], patientNote: string) : CarePlan{
+export function makeCarePlan(planDefinition: PlanDefinition, patient: Patient, communicationRequests: CommunicationRequest[], patientNote: string): CarePlan {
     let activities = communicationRequests.map((req) => CarePlanActivity.withReference(req.reference));
     let carePlan = CarePlan.createIsaccCarePlan(patient, planDefinition, activities);
     carePlan.description = patientNote;

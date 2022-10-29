@@ -4,7 +4,9 @@ import {
     ICommunicationRequest_Payload,
     IReference
 } from "@ahryman40k/ts-fhir-types/lib/R4";
-import {IsaccMessageCategory} from "./CodeSystem";
+import {IsaccMessageCategory, Medium} from "./CodeSystem";
+import Patient from "./Patient";
+import CarePlan from "./CarePlan";
 
 export class CommunicationRequest implements ICommunicationRequest {
     resourceType: "CommunicationRequest";
@@ -31,5 +33,18 @@ export class CommunicationRequest implements ICommunicationRequest {
         this.resourceType = "CommunicationRequest";
         this.status = "active";
         this.category = [{coding: [IsaccMessageCategory.isaccScheduledMessage]}]
+    }
+
+    static createNewOutgoingMessage(messageContent: string, patient: Patient, carePlan: CarePlan): CommunicationRequest {
+        let c = new CommunicationRequest();
+        c.basedOn = [{reference: carePlan.reference}];
+        c.status = "completed";
+        c.category = [{coding: [IsaccMessageCategory.isaccManuallySentMessage]}];
+        c.medium = [Medium.sms];
+        c.occurrenceDateTime = new Date().toISOString();
+        c.recipient = [{reference: patient.reference}];
+        c.payload = [{contentString: messageContent}];
+        c.category = [{coding: [IsaccMessageCategory.isaccManuallySentMessage]}];
+        return c;
     }
 }
