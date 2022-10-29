@@ -9,6 +9,7 @@ import {grey, lightBlue} from "@mui/material/colors";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import Alert from "@mui/material/Alert";
 import {Error, Warning} from "@mui/icons-material";
+import {CommunicationRequest} from "../model/CommunicationRequest";
 
 export default class MessagingView extends React.Component<{}, {
     // messages: MessageDraft[];
@@ -90,7 +91,7 @@ export default class MessagingView extends React.Component<{}, {
     private saveMessage() {
         // @ts-ignore
         let context: FhirClientContextType = this.context;
-        let newMessage: Communication = Communication.createNewOutgoingMessage(this.state.activeMessage, context.patient, context.carePlan);
+        let newMessage: CommunicationRequest = CommunicationRequest.createNewOutgoingMessage(this.state.activeMessage, context.patient, context.carePlan);
         console.log("Attempting to save new Communication:", newMessage);
         context.client.create(newMessage).then(
             (savedCommunication: IResource) => {
