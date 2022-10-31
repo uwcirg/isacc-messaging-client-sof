@@ -10,7 +10,6 @@ import CarePlan from "./model/CarePlan";
 import {Bundle} from "./model/Bundle";
 import {ICarePlan} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {IsaccCarePlanCategory} from "./model/CodeSystem";
-import Communication from "./model/Communication";
 import ErrorComponent from "./components/ErrorComponent";
 
 interface Props {
@@ -23,7 +22,6 @@ export default function FhirClientProvider(props: Props): JSX.Element {
     const [error, setError] = React.useState('');
     const [patient, setPatient] = React.useState(null);
     const [carePlan, setCarePlan] = React.useState(null);
-    const [communications, setCommunications] = React.useState(null);
 
     async function getPatient(client: Client): Promise<Patient> {
         if (!client) return;
@@ -73,37 +71,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
         });
     }
 
-    async function getCommunications(client: Client, carePlanId: string): Promise<Communication[]> {
-        if (!client) return;
-        // Communication?part-of=CarePlan/${carePlanId}
-        let params = new URLSearchParams({
-            "part-of": `CarePlan/${carePlanId}`,
-            "_sort": "-sent"
-        }).toString();
-        return await client.request(`/Communication?${params}`).then((bundle: Bundle) => {
-            if (bundle.type === "searchset") {
-                if (!bundle.entry) return [];
 
-                let communications: Communication[] = bundle.entry.map((e) => {
-                    if (e.resource.resourceType !== "Communication") {
-                        setError("Unexpected resource type returned");
-                        return null;
-                    } else {
-                        console.log("Communication loaded:", e);
-                        return Communication.from(e.resource);
-                    }
-                })
-                return communications;
-
-            } else {
-                setError("Unexpected bundle type returned");
-                return null;
-            }
-        }, (reason: any) => {
-            setError(reason.toString());
-            return null;
-        });
-    }
 
     React.useEffect(() => {
         FHIR.oauth2.ready().then(
@@ -116,12 +84,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
                         setCarePlan(carePlanResult);
                         if (carePlanResult) {
                             console.log(`Loaded ${carePlanResult.reference}`);
-                            getCommunications(client, carePlanResult.id).then((result: Communication[]) => {
-                                setCommunications(result);
-                            }, (reason: any) => setError(reason)).catch(e => {
-                                console.log("Error fetching Communications", e);
-                                setError(e);
-                            })
+
                         }
                     }, (reason: any) => setError(reason)).catch(e => {
                         console.log("Error fetching CarePlan", e)
@@ -141,7 +104,6 @@ export default function FhirClientProvider(props: Props): JSX.Element {
             client: client,
             patient: patient,
             carePlan: carePlan,
-            communications: communications,
             error: error
         }}>
             <FhirClientContext.Consumer>

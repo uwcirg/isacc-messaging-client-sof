@@ -3,31 +3,112 @@ import * as React from "react";
 import {FhirClientContext, FhirClientContextType} from "../FhirClientContext";
 
 import Communication from "../model/Communication";
-import {ICodeableConcept, ICoding, IReference, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
-import {Box, Button, Chip, CircularProgress, Grid, List, Stack, TextField, Typography} from "@mui/material";
+import {IBundle_Entry, ICodeableConcept, ICoding, IReference, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
+import {Box, Button, Chip, CircularProgress, Grid, IconButton, List, Stack, TextField, Typography} from "@mui/material";
 import {grey, lightBlue} from "@mui/material/colors";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import Alert from "@mui/material/Alert";
-import {Error, Warning} from "@mui/icons-material";
+import {Error, Refresh, Warning} from "@mui/icons-material";
 import {CommunicationRequest} from "../model/CommunicationRequest";
+import Client from "fhirclient/lib/Client";
+import {Bundle} from "../model/Bundle";
 
 export default class MessagingView extends React.Component<{}, {
     // messages: MessageDraft[];
     activeMessage: string;
     error: any;
+    communications: Communication[];
+    temporaryCommunications: Communication[];
+    messagesLoading: boolean;
     // showAlert: boolean;
     // alertSeverity: "error" | "warning" | "info" | "success";
     // alertText: string;
 }> {
     static contextType = FhirClientContext
+    interval: any;
 
     constructor(props: ({})) {
         super(props);
         this.state = {
             activeMessage: null,
-            error: null
+            error: null,
+            communications: null,
+            temporaryCommunications: [],
+            messagesLoading: false
         };
 
+    }
+
+    componentDidMount() {
+        if (!this.state) return;
+        if (!this.state.communications) {
+            this.loadCommunications();
+        }
+        this.interval = setInterval(() => {
+            console.log("Timer triggered");
+            this.loadCommunications();
+        }, 60000);
+    }
+    componentWillUnmount() {
+        clearInterval(this.interval);
+    }
+
+    loadCommunications() {
+        // @ts-ignore
+        let context: FhirClientContextType = this.context;
+        this.setState({messagesLoading: true});
+
+        this.getCommunications(context.client, context.carePlan.id).then((result: Communication[]) => {
+                let temporaryCommunications = this.state.temporaryCommunications.filter((tc: Communication) => {
+                    return !result?.find((c: Communication) => {
+                        return c.basedOn?.find((b: IReference) => {
+                            return b.reference?.split("/")[1] === tc.id;
+                        });
+                    });
+                });
+
+                this.setState({
+                    communications: result,
+                    messagesLoading: false,
+                    temporaryCommunications: temporaryCommunications
+                });
+            }, (reason: any) => this.setState({error: reason, messagesLoading: false})
+        ).catch(e => {
+            console.log("Error fetching Communications", e);
+            this.setState({error: e, messagesLoading: false});
+        })
+    }
+
+    async getCommunications(client: Client, carePlanId: string): Promise<Communication[]> {
+        if (!client) return;
+        // Communication?part-of=CarePlan/${carePlanId}
+        let params = new URLSearchParams({
+            "part-of": `CarePlan/${carePlanId}`,
+            "_sort": "-sent"
+        }).toString();
+        return await client.request(`/Communication?${params}`).then((bundle: Bundle) => {
+            if (bundle.type === "searchset") {
+                if (!bundle.entry) return [];
+
+                let communications: Communication[] = bundle.entry.map((e: IBundle_Entry) => {
+                    if (e.resource.resourceType !== "Communication") {
+                        this.setState({error: "Unexpected resource type returned"});
+                        return null;
+                    } else {
+                        console.log("Communication loaded:", e);
+                        return Communication.from(e.resource);
+                    }
+                })
+                return communications;
+
+            } else {
+                this.setState({error: "Unexpected bundle type returned"});
+                return null;
+            }
+        }, (reason: any) => {
+            this.setState({error: reason.toString()});
+            return null;
+        });
     }
 
     render(): React.ReactNode {
@@ -40,7 +121,7 @@ export default class MessagingView extends React.Component<{}, {
             return <Alert severity="error">{context.error}</Alert>
         }
 
-        if (!context.carePlan || !context.communications) {
+        if (!context.carePlan || !this.state.communications) {
             return <CircularProgress/>
         }
 
@@ -59,15 +140,27 @@ export default class MessagingView extends React.Component<{}, {
             <Typography variant={"caption"}>{"No messages"}</Typography>
         </Stack>
 
-        if (context.communications && context.communications.length > 0) {
+        if (this.state.communications && this.state.communications.length > 0) {
+            let communications = [];
+            communications.push(...this.state.communications);
+            communications.push(...this.state.temporaryCommunications);
+            communications.sort((a, b) => {
+                let d1 = a.sent ?? a.meta.lastUpdated;
+                let d2 = b.sent ?? b.meta.lastUpdated;
+                return d1 < d2 ? 1 : -1;
+            });
             messages = <List sx={messageBoxProps}>{
-                context.communications.map((message, index) => this._buildMessageRow(message, index))
+                communications.map((message: Communication, index) => this._buildMessageRow(message, index))
             }</List>
         }
 
 
         return <Grid container direction={"column"}>
-            <Typography variant={'h6'} sx={{paddingTop: 2}}>{"Messages"}</Typography>
+            <Stack direction={'row'} justifyContent={'space-between'}>
+                <Typography variant={'h6'} sx={{paddingTop: 2}}>{"Messages"}</Typography>
+                {this.state.messagesLoading ? <CircularProgress/> :
+                    <IconButton color="primary" onClick={() => this.loadCommunications()}><Refresh/></IconButton>}
+            </Stack>
 
             {messages}
 
@@ -92,32 +185,40 @@ export default class MessagingView extends React.Component<{}, {
         // @ts-ignore
         let context: FhirClientContextType = this.context;
         let newMessage: CommunicationRequest = CommunicationRequest.createNewOutgoingMessage(this.state.activeMessage, context.patient, context.carePlan);
-        console.log("Attempting to save new Communication:", newMessage);
+        console.log("Attempting to save new CommunicationRequest:", newMessage);
         context.client.create(newMessage).then(
-            (savedCommunication: IResource) => {
-                console.log("Saved new Communication:", savedCommunication);
-                context.communications.unshift(Communication.from(savedCommunication));
-                this.setState({activeMessage: ""});
+            (savedCommunicationRequest: IResource) => {
+                console.log("Saved new CommunicationRequest:", savedCommunicationRequest);
+                this.state.temporaryCommunications.unshift(Communication.tempCommunicationFrom(savedCommunicationRequest));
+                this.setState({
+                    activeMessage: "",
+                    temporaryCommunications: this.state.temporaryCommunications
+                });
             },
             (reason: any) => {
-                console.log("Failed to create new Communication:", reason);
+                console.log("Failed to create new CommunicationRequest:", reason);
                 this.setState({error: reason});
             }
         ).catch((reason: any) => {
-            console.log("Failed to create new Communication:", reason);
+            console.log("Failed to create new CommunicationRequest:", reason);
             this.setState({error: reason});
         });
     }
 
     private _buildMessageRow(message: Communication, index: number): React.ReactNode {
-
         let incoming = true;
         if (message.recipient && message.recipient.find((r: IReference) => r.reference.includes("Patient"))) {
             incoming = false;
         }
 
-        let datetime = new Date(message.sent);
-        let timestamp = `${datetime.toLocaleDateString()} ${datetime.toLocaleTimeString()}`;
+        let timestamp = null;
+        let delivered = true;
+        if (message.sent) {
+            let datetime = new Date(message.sent);
+            timestamp = `${datetime.toLocaleDateString()} ${datetime.toLocaleTimeString()}`;
+        } else {
+            delivered = false;
+        }
         // let timestamp = `${intl.formatDate(datetime)} ${intl.formatTime(datetime)}`;
         let msg = message.displayText();
         let autoMessage = true;
@@ -126,7 +227,7 @@ export default class MessagingView extends React.Component<{}, {
         } else if (message.category.find((c: ICodeableConcept) => c.coding.find((coding: ICoding) => IsaccMessageCategory.isaccManuallySentMessage.equals(coding)))) {
             autoMessage = false;
         }
-        let bubbleStyle = MessagingView.getBubbleStyle(incoming, autoMessage);
+        let bubbleStyle = MessagingView.getBubbleStyle(incoming, autoMessage, delivered);
         let priority = message.priority;
         let themes: string[] = message.getThemes();
         return this._alignedRow(incoming, msg, timestamp, bubbleStyle, priority, index, themes);
@@ -171,12 +272,12 @@ export default class MessagingView extends React.Component<{}, {
                 <Stack direction={"row"} alignItems={"center"} spacing={1}>
                     {bubbleAndPriorityRow}
                 </Stack>
-                {themes.length>0 && <Stack direction={"row"} spacing={0.5} paddingTop={0.5}>
+                {themes.length > 0 && <Stack direction={"row"} spacing={0.5} paddingTop={0.5}>
                     {themes.map((theme: string) => <Chip size={"small"} variant="outlined" label={theme}
                                                          onClick={(event) => console.log(event)}/>)}
                 </Stack>
                 }
-                <Typography variant={"caption"}>{timestamp}</Typography>
+                {timestamp && <Typography variant={"caption"}>{timestamp}</Typography>}
 
             </Stack>
         </Grid>
@@ -201,7 +302,13 @@ export default class MessagingView extends React.Component<{}, {
         </Grid>
     }
 
-    private static getBubbleStyle(incoming: boolean, auto: boolean): object {
+    private static getBubbleStyle(incoming: boolean, auto: boolean, delivered: boolean): object {
+        if (!delivered) return {
+            borderStyle: "dashed",
+            borderColor: grey[700],
+            borderWidth: "1px",
+            color: "#000"
+        }
         if (incoming) return {
             backgroundColor: grey[300],
             color: "#000"
