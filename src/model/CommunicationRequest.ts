@@ -38,13 +38,12 @@ export class CommunicationRequest implements ICommunicationRequest {
     static createNewOutgoingMessage(messageContent: string, patient: Patient, carePlan: CarePlan): CommunicationRequest {
         let c = new CommunicationRequest();
         c.basedOn = [{reference: carePlan.reference}];
-        c.status = "completed";
+        c.status = "active";
         c.category = [{coding: [IsaccMessageCategory.isaccManuallySentMessage]}];
         c.medium = [Medium.sms];
         c.occurrenceDateTime = new Date().toISOString();
         c.recipient = [{reference: patient.reference}];
         c.payload = [{contentString: messageContent}];
-        c.category = [{coding: [IsaccMessageCategory.isaccManuallySentMessage]}];
         return c;
     }
 }
