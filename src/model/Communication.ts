@@ -12,9 +12,7 @@ import {
     IReference,
     IResourceList
 } from "@ahryman40k/ts-fhir-types/lib/R4";
-import CarePlan from "./CarePlan";
-import Patient from "./Patient";
-import {ExtensionUrl, IsaccMessageCategory, Medium} from "./CodeSystem";
+import {ExtensionUrl} from "./CodeSystem";
 
 export default class Communication implements ICommunication {
     _implicitRules?: IElement;
@@ -66,23 +64,16 @@ export default class Communication implements ICommunication {
         return c;
     }
 
+    static tempCommunicationFrom(communicationRequest: any) : Communication {
+        let c = Communication.from(communicationRequest);
+        c.sent = null;
+        return c;
+    }
+
     displayText() {
         return this.payload.map((p: CommunicationPayload) => {
             return p.contentStringLocalized()
         }).join("\n");
-    }
-
-    static createNewOutgoingMessage(messageContent: string, patient: Patient, carePlan: CarePlan): Communication {
-        let c = new Communication();
-        c.resourceType = "Communication";
-        c.partOf = [{reference: carePlan.reference}];
-        c.status = "completed";
-        c.category = [{coding: [IsaccMessageCategory.isaccManuallySentMessage]}];
-        c.medium = [Medium.sms];
-        c.sent = new Date().toISOString();// TODO: Update to the actual time
-        c.recipient = [{reference: patient.reference}];
-        c.payload = [CommunicationPayload.from({contentString: messageContent})];
-        return c;
     }
 
     getThemes(): string[] {
