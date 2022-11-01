@@ -23,6 +23,7 @@ interface SummaryProps {
 
 type SummaryState = {
     error: string;
+    editable: boolean;
 }
 
 export default class Summary extends React.Component<SummaryProps, SummaryState> {
@@ -32,7 +33,8 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     constructor(props: Readonly<SummaryProps> | SummaryProps) {
         super(props);
         this.state = {
-            error: ''
+            error: '',
+            editable: false
         }
     }
 
@@ -48,9 +50,13 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
 
         let emergencyContactString = "None on file";
         if (patient.contact) {
-            let emergencyContact: IPatient_Contact = patient.contact.find((contact: IPatient_Contact) => contact.relationship.find((relationship: ICodeableConcept) => relationship.coding.find((coding: ICoding) => coding === RelationshipCategory.emergencyContact)));
-            let contactDetails = emergencyContact.telecom.map((t: IContactPoint) => t.value).join(" / ");
-            emergencyContactString = `${emergencyContact.name.given} ${emergencyContact.name.family} (${contactDetails})`;
+            if (this.state.editable) {
+
+            } else {
+                let emergencyContact: IPatient_Contact = patient.contact.find((contact: IPatient_Contact) => contact.relationship.find((relationship: ICodeableConcept) => relationship.coding.find((coding: ICoding) => coding === RelationshipCategory.emergencyContact)));
+                let contactDetails = emergencyContact.telecom.map((t: IContactPoint) => t.value).join(" / ");
+                emergencyContactString = `${emergencyContact.name.given} ${emergencyContact.name.family} (${contactDetails})`;
+            }
         }
 
         let contactInformation: { label: string, value: ReactNode }[] = [{
