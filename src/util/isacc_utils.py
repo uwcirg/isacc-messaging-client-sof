@@ -21,10 +21,6 @@ class IsaccRecordCreator:
         })
 
     def createCommunicationFromRequest(self, cr):
-        if cr.category[0].coding[0].code == 'isacc-manually-sent-message':
-            code = 'isacc-manually-sent-message'
-        else:
-            code = "isacc-auto-sent-message"
         return {
             "resourceType": "Communication",
             "basedOn": [{"reference": f"CommunicationRequest/{cr.id}"}],
@@ -32,7 +28,7 @@ class IsaccRecordCreator:
             "category": [{
                 "coding": [{
                     "system": "https://isacc.app/CodeSystem/communication-type",
-                    "code": code
+                    "code": "isacc-auto-sent-message"
                 }]
             }],
 
@@ -154,7 +150,7 @@ class IsaccRecordCreator:
         self.generateIncomingMessage("I'm okay. How are you?", patientId=patientId)
         self.generateManualOutgoingMessage("I'm doing well, thanks for asking.", patientId=patientId)
         self.generateIncomingMessage("I feel trapped and there's nothing I can do to help myself",themes=['entrapment', 'hopelessness'], priority='stat', patientId=patientId)
-        self.createPHQ(4, patientId=patientId)
+        self.createPHQ(score=4, patientId=patientId)
 
     def createPHQ(score, patientId=None):
         if patientId is None:
