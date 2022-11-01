@@ -64,12 +64,6 @@ export default class Communication implements ICommunication {
         return c;
     }
 
-    static tempCommunicationFrom(communicationRequest: any) : Communication {
-        let c = Communication.from(communicationRequest);
-        c.sent = null;
-        return c;
-    }
-
     displayText() {
         return this.payload.map((p: CommunicationPayload) => {
             return p.contentStringLocalized()
