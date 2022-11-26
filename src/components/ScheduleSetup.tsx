@@ -95,7 +95,7 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
 
         return <>
             <Grid container spacing={2}>
-                <Grid item xs={6}><Summary/></Grid>
+                <Grid item xs={6}><Summary editable={true}/></Grid>
                 <Grid item xs={6}>
                     <Typography variant={'h6'}>{"Patient note"}</Typography>
                     <TextField
@@ -186,6 +186,8 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
             this.showSnackbar("error", "Messages cannot be empty");
             return;
         }
+
+        client.update(patient).then((value: any) => console.log(`Patient ${patient.id} updated`));
 
         let communicationRequests = makeCommunicationRequests(patient, this.planDefinition, this.state.messages);
         let promises = communicationRequests.map(

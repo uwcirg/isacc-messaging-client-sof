@@ -46,7 +46,6 @@ export default class Patient implements IPatient {
   link?: IPatient_Link[];
   managingOrganization?: IReference;
   maritalStatus?: ICodeableConcept;
-  meta?: IMeta;
   modifierExtension?: IExtension[];
   multipleBirthBoolean?: boolean;
   multipleBirthInteger?: number;

@@ -11,14 +11,21 @@ import {
     TableCell,
     TableContainer,
     TableRow,
+    TextField,
     Typography
 } from "@mui/material";
-import {ICodeableConcept, ICoding, IContactPoint, IPatient_Contact} from "@ahryman40k/ts-fhir-types/lib/R4";
+import {
+    ContactPointSystemKind,
+    ICodeableConcept,
+    ICoding,
+    IContactPoint,
+    IPatient_Contact
+} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {RelationshipCategory} from "../model/CodeSystem";
 import Patient from "../model/Patient";
 
 interface SummaryProps {
-
+    editable: boolean
 }
 
 type SummaryState = {
@@ -59,18 +66,36 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             }
         }
 
-        let contactInformation: { label: string, value: ReactNode }[] = [{
-            label: 'Contact information',
-            value: 'None on file'
-        }];
-        if (patient.telecom) {
-            contactInformation = patient.telecom?.map((t: IContactPoint) => {
-                return {label: 'Contact information', value: t.value}
-            });
+        if (!patient.telecom) {
+            patient.telecom = [];
         }
 
+        let smsContactPoint = patient.telecom.filter(
+            (t: IContactPoint) => t.system === ContactPointSystemKind._sms
+        )[0];
+
+        if (!smsContactPoint) {
+            smsContactPoint = {system: ContactPointSystemKind._sms};
+            patient.telecom.push(smsContactPoint);
+        }
+
+        let contactInformationValue = smsContactPoint.value;
+
+        let contactInformationEntry = <TextField
+            value={contactInformationValue ?? ""}
+            placeholder={"Phone number"}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                smsContactPoint.value = event.target.value;
+                this.setState({});
+            }}/>;
+
+        let contactInformation: { label: string, value: ReactNode } = {
+            label: 'Contact information',
+            value: this.props.editable ? contactInformationEntry : (contactInformationValue ?? "None on file")
+        };
+
         let ccContactMethodPreference = "SMS";
-        let ccContactMethodSelector = <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+        let ccContactMethodSelector = <FormControl variant="standard" sx={{m: 1, minWidth: 120}}>
             <Select
                 value={ccContactMethodPreference}
                 // onChange={handleChange}
@@ -86,9 +111,12 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             {label: 'Last name', value: patient.name[0].family},
             {label: 'Gender', value: patient.gender},
             {label: 'DOB', value: patient.birthDate},
-            ...contactInformation,
+            contactInformation,
             {label: 'Emergency contact', value: emergencyContactString},
-            {label: 'Send Caring Contacts via:', value: ccContactMethodSelector},
+            {
+                label: 'Send Caring Contacts via:',
+                value: this.props.editable ? ccContactMethodSelector : ccContactMethodPreference
+            },
         ]
 
 
