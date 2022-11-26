@@ -30,7 +30,6 @@ interface SummaryProps {
 
 type SummaryState = {
     error: string;
-    editable: boolean;
 }
 
 export default class Summary extends React.Component<SummaryProps, SummaryState> {
