@@ -217,7 +217,7 @@ export default class MessagingView extends React.Component<{}, {
           let datetime = new Date(message.sent);
           // instead of hard-coded en-US possibly get locale info from config?
           timestamp = `${datetime.toLocaleDateString("en-US", {
-            weekday: "long",
+            weekday: "short",
             year: "numeric",
             month: "numeric",
             day: "numeric",
