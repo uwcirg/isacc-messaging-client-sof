@@ -237,45 +237,63 @@ const MessageScheduleList = (props: {
 }) => {
 
     const buildMessageItem = (message: MessageDraft, index: number) => {
-        return <ListItem key={index} sx={{width: '100%'}} secondaryAction={
-            <ClearIcon onClick={() => {
-                removeMessage(index);
-            }}/>
-        }>
-            <Grid container direction={"row"} flexDirection={"row"} spacing={2}
-                  sx={{paddingTop: 2}}>
-
-                <Grid item>
-                    <DateTimePicker
-
-                        label="Date & Time"
-                        value={message.scheduledDateTime}
-                        onChange={(newValue: Date | null) => {
-                            // message.scheduledDateTime = newValue;
-                            let messages = props.messages;
-                            messages[index].scheduledDateTime = newValue;
-                            props.onMessagesChanged(messages);
-                            // this.setState({messages: this.state.messages});
-                        }}
-                        renderInput={(params: TextFieldProps) => <TextField {...params} />}/>
-                </Grid>
-                <Grid item flexGrow={1}>
-                    <TextField
-                        error={message.text.length === 0}
-                        helperText={message.text.length === 0 ? "Enter a message" : ""}
-                        label={"Message"}
-                        fullWidth
-                        multiline
-                        value={message.text ?? ""}
-                        placeholder={"Enter message"}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                            props.messages[index].text = event.target.value;
-                            props.onMessagesChanged(props.messages);
-                            // this.setState({messages: this.state.messages});
-                        }}/>
-                </Grid>
+        return (
+          <ListItem
+            key={index}
+            sx={{ width: "100%" }}
+            secondaryAction={
+              <ClearIcon
+                onClick={() => {
+                  removeMessage(index);
+                }}
+              />
+            }
+          >
+            <Grid
+              container
+              direction={"row"}
+              flexDirection={"row"}
+              spacing={2}
+              sx={{ paddingTop: 2 }}
+            >
+              <Grid item>
+                <DateTimePicker
+                  label="Date & Time"
+                  value={message.scheduledDateTime}
+                  inputFormat="ddd, MM/DD/YYYY hh:mm A" // example output display: Thu, 03/09/2023 09:34 AM
+                  onChange={(newValue: Date | null) => {
+                    // message.scheduledDateTime = newValue;
+                    let messages = props.messages;
+                    messages[index].scheduledDateTime = newValue;
+                    props.onMessagesChanged(messages);
+                    // this.setState({messages: this.state.messages});
+                  }}
+                  renderInput={(params: TextFieldProps) => (
+                    <TextField {...params} sx={{ minWidth: "264px" }} />
+                  )}
+                />
+              </Grid>
+              <Grid item flexGrow={1}>
+                <TextField
+                  error={message.text.length === 0}
+                  helperText={
+                    message.text.length === 0 ? "Enter a message" : ""
+                  }
+                  label={"Message"}
+                  fullWidth
+                  multiline
+                  value={message.text ?? ""}
+                  placeholder={"Enter message"}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    props.messages[index].text = event.target.value;
+                    props.onMessagesChanged(props.messages);
+                    // this.setState({messages: this.state.messages});
+                  }}
+                />
+              </Grid>
             </Grid>
-        </ListItem>
+          </ListItem>
+        );
     }
 
     const removeMessage = (index: number) => {
