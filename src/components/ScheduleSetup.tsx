@@ -3,6 +3,7 @@ import {
     Button,
     CircularProgress,
     Grid,
+    IconButton,
     List,
     ListItem,
     Snackbar,
@@ -14,7 +15,6 @@ import {
 import ClearIcon from '@mui/icons-material/Clear';
 import {DateTimePicker} from "@mui/x-date-pickers";
 import {FhirClientContext} from "../FhirClientContext";
-import {makeCarePlan, makeCommunicationRequests} from "../model/modelUtil";
 import {IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {CommunicationRequest} from "../model/CommunicationRequest";
 import Alert from "@mui/material/Alert";
@@ -27,16 +27,16 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import Dialog from "@mui/material/Dialog";
 import Client from "fhirclient/lib/Client";
-import {getUsername} from "../util/isacc_util";
+import PatientNotes from "./PatientNotes";
+import CarePlan from "../model/CarePlan";
 
 
 interface ScheduleSetupProps {
 }
 
 type ScheduleSetupState = {
-    messages: MessageDraft[];
-    patientNote: string;
-    showAlert: boolean;
+    carePlan: CarePlan;
+    showCloseSchedulePlannerAlert: boolean;
     alertSeverity: "error" | "warning" | "info" | "success";
     alertText: string;
     savingInProgress: boolean;
@@ -64,9 +64,8 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
     constructor(props: ScheduleSetupProps) {
         super(props);
         this.state = {
-            messages: null,
-            patientNote: '',
-            showAlert: false,
+            carePlan: null,
+            showCloseSchedulePlannerAlert: false,
             alertText: null,
             alertSeverity: null,
             savingInProgress: false
@@ -76,58 +75,74 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
 
     componentDidMount() {
         //@ts-ignore
-        let patient: Patient = this.context.patient;
-        //@ts-ignore
-        let client: Client = this.context.client;
-
-        let replacements: { [key: string]: number } = {};
-        let preferred_username = getUsername(client);
-        if (preferred_username) {
-            replacements['{userName}'] = preferred_username;
-        }
-
-        const messages: MessageDraft[] = this.planDefinition.createMessageList(patient, replacements);
-        this.setState({messages: messages});
+        let carePlan: CarePlan = this.context.carePlan;
+        this.setState({carePlan: carePlan});
     }
 
     render(): React.ReactNode {
-        if (!this.state || !this.state.messages) return <CircularProgress/>;
+        if (!this.state || !this.state.carePlan || !this.context) return <CircularProgress/>;
+
+        //@ts-ignore
+        let patient: Patient = this.context.patient;
+
+        let editing = this.state.carePlan.id != null;
+
 
         return <>
+            {editing ?
+                <Alert severity={"info"}>
+                    {`You are editing an existing CarePlan (CarePlan/${this.state.carePlan.id}, created ${new Date(this.state.carePlan.created)})`}
+                </Alert>
+                : null}
             <Grid container spacing={2}>
                 <Grid item xs={6}><Summary editable={true}/></Grid>
                 <Grid item xs={6}>
-                    <Typography variant={'h6'}>{"Patient note"}</Typography>
-                    <TextField
-                        sx={{maxHeight: 400, overflow: 'auto', ...styles.patientNotesField}}
-                        fullWidth
-                        multiline
-                        value={this.state.patientNote ?? ""}
-                        placeholder={"Patient note"}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                            this.setState({patientNote: event.target.value});
-                        }}/>
+                    {editing ?
+                        <PatientNotes/> :
+                        <>
+                            <Typography variant={'h6'}>{"Patient note"}</Typography>
+                            <TextField
+                                sx={{maxHeight: 400, overflow: 'auto', ...styles.patientNotesField}}
+                                fullWidth
+                                multiline
+                                value={this.state.carePlan.description ?? ""}
+                                placeholder={"Patient note"}
+                                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                    const cp = this.state.carePlan;
+                                    cp.description = event.target.value;
+                                    this.setState({carePlan: cp});
+                                }}/>
+                        </>
+                    }
                 </Grid>
                 <Grid item xs={12}>
                     <MessageScheduleList
-                        messages={this.state.messages}
-                        onMessagesChanged={(messages: MessageDraft[]) => this.setState({messages: messages})}
+                        messagePlan={this.state.carePlan}
+                        onMessagePlanChanged={(carePlan: CarePlan) => {
+                            this.setState({carePlan: carePlan});
+                        }}
                         saveSchedule={() => this.saveSchedule()}
+                        patient={patient}
                     />
                 </Grid>
             </Grid>
 
-            {this.getAlert()}
+            {this.getCloseSchedulePlannerAlert()}
         </>
     }
 
     private showSnackbar(alertSeverity: "error" | "warning" | "info" | "success", alertText: string) {
-        this.setState({showAlert: true, alertSeverity: alertSeverity, alertText: alertText, savingInProgress: false});
+        this.setState({
+            showCloseSchedulePlannerAlert: true,
+            alertSeverity: alertSeverity,
+            alertText: alertText,
+            savingInProgress: false
+        });
     }
 
-    private getAlert() {
+    private getCloseSchedulePlannerAlert() {
         let clearSessionLink = getEnv("REACT_APP_DASHBOARD_URL") + "/clear_session";
-        let onClose = () => this.setState({showAlert: false});
+        let onClose = () => this.setState({showCloseSchedulePlannerAlert: false});
 
         if (this.state.savingInProgress) {
             return <Dialog open={this.state.savingInProgress}>
@@ -139,7 +154,7 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
         }
 
         if (this.state.alertSeverity === 'success') {
-            return <Dialog open={this.state.showAlert}
+            return <Dialog open={this.state.showCloseSchedulePlannerAlert}
                            onClose={onClose}>
                 <DialogContent>
                     <DialogContentText>{this.state.alertText}</DialogContentText>
@@ -152,7 +167,7 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
                 </DialogContent>
             </Dialog>;
         }
-        return <Snackbar open={this.state.showAlert}
+        return <Snackbar open={this.state.showCloseSchedulePlannerAlert}
                          autoHideDuration={6000}
                          onClose={onClose}>
             <Alert
@@ -164,6 +179,7 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
             </Alert>
         </Snackbar>;
     }
+
 
     private saveSchedule() {
         // @ts-ignore
@@ -182,27 +198,41 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
         }
         this.setState({savingInProgress: true});
 
-        if (this.state.messages.find((m: MessageDraft) => m.text.length === 0)) {
+        if (this.state.carePlan.communicationRequests.find((m: CommunicationRequest) => m.getText().length === 0)) {
             this.showSnackbar("error", "Messages cannot be empty");
             return;
         }
 
         client.update(patient).then((value: any) => console.log(`Patient ${patient.id} updated`));
 
-        let communicationRequests = makeCommunicationRequests(patient, this.planDefinition, this.state.messages);
-        let promises = communicationRequests.map(
-            (c: CommunicationRequest) => client.create(c).then(
-                (value: any) => CommunicationRequest.from(value)
-            )
+        let promises = this.state.carePlan.communicationRequests.map(
+            (c: CommunicationRequest) => {
+                let p;
+                if (c.id) {
+                    p = client.update(c);
+                } else {
+                    p = client.create(c);
+                }
+                return p.then(
+                    (value: any) => CommunicationRequest.from(value)
+                );
+            }
         );
 
         Promise.all(promises).then((communicationRequests: CommunicationRequest[]) => {
             communicationRequests.forEach((v: CommunicationRequest) => {
                 console.log("resource saved:", v);
             });
-            // create CarePlan with the newly created CommunicationRequests
-            let carePlan = makeCarePlan(this.planDefinition, patient, communicationRequests, this.state.patientNote);
-            client.create(carePlan).then((savedCarePlan: IResource) => {
+            // update CarePlan with the newly created CommunicationRequests
+            this.state.carePlan.setCommunicationRequests(communicationRequests);
+            // create resource on server
+            let p;
+            if (this.state.carePlan.id) {
+                p = client.update(this.state.carePlan);
+            } else {
+                p = client.create(this.state.carePlan);
+            }
+            p.then((savedCarePlan: IResource) => {
                 this.onSaved(savedCarePlan);
                 let updatePromises = communicationRequests.map((c: CommunicationRequest) => {
                     c.basedOn = [{reference: `CarePlan/${savedCarePlan.id}`}];
@@ -231,75 +261,62 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
 
 
 const MessageScheduleList = (props: {
-    messages: MessageDraft[],
-    onMessagesChanged: (messages: MessageDraft[]) => void,
+    messagePlan: CarePlan,
+    patient: Patient,
+    onMessagePlanChanged: (carePlan: CarePlan) => void,
     saveSchedule: () => void,
 }) => {
 
-    const buildMessageItem = (message: MessageDraft, index: number) => {
-        return (
-          <ListItem
-            key={index}
-            sx={{ width: "100%" }}
-            secondaryAction={
-              <ClearIcon
-                onClick={() => {
-                  removeMessage(index);
-                }}
-              />
-            }
-          >
-            <Grid
-              container
-              direction={"row"}
-              flexDirection={"row"}
-              spacing={2}
-              sx={{ paddingTop: 2 }}
-            >
-              <Grid item>
-                <DateTimePicker
-                  label="Date & Time"
-                  value={message.scheduledDateTime}
-                  inputFormat="ddd, MM/DD/YYYY hh:mm A" // example output display: Thu, 03/09/2023 09:34 AM
-                  onChange={(newValue: Date | null) => {
-                    // message.scheduledDateTime = newValue;
-                    let messages = props.messages;
-                    messages[index].scheduledDateTime = newValue;
-                    props.onMessagesChanged(messages);
-                    // this.setState({messages: this.state.messages});
-                  }}
-                  renderInput={(params: TextFieldProps) => (
-                    <TextField {...params} sx={{ minWidth: "264px" }} />
-                  )}
-                />
-              </Grid>
-              <Grid item flexGrow={1}>
-                <TextField
-                  error={message.text.length === 0}
-                  helperText={
-                    message.text.length === 0 ? "Enter a message" : ""
-                  }
-                  label={"Message"}
-                  fullWidth
-                  multiline
-                  value={message.text ?? ""}
-                  placeholder={"Enter message"}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    props.messages[index].text = event.target.value;
-                    props.onMessagesChanged(props.messages);
-                    // this.setState({messages: this.state.messages});
-                  }}
-                />
-              </Grid>
+    const buildMessageItem = (message: CommunicationRequest, index: number) => {
+        return <ListItem key={index} sx={{
+            width: '100%'
+        }} secondaryAction={
+            message.status === "completed" ? <></> :
+            <IconButton hidden={message.status === "completed"} onClick={() => {
+                removeMessage(index);
+            }}>
+                <ClearIcon/>
+            </IconButton>
+        }>
+            <Grid container direction={"row"} flexDirection={"row"} spacing={2}
+                  sx={{paddingTop: 2}}>
+
+                <Grid item>
+                    <DateTimePicker
+
+                        label={message.status === "completed" ? "Delivered Date & Time" : "Scheduled Date & Time"}
+                        value={message.occurrenceDateTime}
+                        inputFormat="ddd, MM/DD/YYYY hh:mm A" // example output display: Thu, 03/09/2023 09:34 AM
+                        disabled={message.status === "completed"}
+                        onChange={(newValue: Date | null) => {
+                            message.setOccurrenceDate(newValue);
+                            props.onMessagePlanChanged(props.messagePlan);
+                        }}
+                        renderInput={(params: TextFieldProps) => <TextField {...params} />}/>
+                </Grid>
+                <Grid item flexGrow={1}>
+                    <TextField
+                        error={message.getText().length === 0}
+                        helperText={message.getText().length === 0 ? "Enter a message" : ""}
+                        label={message.status === "completed" ? "Delivered Message" : "Scheduled Message"}
+                        fullWidth
+                        multiline
+                        value={message.getText() ?? ""}
+                        placeholder={"Enter message"}
+                        disabled={message.status === "completed"}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                            message.setText(event.target.value);
+                            props.onMessagePlanChanged(props.messagePlan);
+                        }}/>
+                </Grid>
             </Grid>
-          </ListItem>
-        );
+        </ListItem>
     }
 
     const removeMessage = (index: number) => {
-        let messages = props.messages;
-        messages.splice(index, 1);
-        props.onMessagesChanged(messages);
+        let messagePlan = props.messagePlan;
+        messagePlan.removeActiveCommunicationRequest(index);
+        props.onMessagePlanChanged(messagePlan);
     }
 
     return <><Typography variant={'h6'}>{"Message schedule"}</Typography>
@@ -308,17 +325,16 @@ const MessageScheduleList = (props: {
         </Alert>
 
         <List>{
-            props.messages.map((message: MessageDraft, index: number) => {
-                    return buildMessageItem(message, index);
-                }
+            props.messagePlan.getActiveCommunicationRequests().map(
+                (message: CommunicationRequest, index: number) => buildMessageItem(message, index)
             )
         }</List>
 
         <Stack direction={'row'} justifyContent={"space-between"}>
             <Button variant="outlined" onClick={() => {
-                props.messages.push({text: "", scheduledDateTime: new Date()});
-                props.onMessagesChanged(props.messages);
-                // this.setState({messages: this.state.messages});
+                let newMessage = CommunicationRequest.createNewScheduledMessage("", props.patient, props.messagePlan, new Date());
+                props.messagePlan.addCommunicationRequest(newMessage);
+                props.onMessagePlanChanged(props.messagePlan);
             }}>
                 Add message
             </Button>

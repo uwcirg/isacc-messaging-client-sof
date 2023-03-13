@@ -22,6 +22,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
     const [error, setError] = React.useState('');
     const [patient, setPatient] = React.useState(null);
     const [carePlan, setCarePlan] = React.useState(null);
+    const [loaded, setLoaded] = React.useState(false);
 
     async function getPatient(client: Client): Promise<Patient> {
         if (!client) return;
@@ -44,6 +45,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
         let params = new URLSearchParams({
             "subject": `Patient/${patientId}`,
             "category": IsaccCarePlanCategory.isaccMessagePlan.code,
+            "status": "active",
             "_sort": "-_lastUpdated"
         }).toString();
         return await client.request(`/CarePlan?${params}`).then((bundle: Bundle) => {
@@ -84,18 +86,23 @@ export default function FhirClientProvider(props: Props): JSX.Element {
                         setCarePlan(carePlanResult);
                         if (carePlanResult) {
                             console.log(`Loaded ${carePlanResult.reference}`);
-
                         }
+                        setLoaded(true);
                     }, (reason: any) => setError(reason)).catch(e => {
                         console.log("Error fetching CarePlan", e)
                         setError(e);
+                        setLoaded(true);
                     });
                 }).catch(e => {
                     console.log("Error fetching Patient", e)
                     setError(e);
+                    setLoaded(true);
                 });
 
-            }, (reason: any) => setError(reason)
+            }, (reason: any) => {
+                setError(reason);
+                setLoaded(true);
+            }
         );
     }, []);
 
@@ -114,7 +121,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
                     }
 
                     // if client is already available render the subtree
-                    if (context.client && context.patient) {
+                    if (loaded) {
                         return props.children;
                     }
 

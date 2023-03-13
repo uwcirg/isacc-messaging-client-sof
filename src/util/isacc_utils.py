@@ -10,6 +10,8 @@ import argparse
 from datetime import datetime
 import dateutil.parser
 
+import requests
+
 
 class IsaccRecordCreator:
     def __init__(self, api_base):
@@ -156,7 +158,7 @@ class IsaccRecordCreator:
         self.generateIncomingMessage("I feel trapped and there's nothing I can do to help myself",themes=['entrapment', 'hopelessness'], priority='stat', patientId=patientId)
         self.createPHQ(4, patientId=patientId)
 
-    def createPHQ(score, patientId=None):
+    def createPHQ(self, score, patientId=None):
         if patientId is None:
             patientId = "2cda5aad-e409-4070-9a15-e1c35c46ed5a" # Geoffrey Abbott
 
@@ -199,6 +201,51 @@ class IsaccRecordCreator:
         result = o.create(self.db.server)
         print(result)
 
+    def delete_entire_careplans(self, cps_to_delete):
+        cp_ids_to_delete = [cp.id for cp in cps_to_delete]
+        cs_to_delete = list(set([
+            c.id
+            for cp_id in cp_ids_to_delete
+            for c in Communication.where(struct={'part-of': f"CarePlan/{cp_id}"}).perform_resources(self.db.server)
+        ]))
+        crs_to_delete = [a.reference.reference.split(
+            '/')[1] for r in cps_to_delete for a in r.activity]
+        deletion_bundle = {
+            "resourceType": "Bundle",
+            "type": "transaction",
+            "entry": [
+                {
+                    "request": {
+                        "method": "DELETE",
+                        "url": f"CarePlan/{cp_id}"
+                    }
+                } for cp_id in cp_ids_to_delete]+[
+                {
+                    "request": {
+                        "method": "DELETE",
+                        "url": f"CommunicationRequest/{cr_id}"
+                    }
+                } for cr_id in crs_to_delete]+[
+                {
+                    "request": {
+                        "method": "DELETE",
+                        "url": f"Communication/{c_id}"
+                    }
+                } for c_id in cs_to_delete]
+
+        }
+        result=requests.post(self.db.server.base_uri, json=deletion_bundle)
+        for i in result.iter_lines():
+            print(i)
+        return result
+
+
+    def delete_entire_patient(self, patientId):
+        cps=CarePlan.where(struct={"subject": f"Patient/{patientId}",
+                "category": "isacc-message-plan"}).perform_resources(self.db.server)
+        print(self.delete_entire_careplans(cps))
+        print(Patient.read(patientId, self.db.server).delete(self.db.server))
+
 
 def main(args=None):
     parser = argparse.ArgumentParser()
@@ -219,6 +266,9 @@ def main(args=None):
     subcommand3_parser = subparsers.add_parser("generateScript", help="Generate messages from CarePlan")
     subcommand3_parser.add_argument('--patient', '-p', help="Patient ID", default="2cda5aad-e409-4070-9a15-e1c35c46ed5a")
 
+    subcommand4_parser = subparsers.add_parser("deletePatient", help="Delete entire patient")
+    subcommand4_parser.add_argument('--patient', '-p', help="Patient ID", default="2cda5aad-e409-4070-9a15-e1c35c46ed5a")
+
     args = parser.parse_args(args)
 
     recordCreator = IsaccRecordCreator(api_base=args.api_base)
@@ -230,6 +280,8 @@ def main(args=None):
         recordCreator.generateIncomingMessage(patientId=args.patient, message=args.message, time=time, priority=args.priority, themes=args.themes)
     elif args.command == "generateScript":
         recordCreator.generateScript(patientId=args.patient)
+    elif args.command == "deletePatient":
+        recordCreator.delete_entire_patient(patientId=args.patient)
     else:
         print("Command not found")
 

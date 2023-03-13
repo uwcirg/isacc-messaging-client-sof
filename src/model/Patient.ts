@@ -7,7 +7,6 @@ import {
   IExtension,
   IHumanName,
   IIdentifier,
-  IMeta,
   INarrative,
   IPatient,
   IPatient_Communication,

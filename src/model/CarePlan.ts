@@ -17,7 +17,7 @@ import {
 } from "@ahryman40k/ts-fhir-types/lib/R4";
 import {IsaccCarePlanCategory} from "./CodeSystem";
 import Patient from "./Patient";
-
+import {CommunicationRequest} from "./CommunicationRequest";
 
 
 export default class CarePlan implements ICarePlan {
@@ -66,31 +66,68 @@ export default class CarePlan implements ICarePlan {
     static from(raw: ICarePlan): CarePlan {
         if (!raw) return null;
         let c = Object.assign(new CarePlan(), raw);
-        c.activity = c.activity.map((a: any) => CarePlanActivity.from(a));
+        c.activity = c.activity?.map((a: any) => CarePlanActivity.from(a));
         return c;
     }
 
-    static createIsaccCarePlan(subject?: Patient, instantiates?: IResourceList, activities?: CarePlanActivity[]) : CarePlan{
+    static createIsaccCarePlan(subject?: Patient, instantiates?: IResourceList, communicationRequests?: CommunicationRequest[]): CarePlan {
+
         let carePlan = new CarePlan();
+
+        carePlan.setCommunicationRequests(communicationRequests);
+
         carePlan.resourceType = "CarePlan";
         // TODO: populate instantiatesCanonical once the PlanDefinition is loaded from FHIR server rather than defined in-app
         // if (instantiates !== undefined) {
         //     carePlan.instantiatesCanonical = [`${instantiates.resourceType}/${instantiates.id}`];
         // }
-        carePlan.activity = activities;
         carePlan.intent = "plan";
         carePlan.status = "active";
         if (subject) {
             carePlan.subject = {reference: subject.reference};
         }
         carePlan.category = [{coding: [IsaccCarePlanCategory.isaccMessagePlan]}]
+        carePlan.created = new Date().toISOString();
 
-        return carePlan
+        return carePlan;
     }
-
 
     get reference(): string {
         return `${this.resourceType}/${this.id}`;
+    }
+
+    communicationRequests: CommunicationRequest[];
+
+    setCommunicationRequests(communicationRequests: CommunicationRequest[]) {
+        this.communicationRequests = communicationRequests.sort(((a, b) => a.occurrenceDateTime < b.occurrenceDateTime ? -1 : 1));
+        this.updateActivityAttr();
+    }
+
+    getActiveCommunicationRequests() {
+        return this.communicationRequests.filter(
+            (message: CommunicationRequest) => message.status !== "revoked"
+        )
+    }
+
+    private updateActivityAttr() {
+        this.activity = this.communicationRequests.filter((req: CommunicationRequest) => req.status !== 'revoked').map((req: CommunicationRequest) => CarePlanActivity.withReference(req.reference));
+    }
+
+    addCommunicationRequest(communicationRequest: CommunicationRequest) {
+        this.communicationRequests.push(communicationRequest);
+    }
+
+    removeActiveCommunicationRequest(index: number) {
+        let requests = this.getActiveCommunicationRequests();
+        // if record doesn't exist yet on server, just delete it. Otherwise, don't delete, but rather, mark it as revoked
+        if (requests[index].id) {
+            requests[index].status = "revoked";
+            this.updateActivityAttr();
+        } else {
+            requests.splice(index, 1);
+            this.updateActivityAttr();
+        }
+        // update activity array
     }
 }
 
