@@ -4,14 +4,14 @@ import {
     ICommunicationRequest_Payload,
     IReference
 } from "@ahryman40k/ts-fhir-types/lib/R4";
-import {IsaccMessageCategory, Medium} from "./CodeSystem";
+import {Coding, IsaccMessageCategory, Medium} from "./CodeSystem";
 import Patient from "./Patient";
 import CarePlan from "./CarePlan";
 
 export class CommunicationRequest implements ICommunicationRequest {
     resourceType: "CommunicationRequest";
     id: string;
-    occurrenceDateTime: string;
+    occurrenceDateTime: string; // ISO string
     payload: ICommunicationRequest_Payload[];
     recipient: IReference[];
     status: string;
@@ -35,15 +35,49 @@ export class CommunicationRequest implements ICommunicationRequest {
         this.category = [{coding: [IsaccMessageCategory.isaccScheduledMessage]}]
     }
 
-    static createNewOutgoingMessage(messageContent: string, patient: Patient, carePlan: CarePlan): CommunicationRequest {
-        let c = new CommunicationRequest();
-        c.basedOn = [{reference: carePlan.reference}];
-        c.status = "active";
-        c.category = [{coding: [IsaccMessageCategory.isaccManuallySentMessage]}];
-        c.medium = [Medium.sms];
-        c.occurrenceDateTime = new Date().toISOString();
-        c.recipient = [{reference: patient.reference}];
-        c.payload = [{contentString: messageContent}];
+    static createNewScheduledMessage(messageContent: string, patient: Patient, carePlan: CarePlan, occurrenceDateTime: Date): CommunicationRequest {
+        let c = this.createNewOutgoingMessage(messageContent, patient, carePlan, IsaccMessageCategory.isaccScheduledMessage);
+        c.setOccurrenceDate(occurrenceDateTime);
         return c;
+    }
+    static createNewManualOutgoingMessage(messageContent: string, patient: Patient, carePlan: CarePlan) {
+        return this.createNewOutgoingMessage(messageContent, patient, carePlan, IsaccMessageCategory.isaccManuallySentMessage);
+    }
+
+    static createNewOutgoingMessage(messageContent: string, patient: Patient, carePlan: CarePlan, messageType: Coding): CommunicationRequest {
+        if (!messageType) {
+            messageType = IsaccMessageCategory.isaccManuallySentMessage;
+        }
+
+        let c = new CommunicationRequest();
+        if (carePlan) {
+            c.basedOn = [{reference: carePlan.reference}];
+        }
+        c.category = [{coding: [messageType]}];
+        c.medium = [Medium.sms];
+        c.setOccurrenceDate(new Date());
+        c.recipient = [{reference: patient.reference}];
+        c.setText(messageContent);
+        return c;
+    }
+
+
+    getOccurrenceDate(): Date {
+        return new Date(this.occurrenceDateTime);
+    }
+
+    setOccurrenceDate(date: Date) {
+        this.occurrenceDateTime = date.toISOString();
+    }
+
+    getText(): string {
+        if (this.payload) {
+            return this.payload[0].contentString;
+        }
+        return null;
+    }
+
+    setText(text: string) {
+        this.payload = [{contentString: text}];
     }
 }
