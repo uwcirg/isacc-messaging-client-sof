@@ -283,7 +283,6 @@ const MessageScheduleList = (props: {
 
                 <Grid item>
                     <DateTimePicker
-
                         label={message.status === "completed" ? "Delivered Date & Time" : "Scheduled Date & Time"}
                         value={message.occurrenceDateTime}
                         inputFormat="ddd, MM/DD/YYYY hh:mm A" // example output display: Thu, 03/09/2023 09:34 AM
@@ -292,7 +291,8 @@ const MessageScheduleList = (props: {
                             message.setOccurrenceDate(newValue);
                             props.onMessagePlanChanged(props.messagePlan);
                         }}
-                        renderInput={(params: TextFieldProps) => <TextField {...params} />}/>
+                        renderInput={(params: TextFieldProps) => <TextField {...params} sx={{ width: "264px" }} />}
+                    />
                 </Grid>
                 <Grid item flexGrow={1}>
                     <TextField
