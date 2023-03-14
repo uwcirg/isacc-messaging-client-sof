@@ -4,7 +4,8 @@ import {
     IActivityDefinition_DynamicValue,
     IPlanDefinition,
     IPlanDefinition_Action,
-    IResourceList, ITiming,
+    IResourceList,
+    ITiming,
     PlanDefinitionStatusKind
 } from "@ahryman40k/ts-fhir-types/lib/R4";
 import defaultSchedule from "../resource/default_message_schedule.json"
@@ -12,8 +13,11 @@ import {ITriggerDefinition} from "@ahryman40k/ts-fhir-types/lib/R4/Resource/RTTI
 import Patient from "./Patient";
 import {birthdaysBetweenDates} from "../util/isacc_util";
 import {MessageDraft} from "../components/ScheduleSetup";
+import {makeCommunicationRequests} from "./modelUtil";
+import {CommunicationRequest} from "./CommunicationRequest";
 
 export default class PlanDefinition implements IPlanDefinition {
+    resourceType: "PlanDefinition";
     activityDefinitions: ActivityDefinition[];
     action: IPlanDefinition_Action[];
     contained: IResourceList[];
@@ -45,11 +49,9 @@ export default class PlanDefinition implements IPlanDefinition {
         return `${this.resourceType}/${this.id}`;
     }
 
-    resourceType: "PlanDefinition";
-
-    createMessageList(patient: Patient, replacements: object): MessageDraft[] {
+    createMessageList(patient: Patient, replacements: object): CommunicationRequest[] {
         // regular messages
-        const messages: MessageDraft[] = this.activityDefinitions.map(
+        let messages: MessageDraft[] = this.activityDefinitions.map(
             (activityDef: ActivityDefinition) => {
                 if (!this.isBirthdayMessage(activityDef.id) && activityDef.timingTiming) {
                     let contentString = activityDef.payloadText;
@@ -82,17 +84,31 @@ export default class PlanDefinition implements IPlanDefinition {
                 (activityDef: ActivityDefinition) => activityDef.id === birthdayMessageAction.definitionCanonical.slice(1)
             );
             if (birthdayMessageAction && birthdayMessageActivityDefinition) {
-                let birthdays = birthdaysBetweenDates(programStart, programEnd, new Date(patient.birthDate));
-                birthdays.forEach((d: Date) => messages.push({
-                    text: birthdayMessageActivityDefinition.payloadText,
-                    scheduledDateTime: birthdayMessageActivityDefinition.nextOccurrenceTimeAtDate(d),
-                }));
+                if (patient.birthDate) {
+                    let dobNumbers = patient.birthDate.split('-').map((v:string) => parseInt(v))
+                    let year, month, day;
+                    if (dobNumbers.length >= 1) {
+                        year = dobNumbers[0];
+                    }
+                    if (dobNumbers.length >= 2) {
+                        month = dobNumbers[1];
+                    }
+                    if (dobNumbers.length >= 3) {
+                        day = dobNumbers[2];
+                    }
+
+                    let birthdays = birthdaysBetweenDates(programStart, programEnd, new Date(year, month, day));
+                    birthdays.forEach((d: Date) => messages.push({
+                        text: birthdayMessageActivityDefinition.payloadText,
+                        scheduledDateTime: birthdayMessageActivityDefinition.nextOccurrenceTimeAtDate(d),
+                    }));
+                }
             }
         }
 
         //TODO: Add holidays
-
-        return messages.sort((a, b) => a.scheduledDateTime < b.scheduledDateTime ? -1 : 1);
+        messages = messages.sort((a, b) => a.scheduledDateTime < b.scheduledDateTime ? -1 : 1);
+        return makeCommunicationRequests(patient, this, messages);
     }
 }
 
