@@ -125,7 +125,7 @@ export default class CarePlan implements ICarePlan {
             this.updateActivityAttr();
         } else {
             requests.splice(index, 1);
-            this.updateActivityAttr();
+            this.setCommunicationRequests(requests);
         }
         // update activity array
     }
