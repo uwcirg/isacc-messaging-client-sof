@@ -195,9 +195,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
     }
 
     getCarePlanAlreadyExistsView(): JSX.Element {
-        let edit = () => {
-            this.handleSetEditModeTrue();
-        };
+        let edit = () => this.handleSetEditModeTrue();
         let createNew = () => this.handleSetEditModeFalse();
 
         // @ts-ignore
@@ -215,7 +213,6 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
                     onClick={edit} autoFocus>Edit</Button>
                 <Button
                     onClick={createNew} autoFocus>Revoke and create new</Button>
-
             </DialogActions>
         </DialogContent>;
 
