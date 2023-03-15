@@ -101,7 +101,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
             });
 
         }).then(() => {
-            existingCarePlan.status = "revoke";
+            existingCarePlan.status = "revoked";
             client.update(existingCarePlan).then(
                 //onfulfilled
                 (value) => console.log(`CarePlan/${existingCarePlan.id} revocation successful:`, value),
