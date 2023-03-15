@@ -1,4 +1,5 @@
 import {
+  ContactPointSystemKind,
   IAddress,
   IAttachment,
   ICodeableConcept,
@@ -58,6 +59,30 @@ export default class Patient implements IPatient {
   static from(raw: IPatient): Patient {
     if (!raw) return null;
     return Object.assign(new Patient(), raw);
+  }
+
+  get smsContactPoint() : string {
+    let p = this.telecom?.filter(
+        (t: IContactPoint) => t.system === ContactPointSystemKind._sms
+    )[0];
+    return p ? p.value : null;
+  }
+
+  set smsContactPoint(phone: string) {
+    if (!this.telecom) {
+      this.telecom = [];
+    }
+
+    let smsContactPoint: IContactPoint = this.telecom.filter(
+        (t: IContactPoint) => t.system === ContactPointSystemKind._sms
+    )[0];
+
+    if (!smsContactPoint) {
+      smsContactPoint = {system: ContactPointSystemKind._sms};
+      this.telecom.push(smsContactPoint);
+    }
+
+    smsContactPoint.value = phone;
   }
 
   get firstName(): string {
