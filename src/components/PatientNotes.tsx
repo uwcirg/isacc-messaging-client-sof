@@ -38,35 +38,46 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
 
         if (!carePlan) return null;
 
-        return <>
-            <CardContent>
-                <Typography variant={"h6"}>Patient notes</Typography>
-                {this.state.editable ?
-                    <TextField
-                        InputProps={{sx: {typography: 'body2'}}}
-                        multiline
-                        fullWidth
-                        value={this.state.updatedPatientNote ?? ""}
-                        placeholder={"Enter patient note"}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                            this.setState({updatedPatientNote: event.target.value});
-                        }}
-                    /> :
-                    <Typography variant={"body2"}>{carePlan.description}</Typography>
-                }
-                {this._updateError()}
+        return (
+          <>
+            <CardContent sx={{ padding: 0 }}>
+              <Typography variant={"h6"}>Patient notes</Typography>
+              {this.state.editable ? (
+                <TextField
+                  InputProps={{ sx: { typography: "body2" } }}
+                  multiline
+                  fullWidth
+                  value={this.state.updatedPatientNote ?? ""}
+                  placeholder={"Enter patient note"}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    this.setState({ updatedPatientNote: event.target.value });
+                  }}
+                />
+              ) : (
+                <Typography variant={"body2"}>
+                  {carePlan.description}
+                </Typography>
+              )}
+              {this._updateError()}
             </CardContent>
             <CardActions>
-                <Button onClick={() => {
-                    if (this.state.editable) {
-                        this.updateNote(this.state.updatedPatientNote)
-                    } else {
-                        this.setState({updatedPatientNote: carePlan.description, editable: true});
-                    }
-                }}>{this.state.editable ? "Done" : "Update"}</Button>
-
+              <Button
+                onClick={() => {
+                  if (this.state.editable) {
+                    this.updateNote(this.state.updatedPatientNote);
+                  } else {
+                    this.setState({
+                      updatedPatientNote: carePlan.description,
+                      editable: true,
+                    });
+                  }
+                }}
+              >
+                {this.state.editable ? "Done" : "Update"}
+              </Button>
             </CardActions>
-        </>;
+          </>
+        );
     }
 
     private _updateError() {
