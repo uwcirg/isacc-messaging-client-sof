@@ -27,8 +27,8 @@ export const MessagingApp = () => {
         container
         direction={"row"}
         justifyContent={"center"}
-        rowSpacing={{ sx: 0, sm: 1 }}
-        columnSpacing={{ sx: 0, sm: 1 }}
+        rowSpacing={1}
+        columnSpacing={1}
       >
         <GridItem xs={12} sm={12} md={3} lg={3} xl={3}>
           <Stack direction={"column"} spacing={1} sx={{ width: "100%" }}>
