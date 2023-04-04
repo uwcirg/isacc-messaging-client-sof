@@ -3,9 +3,6 @@ import {FhirClientContext} from '../FhirClientContext';
 import {
     Alert,
     CircularProgress,
-    FormControl,
-    MenuItem,
-    Select,
     Table,
     TableBody,
     TableCell,
@@ -90,18 +87,6 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             value: this.props.editable ? contactInformationEntry : (contactInformationValue ?? "None on file")
         };
 
-        let ccContactMethodPreference = "SMS";
-        let ccContactMethodSelector = <FormControl variant="standard" sx={{m: 1, minWidth: 120}}>
-            <Select
-                value={ccContactMethodPreference}
-                // onChange={handleChange}
-
-            >
-                <MenuItem value={"SMS"}>SMS</MenuItem>
-                <MenuItem value={"Email"}>Email</MenuItem>
-            </Select>
-        </FormControl>
-
         let rows = [
             {label: 'First name', value: patient.name[0].given},
             {label: 'Last name', value: patient.name[0].family},
@@ -111,7 +96,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             {label: 'Emergency contact', value: emergencyContactString},
             {
                 label: 'Send Caring Contacts via:',
-                value: this.props.editable ? ccContactMethodSelector : ccContactMethodPreference
+                value: "SMS" // hard coded because only SMS is supported for now
             },
         ]
 
