@@ -53,7 +53,8 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         // @ts-ignore
         let client: Client = this.context.client;
         let params = new URLSearchParams({
-            "_count": "1000"
+            "_count": "250",
+            "_sort": "-_lastUpdated"
         }).toString();
         client.request(`/Practitioner?${params}`).then((bundle: Bundle) => {
             console.log("Loaded practitioners", bundle);
