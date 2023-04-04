@@ -52,19 +52,38 @@ export const IsaccCarePlanCategory = {
     isaccMessagePlan: Coding.make("https://isacc.app/CodeSystem/careplan-type", "isacc-message-plan")
 }
 export const IsaccMessageCategory = {
-    isaccScheduledMessage: Coding.make("https://isacc.app/CodeSystem/communication-request-type", "isacc-scheduled-message"),
-    isaccAutoSentMessage: Coding.make("https://isacc.app/CodeSystem/communication-type", "isacc-auto-sent-message"),
-    isaccManuallySentMessage: Coding.make("https://isacc.app/CodeSystem/communication-type", "isacc-manually-sent-message"),
-    isaccReceivedMessage: Coding.make("https://isacc.app/CodeSystem/communication-type", "isacc-received-message")
-}
+  isaccScheduledMessage: Coding.make(
+    "https://isacc.app/CodeSystem/communication-request-type",
+    "isacc-scheduled-message"
+  ),
+  isaccAutoSentMessage: Coding.make(
+    "https://isacc.app/CodeSystem/communication-type",
+    "isacc-auto-sent-message"
+  ),
+  isaccManuallySentMessage: Coding.make(
+    "https://isacc.app/CodeSystem/communication-type",
+    "isacc-manually-sent-message"
+  ),
+  isaccReceivedMessage: Coding.make(
+    "https://isacc.app/CodeSystem/communication-type",
+    "isacc-received-message"
+  ),
+  isaccNonSMSMessage: Coding.make(
+    "https://isacc.app/CodeSystem/communication-type",
+    "isacc-non-sms-message"
+  ),
+};
 
 export const RelationshipCategory = {
     emergencyContact: Coding.make("http://hl7.org/fhir/ValueSet/patient-contactrelationship", "C")
 }
 
 export const Medium = {
-    sms: Coding.make('http://terminology.hl7.org/ValueSet/v3-ParticipationMode', 'SMSWRIT')
-}
+  sms: Coding.make(
+    "http://terminology.hl7.org/ValueSet/v3-ParticipationMode",
+    "SMSWRIT"
+  )
+};
 
 export const CSSAnswerCategories = {
     low: Coding.make("http://loinc.org", "LA9194-7"),
