@@ -44,7 +44,7 @@ export const MessagingApp = () => {
 
 const GridItemWithoutCardContent = ({children, ...rest}: PropsWithChildren & GridProps) =>
     <Grid item {...rest} flexGrow={1} display={"flex"}>
-        <Card variant={"outlined"} sx={{'flex-grow':"1"}}>
+        <Card variant={"outlined"} sx={{flexGrow:1}}>
             {children}
         </Card>
     </Grid>

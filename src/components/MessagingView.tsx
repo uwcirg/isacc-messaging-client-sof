@@ -7,21 +7,24 @@ import {IBundle_Entry, ICodeableConcept, ICoding, IReference, IResource} from "@
 import {
   Box,
   Button,
-  Checkbox,
   Chip,
   CircularProgress,
-  Divider,
-  FormGroup,
+  Dialog,
+  DialogActions,
+  DialogContent,
   FormControlLabel,
   Grid,
   IconButton,
   List,
+  Radio,
+  RadioGroup,
   Stack,
   TextField,
   TextFieldProps,
   Typography,
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
+import InfoIcon from "@mui/icons-material/Info";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import {amber, grey, lightBlue} from "@mui/material/colors";
 import {IsaccMessageCategory} from "../model/CodeSystem";
@@ -45,10 +48,11 @@ export default class MessagingView extends React.Component<
     activeNonSMSMessage: NonSMSMessage;
     error: any;
     communications: Communication[];
-    isNonSMSChecked: boolean;
+    media: string;
     temporaryCommunications: Communication[];
     messagesLoading: boolean;
     saveLoading: boolean;
+    infoOpen: boolean;
     // showAlert: boolean;
     // alertSeverity: "error" | "warning" | "info" | "success";
     // alertText: string;
@@ -67,10 +71,11 @@ export default class MessagingView extends React.Component<
       },
       error: null,
       communications: null,
-      isNonSMSChecked: false,
+      media: "sms",
       temporaryCommunications: [],
       messagesLoading: false,
       saveLoading: false,
+      infoOpen: false
     };
   }
 
@@ -130,7 +135,12 @@ export default class MessagingView extends React.Component<
       "part-of": `CarePlan/${carePlanId}`,
       _sort: "-sent",
     }).toString();
-    return await client.request(`/Communication?${params}`).then(
+    return await client.request({
+        url : `/Communication?${params}`, 
+        headers: {
+            "Cache-Control": "no-cache",
+        }
+    }).then(
       (bundle: Bundle) => {
         if (bundle.type === "searchset") {
           if (!bundle.entry) return [];
@@ -175,6 +185,7 @@ export default class MessagingView extends React.Component<
 
     let messageBoxProps = {
       maxHeight: 600,
+      minHeight: 40,
       overflow: "auto",
       display: "flex",
       flexDirection: "column-reverse",
@@ -186,7 +197,7 @@ export default class MessagingView extends React.Component<
 
     let messages = (
       <Stack direction={"row"} justifyContent={"flex-end"} sx={messageBoxProps}>
-        <Typography variant={"caption"}>{"No messages"}</Typography>
+        <Typography variant={"body1"} color="text.secondary">{"No messages"}</Typography>
       </Stack>
     );
 
@@ -197,7 +208,9 @@ export default class MessagingView extends React.Component<
       communications.sort((a, b) => {
         let d1 = a.sent ?? a.meta.lastUpdated;
         let d2 = b.sent ?? b.meta.lastUpdated;
-        return d1 < d2 ? 1 : -1;
+        const t1 = d1 ? new Date(d1).getTime() : 0;
+        const t2 = d2 ? new Date(d2).getTime() : 0;
+        return t1 < t2 ? 1 : -1;
       });
       messages = (
         <List sx={messageBoxProps}>
@@ -228,109 +241,161 @@ export default class MessagingView extends React.Component<
 
         {messages}
 
-        <TextField
-          multiline
-          value={this.state.activeMessage ?? ""}
-          placeholder={"Enter message"}
-        />
-        <Stack
-          direction={"row"}
-          justifyContent={"flex-end"}
-          sx={{ marginTop: 2, marginBottom: 2 }}
-        >
-          <Button variant="contained" onClick={() => this.saveMessage()}>
-            Send
-          </Button>
-        </Stack>
-        <Divider></Divider>
-        {this._buildNonSMSEntryComponent()}
+        {this._buildMediaSelect()}
+
+        <Box sx={{ backgroundColor: grey[50], padding: 1 }}>
+          {this.state.media === "sms" && this._buildSMSEntryComponent()}
+          {this.state.media !== "sms" && this._buildNonSMSEntryComponent()}
+        </Box>
+        
         {this.state.error && (
           <Alert severity="error" sx={{ marginTop: 2 }}>
-            {typeof this.state.error === "string" ? this.state.error : "Error occurred.  See console for detail."}
+            {typeof this.state.error === "string"
+              ? this.state.error
+              : "Error occurred.  See console for detail."}
           </Alert>
         )}
       </Grid>
     );
   }
 
+  private _buildMediaSelect(): React.ReactNode {
+    const handleInfoClose = () =>
+      this.setState({
+        infoOpen: false,
+      });
+    return (
+      <Stack direction={"row"}>
+        <RadioGroup
+          row
+          aria-labelledby="media method radio group"
+          name="mediaMethods"
+          value={this.state.media}
+          onChange={(event: React.ChangeEvent, value: string) => {
+            this.setState({ media: value });
+          }}
+          sx={{ marginTop: 1 }}
+        >
+          <FormControlLabel
+            value="sms"
+            control={<Radio size="small" />}
+            label="SMS"
+          />
+          <FormControlLabel
+            value="non-sms"
+            control={<Radio size="small" />}
+            label="Non-SMS"
+          />
+        </RadioGroup>
+        <IconButton
+          color="info"
+          size="small"
+          sx={{ position: "relative", top: 2, marginLeft: -2 }}
+          onClick={() => this.setState({ infoOpen: true })}
+        >
+          <InfoIcon></InfoIcon>
+        </IconButton>
+        <Dialog
+          open={this.state.infoOpen}
+          onClose={handleInfoClose}
+          aria-labelledby="non-sms-dialog"
+          aria-describedby="non-sms-dialog-description"
+        >
+          <DialogContent>
+            <Typography variant="body1">
+              Non-SMS are previous communications with/about the patients that were not sent via
+              text messages, such as previous phone conversations or general notes.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button variant="text" onClick={handleInfoClose}>
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Stack>
+    );
+  }
+
+  private _buildSMSEntryComponent(): React.ReactNode {
+    return (
+      <>
+        <TextField
+          multiline
+          value={this.state.activeMessage ?? ""}
+          placeholder={"Enter message"}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            this.setState({ activeMessage: event.target.value });
+          }}
+          fullWidth
+          sx={{ backgroundColor: "#FFF" }}
+        />
+        <Stack
+          direction={"row"}
+          justifyContent={"flex-end"}
+          sx={{ marginTop: 1, marginBottom: 1 }}
+        >
+          <Button variant="contained" onClick={() => this.saveMessage()}>
+            Send
+          </Button>
+        </Stack>
+      </>
+    );
+  }
+
   private _buildNonSMSEntryComponent(): React.ReactNode {
     return (
-      <Stack
-        direction={"column"}
-        justifyContent={"flex-start"}
-        sx={{
-            marginTop: 1,
-            padding: 1,
-            backgroundColor: this.state.isNonSMSChecked ? "#F1F1F1" : "#FFF",
-            borderRadius: 1
-        }}
-        spacing={1}
-      >
-        <FormGroup>
-          <FormControlLabel
-            control={<Checkbox />}
-            label="Non-SMS?"
-            onClick={() =>
-              this.setState({
-                isNonSMSChecked: !this.state.isNonSMSChecked,
-              })
-            }
-          />
-        </FormGroup>
-        {this.state.isNonSMSChecked && (
-          <>
-            <Stack direction={"row"} spacing={1}>
-              <DateTimePicker
-                label="date & time"
-                inputFormat="ddd, MM/DD/YYYY hh:mm A"
-                value={this.state.activeNonSMSMessage?.date}
-                renderInput={(params: TextFieldProps) => (
-                  <TextField
-                    {...params}
-                    sx={{ minWidth: "264px", backgroundColor: "#FFF" }}
-                  />
-                )}
-                onChange={(newValue: Date | null) => {
-                  this.setState({
-                    activeNonSMSMessage: {
-                      ...this.state.activeNonSMSMessage,
-                      date: newValue?.toISOString(),
-                    },
-                  });
-                }}
-              ></DateTimePicker>
+      <>
+        <Stack direction={"row"} spacing={1}>
+          <DateTimePicker
+            label="date & time"
+            inputFormat="ddd, MM/DD/YYYY hh:mm A"
+            value={this.state.activeNonSMSMessage?.date}
+            renderInput={(params: TextFieldProps) => (
               <TextField
-                multiline
-                fullWidth
-                placeholder="Enter content"
-                value={this.state.activeNonSMSMessage?.content || ""}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    this.setState({
-                    activeNonSMSMessage: {
-                        ...this.state.activeNonSMSMessage,
-                        content: event.target.value,
-                    },
-                    });
-                }}
-                sx={{
-                  backgroundColor: "#FFF",
-                }}
-              ></TextField>
-            </Stack>
-            <Box sx={{ textAlign: "right" }}>
-              <LoadingButton
-                variant="contained"
-                onClick={() => {
-                  this.saveNonSMSMessage();
-                }}
-                loading={this.state.saveLoading}
-              >
-                Save
-              </LoadingButton>
-            </Box>
-          </>
-        )}
-      </Stack>
+                {...params}
+                sx={{ minWidth: 264, backgroundColor: "#FFF" }}
+              />
+            )}
+            onChange={(newValue: Date | null) => {
+              this.setState({
+                activeNonSMSMessage: {
+                  ...this.state.activeNonSMSMessage,
+                  date: newValue?.toISOString(),
+                },
+              });
+            }}
+          ></DateTimePicker>
+          <TextField
+            multiline
+            fullWidth
+            placeholder="Enter content"
+            value={this.state.activeNonSMSMessage?.content || ""}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              this.setState({
+                activeNonSMSMessage: {
+                  ...this.state.activeNonSMSMessage,
+                  content: event.target.value,
+                },
+              });
+            }}
+            sx={{
+              backgroundColor: "#FFF",
+            }}
+          ></TextField>
+        </Stack>
+        <Box sx={{ marginTop: 1, textAlign: "right" }}>
+          <LoadingButton
+            variant="contained"
+            onClick={() => {
+              this.saveNonSMSMessage();
+            }}
+            loading={this.state.saveLoading}
+          >
+            Save
+          </LoadingButton>
+        </Box>
+      </>
     );
   }
 
@@ -355,7 +420,7 @@ export default class MessagingView extends React.Component<
       context.carePlan,
       this.state.activeNonSMSMessage?.date
     );
-    console.log("new communication? ", newCommunication);
+    console.log("Saving new non-sms communication: ", newCommunication);
     context.client
       .create(newCommunication)
       .then(
@@ -477,7 +542,7 @@ export default class MessagingView extends React.Component<
     );
     let priority = message.priority;
     let themes: string[] = message.getThemes();
-    const comment = nonSMSMessage ? "Non-SMS" : "";
+    const comment = nonSMSMessage ? "Non-SMS, staff entered" : "";
     return this._alignedRow(
       incoming,
       msg,
@@ -563,7 +628,11 @@ export default class MessagingView extends React.Component<
             <Typography variant={"caption"}>{timestamp}</Typography>
           )}
           {comment && (
-            <Typography variant={"caption"} sx={{color: "#777"}} gutterBottom>{`(${comment})`}</Typography>
+            <Typography
+              variant={"caption"}
+              color="text.secondary"
+              gutterBottom
+            >{`(${comment})`}</Typography>
           )}
         </Stack>
       </Grid>

@@ -121,8 +121,8 @@ export default class DiagnosisAndCareTeam extends React.Component<{}, {
 const DisplayRow = ({item}: { item: DisplayItem }) => <>
     <Typography variant={"body1"}>{item.title}</Typography>
     {
-        item.info.map((infoItem) => {
-            return <Stack direction={"row"} alignItems={"flex-end"} spacing={0.5}>
+        item.info.map((infoItem, index) => {
+            return <Stack direction={"row"} alignItems={"flex-end"} spacing={0.5} key={`infoItem_${index}`}>
                 <Typography variant={"caption"}>{`${infoItem.label}: `}</Typography>
                 <Typography variant={"body2"}>{`${infoItem.value}`}</Typography>
             </Stack>;
