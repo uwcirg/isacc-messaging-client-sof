@@ -141,7 +141,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 onChange={(event: any, value: (string | IPractitioner)[]) => {
                     patient.generalPractitioner = value.map((v) => ({
                         type: "Practitioner",
-                        id: (v as IPractitioner).id
+                        reference: `Practitioner/${(v as IPractitioner).id}`
                     }));
                 }}
             />;
