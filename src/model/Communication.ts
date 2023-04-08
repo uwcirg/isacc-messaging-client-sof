@@ -74,12 +74,14 @@ export default class Communication implements ICommunication {
     return c;
   }
 
-  static createCommunication(
+  static create(
     messageContent: string,
     patient: Patient,
     carePlan: CarePlan,
-    occurredDateTimeString: string,
-    messageType: Coding
+    sentDateTimeString: string,
+    receivedDateTimeString: string,
+    messageType: Coding,
+    note: string
   ): Communication {
     if (!messageType) {
       messageType = IsaccMessageCategory.isaccManuallySentMessage;
@@ -90,25 +92,14 @@ export default class Communication implements ICommunication {
       c.partOf = [{ reference: carePlan.reference }];
     }
     c.category = [{ coding: [messageType] }];
-    c.sent = occurredDateTimeString;
+    if (sentDateTimeString) c.sent = sentDateTimeString;
+    if (receivedDateTimeString) c.received = receivedDateTimeString;
+    if (note) c.setNote(note);
     c.recipient = [{ reference: patient.reference }];
     c.setText(messageContent);
     return c;
   }
-  static createNonSMSCommunication(
-    messageContent: string,
-    patient: Patient,
-    carePlan: CarePlan,
-    occurredDateTimeString: string,): Communication {
-    return this.createCommunication(
-        messageContent,
-        patient,
-        carePlan,
-        occurredDateTimeString,
-        IsaccMessageCategory.isaccNonSMSMessage
-    );
-  }
-
+  
   displayText() {
     return this.payload
       .map((p: CommunicationPayload) => {
@@ -121,6 +112,19 @@ export default class Communication implements ICommunication {
     let c = new CommunicationPayload();
     c.contentString = text;
     this.payload = [c];
+  }
+
+  displayNote() {
+    if (!this.note) return "";
+    return this.note.map((n: IAnnotation) => {
+        return n.text
+    }).join("\n");
+  }
+
+  setNote(note: string) {
+    let n = new Annotation();
+    n.text = note;
+    this.note = [n];
   }
 
   getThemes(): string[] {
@@ -152,4 +156,10 @@ class CommunicationPayload implements ICommunication_Payload {
     contentStringLocalized() {
         return FhirTranslations.extractTranslation(this.contentString, this._contentString);
     }
+}
+
+class Annotation implements IAnnotation {
+    text: string;
+    // other props
+
 }

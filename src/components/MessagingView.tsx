@@ -35,20 +35,30 @@ import Client from "fhirclient/lib/Client";
 import {Bundle} from "../model/Bundle";
 import {getEnv} from "../util/util";
 
-interface NonSMSMessage {
+type MessageType  = "sms" | "manual message" | "note";
+type MessageMode = "sent" |  "received";
+
+interface Message {
     date: string,
-    content: string
+    content: string,
+    type: MessageType
+    mode: MessageMode
 }
+
+const defaultMessage : Message = {
+    date: new Date().toISOString(),
+    content: "",
+    type: "sms",
+    mode: "sent"
+};
 
 export default class MessagingView extends React.Component<
   {},
   {
     // messages: MessageDraft[];
-    activeMessage: string;
-    activeNonSMSMessage: NonSMSMessage;
+    activeMessage: Message;
     error: any;
     communications: Communication[];
-    media: string;
     temporaryCommunications: Communication[];
     messagesLoading: boolean;
     saveLoading: boolean;
@@ -64,14 +74,9 @@ export default class MessagingView extends React.Component<
   constructor(props: {}) {
     super(props);
     this.state = {
-      activeMessage: null,
-      activeNonSMSMessage: {
-        date: new Date().toISOString(),
-        content: "",
-      },
+      activeMessage: defaultMessage,
       error: null,
       communications: null,
-      media: "sms",
       temporaryCommunications: [],
       messagesLoading: false,
       saveLoading: false,
@@ -133,7 +138,7 @@ export default class MessagingView extends React.Component<
     // Communication?part-of=CarePlan/${carePlanId}
     let params = new URLSearchParams({
       "part-of": `CarePlan/${carePlanId}`,
-      _sort: "-sent",
+     // _sort: "-sent",
     }).toString();
     return await client.request({
         url : `/Communication?${params}`, 
@@ -206,8 +211,8 @@ export default class MessagingView extends React.Component<
       communications.push(...this.state.communications);
       communications.push(...this.state.temporaryCommunications);
       communications.sort((a, b) => {
-        let d1 = a.sent ?? a.meta.lastUpdated;
-        let d2 = b.sent ?? b.meta.lastUpdated;
+        let d1 = a.sent ? a.sent : a.received ?? a.meta.lastUpdated;
+        let d2 = b.sent ? b.sent : b.received ?? b.meta.lastUpdated;
         const t1 = d1 ? new Date(d1).getTime() : 0;
         const t2 = d2 ? new Date(d2).getTime() : 0;
         return t1 < t2 ? 1 : -1;
@@ -241,11 +246,11 @@ export default class MessagingView extends React.Component<
 
         {messages}
 
-        {this._buildMediaSelect()}
+        {this._buildMessageTypeSelector()}
 
         <Box sx={{ backgroundColor: grey[50], padding: 1 }}>
-          {this.state.media === "sms" && this._buildSMSEntryComponent()}
-          {this.state.media !== "sms" && this._buildNonSMSEntryComponent()}
+          {this.state.activeMessage.type === "sms" && this._buildSMSEntryComponent()}
+          {this.state.activeMessage.type !== "sms" && this._buildNonSMSEntryComponent()}
         </Box>
         
         {this.state.error && (
@@ -259,7 +264,15 @@ export default class MessagingView extends React.Component<
     );
   }
 
-  private _buildMediaSelect(): React.ReactNode {
+  private _hasNoMessageContent(): boolean {
+    return (
+        !this.state.activeMessage || 
+        (!this.state.activeMessage.content) || 
+        !String(this.state.activeMessage.content).trim()
+    );
+  }
+
+  private _buildMessageTypeSelector(): React.ReactNode {
     const handleInfoClose = () =>
       this.setState({
         infoOpen: false,
@@ -268,29 +281,35 @@ export default class MessagingView extends React.Component<
       <Stack direction={"row"}>
         <RadioGroup
           row
-          aria-labelledby="media method radio group"
-          name="mediaMethods"
-          value={this.state.media}
-          onChange={(event: React.ChangeEvent, value: string) => {
-            this.setState({ media: value });
+          aria-labelledby="message type radio group"
+          name="messageTypes"
+          value={this.state.activeMessage?.type}
+          //@ts-ignore
+          onChange={(event: React.ChangeEvent, value: MessageType) => {
+            this.setState({ activeMessage: {...this.state.activeMessage, type: value} });
           }}
-          sx={{ marginTop: 1 }}
+          sx={{ marginTop: 1.5 }}
         >
           <FormControlLabel
             value="sms"
             control={<Radio size="small" />}
-            label="SMS"
+            label="ISSAC send"
           />
           <FormControlLabel
-            value="non-sms"
+            value="manual message"
             control={<Radio size="small" />}
-            label="Non-SMS"
+            label="Enter manual message"
+          />
+           <FormControlLabel
+            value="note"
+            control={<Radio size="small" />}
+            label="Enter comment"
           />
         </RadioGroup>
         <IconButton
           color="info"
           size="small"
-          sx={{ position: "relative", top: 2, marginLeft: -2 }}
+          sx={{ position: "relative", top: 4 }}
           onClick={() => this.setState({ infoOpen: true })}
         >
           <InfoIcon></InfoIcon>
@@ -303,9 +322,11 @@ export default class MessagingView extends React.Component<
         >
           <DialogContent>
             <Typography variant="body1">
-              Non-SMS are previous communications with/about the patients that were not sent via
-              text messages, such as previous phone conversations or general notes.
+              <p><b>ISACC send</b> are messages sent or received directly by ISACC, which include texts, “sms”, iMessages, etc.</p>
+              <p><b>Manual messages</b> mean messages external to ISACC, including manually entered notifications of emails, phone calls, postal mail, or other non-automated communication.</p>
+              <p><b>Comments</b> are contact/note on the patient.</p>
             </Typography>
+            <Alert severity="info">Please note that messages external to ISACC and contact/note on the patient will not be sent/communicated to the patient.</Alert>
           </DialogContent>
           <DialogActions>
             <Button variant="text" onClick={handleInfoClose}>
@@ -322,10 +343,10 @@ export default class MessagingView extends React.Component<
       <>
         <TextField
           multiline
-          value={this.state.activeMessage ?? ""}
-          placeholder={"Enter message"}
+          value={this.state.activeMessage?.content ?? ""}
+          placeholder={"Type message for ISSAC to send"}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-            this.setState({ activeMessage: event.target.value });
+            this.setState({ activeMessage: {...this.state.activeMessage, content : event.target.value }});
           }}
           fullWidth
           sx={{ backgroundColor: "#FFF" }}
@@ -335,7 +356,7 @@ export default class MessagingView extends React.Component<
           justifyContent={"flex-end"}
           sx={{ marginTop: 1, marginBottom: 1 }}
         >
-          <Button variant="contained" onClick={() => this.saveMessage()}>
+          <Button variant="contained" onClick={() => this.saveMessage()} disabled={this._hasNoMessageContent()}>
             Send
           </Button>
         </Stack>
@@ -343,54 +364,152 @@ export default class MessagingView extends React.Component<
     );
   }
 
-  private _buildNonSMSEntryComponent(): React.ReactNode {
+  private _buildNoteEntryComponent(): React.ReactNode {
     return (
-      <>
-        <Stack direction={"row"} spacing={1}>
-          <DateTimePicker
-            label="date & time"
-            inputFormat="ddd, MM/DD/YYYY hh:mm A"
-            value={this.state.activeNonSMSMessage?.date}
-            renderInput={(params: TextFieldProps) => (
-              <TextField
-                {...params}
-                sx={{ minWidth: 264, backgroundColor: "#FFF" }}
-              />
-            )}
-            onChange={(newValue: Date | null) => {
-              this.setState({
-                activeNonSMSMessage: {
-                  ...this.state.activeNonSMSMessage,
-                  date: newValue?.toISOString(),
-                },
-              });
-            }}
-          ></DateTimePicker>
-          <TextField
+        <TextField
             multiline
             fullWidth
-            placeholder="Enter content"
-            value={this.state.activeNonSMSMessage?.content || ""}
+            placeholder="Enter contact/note on patient"
+            value={this.state.activeMessage?.content ?? ""}
+            rows={4}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-              this.setState({
-                activeNonSMSMessage: {
-                  ...this.state.activeNonSMSMessage,
-                  content: event.target.value,
+            this.setState({
+                activeMessage: {
+                ...this.state.activeMessage,
+                date: (new Date()).toISOString(),
+                content: event.target.value,
                 },
-              });
+            });
             }}
             sx={{
-              backgroundColor: "#FFF",
+            backgroundColor: "#FFF",
             }}
-          ></TextField>
+            autoFocus
+        ></TextField>
+    )
+  }
+
+  private _buildManualMessageEntryComponent(): React.ReactNode {
+     const radioProps = {
+        control : <Radio size="small" />,
+        sx: {
+            paddingLeft: 2
+        }
+     }
+     return (
+        <>
+            <Stack
+                direction={"row"} 
+                spacing={2}
+                alignItems={"center"}
+                justifyContent={"space-around"}
+                sx={{
+                    marginBottom: 1
+                }}
+            >
+                <Typography variant="body2">
+                    Email / Phone / Letter
+                </Typography>
+                <RadioGroup
+                    aria-labelledby="message type radio group"
+                    name="messageModes"
+                    value={this.state.activeMessage?.mode}
+                    //@ts-ignore
+                    onChange={(event: React.ChangeEvent, value: MessageMode) => {
+                        this.setState({ activeMessage: {...this.state.activeMessage, mode: value} });
+                    }}
+                    sx={{
+                        backgroundColor: "#FFF",
+                        borderRadius: 2
+                    }}
+                >
+                    <FormControlLabel
+                        value={"sent"}
+                        label={"sent"}
+                        {...radioProps}
+                    />
+                    <FormControlLabel
+                        value="received"
+                        label="received"
+                        {...radioProps}
+                    />
+                </RadioGroup>
+                <Typography variant="body2">
+                    at
+                </Typography>
+                <DateTimePicker
+                    label="date & time"
+                    inputFormat="ddd, MM/DD/YYYY hh:mm A"
+                    value={this.state.activeMessage?.date}
+                    renderInput={(params: TextFieldProps) => (
+                    <TextField
+                        {...params}
+                        sx={{ minWidth: 264, backgroundColor: "#FFF" }}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                            console.log("value ", event.target.value);
+                            //console.log("date value ", new Date(event.target.value).toISOString())
+                            const dateVal = new Date(event.target.value);
+                            if (dateVal instanceof Date && !isNaN(dateVal.getTime())) {
+                                this.setState({
+                                    activeMessage: {
+                                    ...this.state.activeMessage,
+                                    date: event.target.value ? dateVal.toISOString() : null,
+                                    },
+                                });
+                            }
+                        }}
+                    />
+                    )}
+                    onChange={(newValue: Date | null) => {
+                        this.setState({
+                            activeMessage: {
+                            ...this.state.activeMessage,
+                            date: newValue?.toISOString(),
+                            },
+                        });
+                    }}
+                    disableFuture
+                ></DateTimePicker>
+            </Stack>
+            {/* <Typography variant="subtitle2" sx={{marginTop: 3}}>{`Message ${this.state.activeMessage?.mode} at ${displayDateTime(this.state.activeMessage?.date)}`}</Typography> */}
+            <TextField
+                multiline
+                rows={4}
+                fullWidth
+                placeholder="Enter info on email/phone/letter contact"
+                value={this.state.activeMessage?.content ?? ""}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                this.setState({
+                    activeMessage: {
+                    ...this.state.activeMessage,
+                    content: event.target.value,
+                    },
+                });
+                }}
+                sx={{
+                    backgroundColor: "#FFF",
+                }}
+            ></TextField>
+        </>
+     )
+  }
+
+  private _buildNonSMSEntryComponent(): React.ReactNode {
+    const activeType = this.state.activeMessage.type;
+    return (
+      <>
+        <Stack direction={"column"} spacing={1}>
+          {activeType === "note" && this._buildNoteEntryComponent()}
+           {activeType !== "note" && this._buildManualMessageEntryComponent()}
         </Stack>
-        <Box sx={{ marginTop: 1, textAlign: "right" }}>
+        <Box sx={{ marginTop: 1, textAlign: "right"}}>
           <LoadingButton
             variant="contained"
             onClick={() => {
               this.saveNonSMSMessage();
             }}
             loading={this.state.saveLoading}
+            disabled={this._hasNoMessageContent()}
           >
             Save
           </LoadingButton>
@@ -401,9 +520,7 @@ export default class MessagingView extends React.Component<
 
   private saveNonSMSMessage() {
     if (
-      !this.state.activeNonSMSMessage ||
-      !this.state.activeNonSMSMessage.content ||
-      !this.state.activeNonSMSMessage.date
+      this._hasNoMessageContent() || !this.state.activeMessage.date
     ) {
       this.setState({
         error:
@@ -414,11 +531,14 @@ export default class MessagingView extends React.Component<
     // @ts-ignore
     let context: FhirClientContextType = this.context;
     this.setState({ saveLoading: true });
-    const newCommunication = Communication.createNonSMSCommunication(
-      this.state.activeNonSMSMessage?.content,
+    const newCommunication = Communication.create(
+      this.state.activeMessage.content,
       context.patient,
       context.carePlan,
-      this.state.activeNonSMSMessage?.date
+      this.state.activeMessage?.mode === "sent" ? this.state.activeMessage.date : null,
+      this.state.activeMessage?.mode === "received" ? this.state.activeMessage.date : null,
+      IsaccMessageCategory.isaccNonSMSMessage,
+      `Non-SMS ${this.state.activeMessage?.mode} ${this.state.activeMessage?.type}, staff entered`
     );
     console.log("Saving new non-sms communication: ", newCommunication);
     context.client
@@ -427,10 +547,7 @@ export default class MessagingView extends React.Component<
         (savedResult: IResource) => {
           console.log("Saved new Non SMS communication:", savedResult);
           this.setState({
-            activeNonSMSMessage: {
-              date: new Date().toISOString(),
-              content: "",
-            },
+            activeMessage: defaultMessage,
             error: null,
           });
           this.loadCommunications();
@@ -452,7 +569,7 @@ export default class MessagingView extends React.Component<
     let context: FhirClientContextType = this.context;
     let newMessage: CommunicationRequest =
       CommunicationRequest.createNewManualOutgoingMessage(
-        this.state.activeMessage,
+        this.state.activeMessage.content,
         context.patient,
         context.carePlan
       );
@@ -469,7 +586,7 @@ export default class MessagingView extends React.Component<
             Communication.tempCommunicationFrom(savedCommunicationRequest)
           );
           this.setState({
-            activeMessage: "",
+            activeMessage: defaultMessage,
             temporaryCommunications: this.state.temporaryCommunications,
             error: null,
           });
@@ -490,41 +607,32 @@ export default class MessagingView extends React.Component<
     index: number
   ): React.ReactNode {
     let incoming = true;
-    if (
-      message.recipient &&
-      message.recipient.find((r: IReference) => r.reference.includes("Patient"))
+    const isNonSmSMessage = message.category.find((c: ICodeableConcept) =>
+        c.coding.find((coding: ICoding) => IsaccMessageCategory.isaccNonSMSMessage.equals(coding))
+    ) ? true : false;
+   
+    if (isNonSmSMessage && message.received) {
+        incoming = true;
+    } else if (
+        message.recipient &&
+        message.recipient.find((r: IReference) => r.reference.includes("Patient"))
     ) {
-      incoming = false;
+        incoming = false;
     }
 
     let timestamp = null;
     let delivered = true;
     if (message.sent) {
-      let datetime = new Date(message.sent);
-      // instead of hard-coded en-US possibly get locale info from config?
-      timestamp = `${datetime.toLocaleDateString("en-US", {
-        weekday: "short",
-        year: "numeric",
-        month: "numeric",
-        day: "numeric",
-      })} ${datetime.toLocaleTimeString()}`;
+      timestamp = MessagingView.displayDateTime(message.sent);
+    } else if (isNonSmSMessage && message.received) {
+      timestamp = MessagingView.displayDateTime(message.received);
     } else {
       delivered = false;
     }
-    // let timestamp = `${intl.formatDate(datetime)} ${intl.formatTime(datetime)}`;
     let msg = message.displayText();
     let autoMessage = true;
-    let nonSMSMessage = false;
     if (!message.category) {
       console.log("Communication is missing category");
-    } else if (
-      message.category.find((c: ICodeableConcept) =>
-        c.coding.find((coding: ICoding) =>
-          IsaccMessageCategory.isaccNonSMSMessage.equals(coding)
-        )
-      )
-    ) {
-      nonSMSMessage = true;
     } else if (
       message.category.find((c: ICodeableConcept) =>
         c.coding.find((coding: ICoding) =>
@@ -538,11 +646,13 @@ export default class MessagingView extends React.Component<
       incoming,
       autoMessage,
       delivered,
-      nonSMSMessage
+      isNonSmSMessage
     );
     let priority = message.priority;
     let themes: string[] = message.getThemes();
-    const comment = nonSMSMessage ? "Non-SMS, staff entered" : "";
+
+    const comment = message.displayNote();
+    
     return this._alignedRow(
       incoming,
       msg,
@@ -704,5 +814,17 @@ export default class MessagingView extends React.Component<
       backgroundColor: lightBlue[700],
       color: "#fff",
     };
+  }
+  private static displayDateTime (dateString:string) :string {
+    if (!dateString) return "";
+    const dateObj = new Date(dateString);
+    const dateDisplay = dateObj.toLocaleDateString("en-US", {
+        weekday: "short",
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+    });
+    const timeDisplay = dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return `${dateDisplay} ${timeDisplay}`;
   }
 }
