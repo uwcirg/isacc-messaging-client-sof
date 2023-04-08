@@ -277,6 +277,9 @@ export default class MessagingView extends React.Component<
       this.setState({
         infoOpen: false,
       });
+    const formProps = {
+        control : <Radio size="small" />
+    };
     return (
       <Stack direction={"row"}>
         <RadioGroup
@@ -292,18 +295,18 @@ export default class MessagingView extends React.Component<
         >
           <FormControlLabel
             value="sms"
-            control={<Radio size="small" />}
             label="ISSAC send"
+            {...formProps}
           />
           <FormControlLabel
             value="manual message"
-            control={<Radio size="small" />}
             label="Enter manual message"
+            {...formProps}
           />
            <FormControlLabel
             value="note"
-            control={<Radio size="small" />}
             label="Enter comment"
+            {...formProps}
           />
         </RadioGroup>
         <IconButton
@@ -500,7 +503,7 @@ export default class MessagingView extends React.Component<
       <>
         <Stack direction={"column"} spacing={1}>
           {activeType === "note" && this._buildNoteEntryComponent()}
-           {activeType !== "note" && this._buildManualMessageEntryComponent()}
+          {activeType !== "note" && this._buildManualMessageEntryComponent()}
         </Stack>
         <Box sx={{ marginTop: 1, textAlign: "right"}}>
           <LoadingButton
