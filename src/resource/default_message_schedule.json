@@ -17,6 +17,9 @@
       "definitionCanonical": "#Week0Day3Msg"
     },
     {
+      "definitionCanonical": "#Week0Day5Msg"
+    },
+    {
       "definitionCanonical": "#Week1Day0Msg"
     },
     {
@@ -136,6 +139,32 @@
           "expression": {
             "language": "text/cql",
             "expression": "Hello {name}, I know life can be difficult sometimes; I just want you to know that I'm thinking about you and sending positive thoughts your way.  Sincerely, {userName}  "
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Week0Day5Msg",
+      "name": "Week 0 Day 5 Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 5,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "19:03:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hey {name}, hope things are going well and you're having a good week. - {userName}"
           }
         }
       ]
