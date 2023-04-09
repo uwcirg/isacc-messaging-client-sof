@@ -17,9 +17,6 @@
       "definitionCanonical": "#Week0Day3Msg"
     },
     {
-      "definitionCanonical": "#Week0Day5Msg"
-    },
-    {
       "definitionCanonical": "#Week1Day0Msg"
     },
     {
@@ -145,32 +142,6 @@
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Week0Day5Msg",
-      "name": "Week 0 Day 5 Message",
-      "status": "active",
-      "kind": "CommunicationRequest",
-      "timingTiming": {
-        "repeat": {
-          "frequency": 1,
-          "period": 5,
-          "periodUnit": "d",
-          "timeOfDay": [
-            "19:03:00"
-          ]
-        }
-      },
-      "dynamicValue": [
-        {
-          "path": "payload.contentString",
-          "expression": {
-            "language": "text/cql",
-            "expression": "Happy Birthday, {name}! Hope the day brings you happiness and next year holds good things for you. {userName}"
-          }
-        }
-      ]
-    },
-    {
-      "resourceType": "ActivityDefinition",
       "id": "Week1Day0Msg",
       "name": "Week 1 Day 0 Message",
       "status": "active",
@@ -243,6 +214,29 @@
           "expression": {
             "language": "text/cql",
             "expression": "{name}, Hope everything is going well.  {userName}"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "BirthdayMsg",
+      "name": "Birthday Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "timeOfDay": [
+            "10:08:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Happy Birthday, {name}! Hope the day brings you happiness and next year holds good things for you."
           }
         }
       ]
