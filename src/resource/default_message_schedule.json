@@ -233,7 +233,7 @@
           "period": 11,
           "periodUnit": "d",
           "timeOfDay": [
-            "10:00a:00"
+            "10:00:00"
           ]
         }
       },
