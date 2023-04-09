@@ -20,7 +20,6 @@ import {CommunicationRequest} from "../model/CommunicationRequest";
 import Alert from "@mui/material/Alert";
 import Patient from "../model/Patient";
 import Summary from "./Summary";
-import PlanDefinition, {getDefaultMessageSchedule} from "../model/PlanDefinition";
 import {getEnv} from "../util/util";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
@@ -58,7 +57,6 @@ const styles = {
 
 export default class ScheduleSetup extends React.Component<ScheduleSetupProps, ScheduleSetupState> {
     static contextType = FhirClientContext
-    planDefinition: PlanDefinition;
 
     // declare context: React.ContextType<typeof FhirClientContext>
 
@@ -71,7 +69,6 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
             alertSeverity: null,
             savingInProgress: false
         };
-        this.planDefinition = getDefaultMessageSchedule();
     }
 
     componentDidMount() {

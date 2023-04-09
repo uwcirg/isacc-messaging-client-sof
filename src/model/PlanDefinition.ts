@@ -8,7 +8,6 @@ import {
     ITiming,
     PlanDefinitionStatusKind
 } from "@ahryman40k/ts-fhir-types/lib/R4";
-import defaultSchedule from "../resource/default_message_schedule.json"
 import {ITriggerDefinition} from "@ahryman40k/ts-fhir-types/lib/R4/Resource/RTTI_TriggerDefinition";
 import Patient from "./Patient";
 import {birthdaysBetweenDates} from "../util/isacc_util";
@@ -177,9 +176,4 @@ export class ActivityDefinition implements IActivityDefinition {
             (dynVal) => dynVal.path === "payload.contentString"
         ).expression.expression
     }
-}
-
-export function getDefaultMessageSchedule(): PlanDefinition {
-    let raw = defaultSchedule as IPlanDefinition;
-    return PlanDefinition.from(raw);
 }
