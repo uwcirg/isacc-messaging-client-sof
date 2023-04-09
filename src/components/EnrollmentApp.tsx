@@ -11,11 +11,12 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import {IsaccMessageCategory} from "../model/CodeSystem";
-import {IBundle_Entry, ICommunicationRequest} from "@ahryman40k/ts-fhir-types/lib/R4";
-import {getDefaultMessageSchedule} from "../model/PlanDefinition";
+import {IBundle_Entry, ICommunicationRequest, IPlanDefinition, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
+import PlanDefinition, {getDefaultMessageSchedule} from "../model/PlanDefinition";
 import {getUserName} from "../util/isacc_util";
 import Patient from "../model/Patient";
 import {Bundle} from "../model/Bundle";
+import {getEnv} from "../util/util";
 
 type EnrollmenAppState = {
     activeCarePlan: CarePlan;
@@ -35,26 +36,30 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
         };
     }
 
-    createNewCarePlan(): CarePlan {
+    createNewCarePlan(): Promise<CarePlan> {
         //@ts-ignore
         let patient: Patient = this.context.patient;
         //@ts-ignore
         let client: Client = this.context.client;
 
-        let planDefinition = getDefaultMessageSchedule();
+        let defaultMessageScheduleId = getEnv('REACT_APP_DEFAULT_MESSAGE_SCHEDULE_ID');
+        return client.request(`/PlanDefinition/${defaultMessageScheduleId}`).then((value: IResource) => {
+            let planDefinition = PlanDefinition.from(value as IPlanDefinition);
 
-        let replacements: { [key: string]: string } = {};
-        let name = getUserName(client);
-        if (name) {
-            replacements['{userName}'] = name;
-        } else {
-            replacements['{userName}'] = "Caring Contacts Team";
-        }
+            let replacements: { [key: string]: string } = {};
+            let name = getUserName(client);
+            if (name) {
+                replacements['{userName}'] = name;
+            } else {
+                replacements['{userName}'] = "Caring Contacts Team";
+            }
 
-        const messages: CommunicationRequest[] = planDefinition.createMessageList(patient, replacements);
-        const carePlan = makeCarePlan(planDefinition, patient, messages);
+            const messages: CommunicationRequest[] = planDefinition.createMessageList(patient, replacements);
+            const carePlan = makeCarePlan(planDefinition, patient, messages);
 
-        return carePlan;
+            return carePlan;
+        })
+
     }
 
     discontinueExistingCarePlan() {
@@ -126,9 +131,11 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
 
         if (this.state.activeCarePlan == null) {
             if (existingCarePlan == null) {
-                let cp = this.createNewCarePlan();
-                context.carePlan = cp;
-                this.setState({activeCarePlan: cp});
+                this.createNewCarePlan().then((cp: CarePlan) => {
+                    context.carePlan = cp;
+                    this.setState({activeCarePlan: cp});
+                });
+
             }
         }
     }
@@ -136,12 +143,13 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
     private handleSetEditModeFalse() {
         this.discontinueExistingCarePlan();
 
-        let cp = this.createNewCarePlan();
+        this.createNewCarePlan().then((cp: CarePlan) => {
+            //@ts-ignore
+            let context: FhirClientContextType = this.context;
+            context.carePlan = cp;
+            this.setState({activeCarePlan: cp, editMode: false});
+        });
 
-        //@ts-ignore
-        let context: FhirClientContextType = this.context;
-        context.carePlan = cp;
-        this.setState({activeCarePlan: cp, editMode: false});
     }
 
     private handleSetEditModeTrue() {
