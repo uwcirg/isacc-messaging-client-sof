@@ -12,6 +12,7 @@ import {Error, Refresh, Warning} from "@mui/icons-material";
 import {CommunicationRequest} from "../model/CommunicationRequest";
 import Client from "fhirclient/lib/Client";
 import {Bundle} from "../model/Bundle";
+import {getEnv} from "../util/util";
 
 export default class MessagingView extends React.Component<{}, {
     // messages: MessageDraft[];
@@ -243,10 +244,12 @@ export default class MessagingView extends React.Component<{}, {
     private _alignedRow(incoming: boolean, message: string, timestamp: string, bubbleStyle: object, priority: string, index: number, themes: string[]) {
 
         let priorityIndicator = null;
-        if (priority === "urgent") {
-            priorityIndicator = <Warning color={"warning"}/>
-        } else if (priority === "stat") {
-            priorityIndicator = <Error color={"error"}/>
+        if (getEnv("REACT_APP_SHOW_PRIORITY_INDICATOR")?.toLowerCase() === "true") {
+            if (priority === "urgent") {
+                priorityIndicator = <Warning color={"warning"}/>
+            } else if (priority === "stat") {
+                priorityIndicator = <Error color={"error"}/>
+            }
         }
         let align = incoming ? "flex-start" : "flex-end";
 

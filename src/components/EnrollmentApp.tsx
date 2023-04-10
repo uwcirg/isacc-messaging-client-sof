@@ -13,7 +13,7 @@ import DialogActions from "@mui/material/DialogActions";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import {IBundle_Entry, ICommunicationRequest} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {getDefaultMessageSchedule} from "../model/PlanDefinition";
-import {getUsername} from "../util/isacc_util";
+import {getUserName} from "../util/isacc_util";
 import Patient from "../model/Patient";
 import {Bundle} from "../model/Bundle";
 
@@ -43,10 +43,12 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
 
         let planDefinition = getDefaultMessageSchedule();
 
-        let replacements: { [key: string]: number } = {};
-        let preferred_username = getUsername(client);
-        if (preferred_username) {
-            replacements['{userName}'] = preferred_username;
+        let replacements: { [key: string]: string } = {};
+        let name = getUserName(client);
+        if (name) {
+            replacements['{userName}'] = name;
+        } else {
+            replacements['{userName}'] = "Caring Contacts Team";
         }
 
         const messages: CommunicationRequest[] = planDefinition.createMessageList(patient, replacements);
