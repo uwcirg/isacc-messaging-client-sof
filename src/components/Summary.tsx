@@ -11,6 +11,7 @@ import {
     TextField,
     Typography
 } from "@mui/material";
+
 import {
     ContactPointSystemKind, IBundle_Entry,
     ICodeableConcept,
@@ -22,6 +23,7 @@ import {RelationshipCategory} from "../model/CodeSystem";
 import Patient from "../model/Patient";
 import Client from "fhirclient/lib/Client";
 import {Bundle} from "../model/Bundle";
+import { AsYouType, isPossiblePhoneNumber,parsePhoneNumber } from 'libphonenumber-js'
 
 interface SummaryProps {
     editable: boolean
@@ -78,33 +80,29 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             emergencyContactString = `${emergencyContact.name.given} ${emergencyContact.name.family} (${contactDetails})`;
         }
 
-        if (!patient.telecom) {
-            patient.telecom = [];
+        let error = true;
+        if (patient.smsContactPoint) {
+            error = !isPossiblePhoneNumber(patient.smsContactPoint, 'US');
         }
-
-        let smsContactPoint = patient.telecom.filter(
-            (t: IContactPoint) => t.system === ContactPointSystemKind._sms
-        )[0];
-
-        if (!smsContactPoint) {
-            smsContactPoint = {system: ContactPointSystemKind._sms};
-            patient.telecom.push(smsContactPoint);
-        }
-
-        let contactInformationValue = smsContactPoint.value;
 
         let contactInformationEntry = <TextField
-            value={contactInformationValue ?? ""}
+            value={patient.smsContactPoint ? new AsYouType('US').input(patient.smsContactPoint) : ""}
+            error={error}
             placeholder={"Phone number"}
             size="small"
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                smsContactPoint.value = event.target.value;
+                try {
+                    let n = parsePhoneNumber(event.target.value, 'US');
+                    patient.smsContactPoint = n.nationalNumber;
+                } catch (e) {
+                    patient.smsContactPoint = event.target.value;
+                }
                 this.setState({});
             }}/>;
 
         let contactInformation: { label: string, value: ReactNode } = {
             label: 'Contact information',
-            value: this.props.editable ? contactInformationEntry : (contactInformationValue ?? "None on file")
+            value: this.props.editable ? contactInformationEntry : (patient.smsContactPoint ?? "None on file")
         };
 
         let notifyPractitionersSelector = null;
