@@ -15,7 +15,7 @@ import {
 import ClearIcon from '@mui/icons-material/Clear';
 import {DateTimePicker} from "@mui/x-date-pickers";
 import {FhirClientContext} from "../FhirClientContext";
-import {IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
+import {IBundle_Entry, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {CommunicationRequest} from "../model/CommunicationRequest";
 import Alert from "@mui/material/Alert";
 import Patient from "../model/Patient";
@@ -29,6 +29,7 @@ import Dialog from "@mui/material/Dialog";
 import Client from "fhirclient/lib/Client";
 import PatientNotes from "./PatientNotes";
 import CarePlan from "../model/CarePlan";
+import {Bundle} from "../model/Bundle";
 
 
 interface ScheduleSetupProps {
@@ -181,6 +182,50 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
     }
 
 
+    private checkPhoneNumber(): Promise<any> {
+        // @ts-ignore
+        let patient: Patient = this.context.patient;
+        // @ts-ignore
+        let client: Client = this.context.client;
+
+        if (!patient.smsContactPoint) {
+            return new Promise((resolve,reject) => resolve());
+        }
+
+        let params = new URLSearchParams({
+            "telecom": `${patient.smsContactPoint}`
+        }).toString();
+        return client.request(`/Patient?${params}`).then((bundle: Bundle): Promise<void> => {
+            return new Promise((resolve, reject) => {
+                if (bundle.type === "searchset") {
+                    if (bundle.entry) {
+                        let patients: Patient[] = bundle.entry.map((entry: IBundle_Entry) => {
+                            if (entry.resource.resourceType !== "Patient") {
+                                this.showSnackbar("error", "Unexpected resource type returned");
+                                return null;
+                            } else {
+                                console.log("Patient loaded:", entry);
+                                return Patient.from(entry.resource);
+                            }
+                        })
+                        if (patients) {
+                            reject(`Phone number is already associated with: ${patients.map(
+                                (p: Patient) => `${p.fullNameDisplay} (${p.reference})`
+                            ).join("; ")}.`);
+                        } else {
+                            resolve();
+                        }
+                    } else {
+                        resolve();
+                    }
+                } else {
+                    reject("Unexpected bundle type returned");
+                }
+            });
+
+        })
+    }
+
     private saveSchedule() {
         // @ts-ignore
         let client: Client = this.context.client;
@@ -203,7 +248,22 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
             return;
         }
 
-        client.update(patient).then((value: any) => console.log(`Patient ${patient.id} updated`));
+        this.checkPhoneNumber().then(
+            (value: any) => {
+                return client.update(patient).then(
+                    (value: any) => {
+                        console.log(`Patient ${patient.id} updated`);
+                        this.saveCommunicationRequests();
+                    });
+            }, (reason: any) => {
+                this.showSnackbar("error", reason);
+            }
+        )
+    }
+
+    private saveCommunicationRequests() {
+        // @ts-ignore
+        let client: Client = this.context.client;
 
         let promises = this.state.carePlan.communicationRequests.map(
             (c: CommunicationRequest) => {
@@ -272,11 +332,11 @@ const MessageScheduleList = (props: {
             width: '100%'
         }} secondaryAction={
             message.status === "completed" ? <></> :
-            <IconButton hidden={message.status === "completed"} onClick={() => {
-                removeMessage(index);
-            }}>
-                <ClearIcon/>
-            </IconButton>
+                <IconButton hidden={message.status === "completed"} onClick={() => {
+                    removeMessage(index);
+                }}>
+                    <ClearIcon/>
+                </IconButton>
         }>
             <Grid container direction={"row"} flexDirection={"row"} spacing={2}
                   sx={{paddingTop: 2}}>
@@ -291,7 +351,7 @@ const MessageScheduleList = (props: {
                             message.setOccurrenceDate(newValue);
                             props.onMessagePlanChanged(props.messagePlan);
                         }}
-                        renderInput={(params: TextFieldProps) => <TextField {...params} sx={{ width: "264px" }} />}
+                        renderInput={(params: TextFieldProps) => <TextField {...params} sx={{width: "264px"}}/>}
                     />
                 </Grid>
                 <Grid item flexGrow={1}>

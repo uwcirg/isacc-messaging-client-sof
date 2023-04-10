@@ -21,7 +21,16 @@ export function getPatientListURL() {
     return getEnv("REACT_APP_DASHBOARD_URL") + "/clear_session";
 }
 
-export function getUsername(client: Client) {
+export function getUserName(client: Client) {
     let access_token = client.state.tokenResponse.access_token;
-    return jwtDecode<any>(access_token)['preferred_username'];
+    let token = jwtDecode<any>(access_token)
+    if (token['given_name']) return token['given_name'];
+    return token['preferred_username'];
+}
+
+export function getUserEmail(client: Client) {
+    let access_token = client.state.tokenResponse.access_token;
+    let token = jwtDecode<any>(access_token)
+    if (token['email']) return token['email'];
+    return null;
 }

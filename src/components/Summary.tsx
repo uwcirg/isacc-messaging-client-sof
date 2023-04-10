@@ -1,11 +1,8 @@
 import React, {ReactNode} from 'react';
 import {FhirClientContext} from '../FhirClientContext';
 import {
-    Alert,
+    Alert, Autocomplete,
     CircularProgress,
-    FormControl,
-    MenuItem,
-    Select,
     Table,
     TableBody,
     TableCell,
@@ -14,15 +11,19 @@ import {
     TextField,
     Typography
 } from "@mui/material";
+
 import {
-    ContactPointSystemKind,
+    ContactPointSystemKind, IBundle_Entry,
     ICodeableConcept,
     ICoding,
     IContactPoint,
-    IPatient_Contact
+    IPatient_Contact, IPractitioner, IReference
 } from "@ahryman40k/ts-fhir-types/lib/R4";
 import {RelationshipCategory} from "../model/CodeSystem";
 import Patient from "../model/Patient";
+import Client from "fhirclient/lib/Client";
+import {Bundle} from "../model/Bundle";
+import { AsYouType, isPossiblePhoneNumber,parsePhoneNumber } from 'libphonenumber-js'
 
 interface SummaryProps {
     editable: boolean
@@ -30,6 +31,7 @@ interface SummaryProps {
 
 type SummaryState = {
     error: string;
+    practitioners: IPractitioner[];
 }
 
 export default class Summary extends React.Component<SummaryProps, SummaryState> {
@@ -39,12 +41,28 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     constructor(props: Readonly<SummaryProps> | SummaryProps) {
         super(props);
         this.state = {
-            error: ''
+            error: '',
+            practitioners: null
         }
     }
 
+    componentDidMount() {
+        if (!this.state || this.state.practitioners) return;
+
+        // @ts-ignore
+        let client: Client = this.context.client;
+        let params = new URLSearchParams({
+            "_count": "250",
+            "_sort": "-_lastUpdated"
+        }).toString();
+        client.request(`/Practitioner?${params}`).then((bundle: Bundle) => {
+            console.log("Loaded practitioners", bundle);
+            this.setState({practitioners: bundle.entry.map((e: IBundle_Entry) => e.resource as IPractitioner)});
+        });
+    }
+
     render(): React.ReactNode {
-        if (!this.state) return <CircularProgress/>;
+        if (!this.state || !this.state.practitioners) return <CircularProgress/>;
 
         if (this.state.error) return <Alert severity={"error"}>{this.state.error}</Alert>;
 
@@ -62,45 +80,54 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             emergencyContactString = `${emergencyContact.name.given} ${emergencyContact.name.family} (${contactDetails})`;
         }
 
-        if (!patient.telecom) {
-            patient.telecom = [];
+        let error = true;
+        if (patient.smsContactPoint) {
+            error = !isPossiblePhoneNumber(patient.smsContactPoint, 'US');
         }
-
-        let smsContactPoint = patient.telecom.filter(
-            (t: IContactPoint) => t.system === ContactPointSystemKind._sms
-        )[0];
-
-        if (!smsContactPoint) {
-            smsContactPoint = {system: ContactPointSystemKind._sms};
-            patient.telecom.push(smsContactPoint);
-        }
-
-        let contactInformationValue = smsContactPoint.value;
 
         let contactInformationEntry = <TextField
-            value={contactInformationValue ?? ""}
+            value={patient.smsContactPoint ? new AsYouType('US').input(patient.smsContactPoint) : ""}
+            error={error}
             placeholder={"Phone number"}
+            size="small"
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                smsContactPoint.value = event.target.value;
+                try {
+                    let n = parsePhoneNumber(event.target.value, 'US');
+                    patient.smsContactPoint = n.nationalNumber;
+                } catch (e) {
+                    patient.smsContactPoint = event.target.value;
+                }
                 this.setState({});
             }}/>;
 
         let contactInformation: { label: string, value: ReactNode } = {
             label: 'Contact information',
-            value: this.props.editable ? contactInformationEntry : (contactInformationValue ?? "None on file")
+            value: this.props.editable ? contactInformationEntry : (patient.smsContactPoint ?? "None on file")
         };
 
-        let ccContactMethodPreference = "SMS";
-        let ccContactMethodSelector = <FormControl variant="standard" sx={{m: 1, minWidth: 120}}>
-            <Select
-                value={ccContactMethodPreference}
-                // onChange={handleChange}
-
-            >
-                <MenuItem value={"SMS"}>SMS</MenuItem>
-                <MenuItem value={"Email"}>Email</MenuItem>
-            </Select>
-        </FormControl>
+        let notifyPractitionersSelector = null;
+        if (this.state.practitioners) {
+            let currentSelection = this.state.practitioners.filter(
+                (p: IPractitioner) => {
+                    return patient.generalPractitioner?.find((gpRef: IReference) => {
+                        return gpRef.type === "Practitioner" && p.id === gpRef.id;
+                    });
+                });
+            notifyPractitionersSelector = <Autocomplete
+                multiple
+                size="small"
+                defaultValue={currentSelection}
+                options={this.state.practitioners}
+                getOptionLabel={(option) => this.getPractitionerLabel(option as IPractitioner)}
+                renderInput={(params) => <TextField {...params} placeholder={"Practitioners"}/>}
+                onChange={(event: any, value: (string | IPractitioner)[]) => {
+                    patient.generalPractitioner = value.map((v) => ({
+                        type: "Practitioner",
+                        reference: `Practitioner/${(v as IPractitioner).id}`
+                    }));
+                }}
+            />;
+        }
 
         let rows = [
             {label: 'First name', value: patient.name[0].given},
@@ -111,8 +138,12 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             {label: 'Emergency contact', value: emergencyContactString},
             {
                 label: 'Send Caring Contacts via:',
-                value: this.props.editable ? ccContactMethodSelector : ccContactMethodPreference
+                value: "SMS" // hard coded because only SMS is supported for now
             },
+            {
+                label: "Notify on incoming message",
+                value: notifyPractitionersSelector ?? "No practitioner records available"
+            }
         ]
 
 
@@ -137,5 +168,10 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 </Table>
             </TableContainer>}
         </React.Fragment>;
+    }
+
+    private getPractitionerLabel(option: IPractitioner) {
+        if (!option.name || !option.name[0]) return `${option.resourceType}/${option.id}`;
+        return `${option.name[0].given} ${option.name[0].family}`;
     }
 }
