@@ -1,38 +1,32 @@
 {
   "resourceType": "PlanDefinition",
-  "id": "cc-message-schedule-template",
+  "id": "isacc_default_message_schedule",
   "title": "Default CC Message Schedule",
   "status": "active",
   "action": [
     {
-      "definitionCanonical": "#Day1Msg"
+      "definitionCanonical": "#Week0Day0Msg"
     },
     {
-      "definitionCanonical": "#Week1Msg"
+      "definitionCanonical": "#Week0Day1Msg"
     },
     {
-      "definitionCanonical": "#Month1Msg"
+      "definitionCanonical": "#Week0Day2Msg"
     },
     {
-      "definitionCanonical": "#Month2Msg"
+      "definitionCanonical": "#Week0Day3Msg"
     },
     {
-      "definitionCanonical": "#Month3Msg"
+      "definitionCanonical": "#Week0Day5Msg"
     },
     {
-      "definitionCanonical": "#Month4Msg"
+      "definitionCanonical": "#Week1Day0Msg"
     },
     {
-      "definitionCanonical": "#Month6Msg"
+      "definitionCanonical": "#Week1Day2Msg"
     },
     {
-      "definitionCanonical": "#Month8Msg"
-    },
-    {
-      "definitionCanonical": "#Month10Msg"
-    },
-    {
-      "definitionCanonical": "#Month12Msg"
+      "definitionCanonical": "#Week1Day4Msg"
     },
     {
       "definitionCanonical": "#BirthdayMsg",
@@ -47,17 +41,17 @@
   "contained": [
     {
       "resourceType": "ActivityDefinition",
-      "id": "Day1Msg",
-      "name": "Day 1 Message",
+      "id": "Week0Day0Msg",
+      "name": "Week 0 Day 0 Message",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
           "period": 0,
-          "periodUnit": "wk",
+          "periodUnit": "d",
           "timeOfDay": [
-            "09:34:00"
+            "13:30:00"
           ]
         }
       },
@@ -66,24 +60,24 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "{name} - Good to meet you last Thursday. Hope the resources are helpful."
+            "expression": "{name} - Good to meet you today! Could you respond so I know you got this message? Thanks {userName}"
           }
         }
       ]
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Week1Msg",
-      "name": "Week 1 Message",
+      "id": "Week0Day1Msg",
+      "name": "Week 0 Day 1 Message",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
           "period": 1,
-          "periodUnit": "wk",
+          "periodUnit": "d",
           "timeOfDay": [
-            "10:39:00"
+            "09:41:00"
           ]
         }
       },
@@ -92,24 +86,24 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hi {name} - Hope things go well for you this week. {userName}"
+            "expression": "Hi there {name}, Hope you are having a good day.  I am here for you if you need me. {userName}"
           }
         }
       ]
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Month1Msg",
-      "name": "Month 1 Message",
+      "id": "Week0Day2Msg",
+      "name": "Week 0 Day 2 Message",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 4,
-          "periodUnit": "wk",
+          "period": 2,
+          "periodUnit": "d",
           "timeOfDay": [
-            "08:59:00"
+            "12:00:00"
           ]
         }
       },
@@ -118,24 +112,50 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hi there {name}, hope you're having a good day today."
+            "expression": "Hi {name} - You made your first steps. Don't give up now {userName}"
           }
         }
       ]
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Month2Msg",
-      "name": "Month 2 Message",
+      "id": "Week0Day3Msg",
+      "name": "Week 0 Day 3 Message",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 8,
-          "periodUnit": "wk",
+          "period": 3,
+          "periodUnit": "d",
           "timeOfDay": [
-            "10:51:00"
+            "11:20:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hello {name}, I know life can be difficult sometimes; I just want you to know that I'm thinking about you and sending positive thoughts your way.  Sincerely, {userName}  "
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Week0Day5Msg",
+      "name": "Week 0 Day 5 Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 5,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "19:03:00"
           ]
         }
       },
@@ -151,17 +171,17 @@
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Month3Msg",
-      "name": "Month 3 Message",
+      "id": "Week1Day0Msg",
+      "name": "Week 1 Day 0 Message",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 12,
-          "periodUnit": "wk",
+          "period": 7,
+          "periodUnit": "d",
           "timeOfDay": [
-            "10:19:00"
+            "16:24:00"
           ]
         }
       },
@@ -170,24 +190,24 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hey {name}, Hope things are good and you have had a good week. - {userName}"
+            "expression": "Hi {name}, hope all's well and you're taking good care of yourself {userName}"
           }
         }
       ]
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Month4Msg",
-      "name": "Month 4 Message",
+      "id": "Week1Day2Msg",
+      "name": "Week 1 Day 2 Message",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 16,
-          "periodUnit": "wk",
+          "period": 9,
+          "periodUnit": "d",
           "timeOfDay": [
-            "10:12:00"
+            "12:30:00"
           ]
         }
       },
@@ -196,24 +216,24 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hi {name}, hope life is treating you well. -{userName}"
+            "expression": "Hello again, {name}! Know that I am thinking of you and sending positive vibes your way! Feel free to text if you need anything. {userName}"
           }
         }
       ]
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Month6Msg",
-      "name": "Month 6 Message",
+      "id": "Week1Day4Msg",
+      "name": "Week 1 Day 4 Message",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 24,
-          "periodUnit": "wk",
+          "period": 11,
+          "periodUnit": "d",
           "timeOfDay": [
-            "09:30:00"
+            "10:00:00"
           ]
         }
       },
@@ -222,85 +242,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hello again, {name}! Hope things are good -{userName}"
-          }
-        }
-      ]
-    },
-    {
-      "resourceType": "ActivityDefinition",
-      "id": "Month8Msg",
-      "name": "Month 8 Message",
-      "status": "active",
-      "kind": "CommunicationRequest",
-      "timingTiming": {
-        "repeat": {
-          "frequency": 1,
-          "period": 32,
-          "periodUnit": "wk",
-          "timeOfDay": [
-            "08:17:00"
-          ]
-        }
-      },
-      "dynamicValue": [
-        {
-          "path": "payload.contentString",
-          "expression": {
-            "language": "text/cql",
-            "expression": "{name}, Hope everything's going well. {userName}"
-          }
-        }
-      ]
-    },
-    {
-      "resourceType": "ActivityDefinition",
-      "id": "Month10Msg",
-      "name": "Month 10 Message",
-      "status": "active",
-      "kind": "CommunicationRequest",
-      "timingTiming": {
-        "repeat": {
-          "frequency": 1,
-          "period": 40,
-          "periodUnit": "wk",
-          "timeOfDay": [
-            "08:07:00"
-          ]
-        }
-      },
-      "dynamicValue": [
-        {
-          "path": "payload.contentString",
-          "expression": {
-            "language": "text/cql",
-            "expression": "{name}- Hope everything's going well. -{userName}"
-          }
-        }
-      ]
-    },
-    {
-      "resourceType": "ActivityDefinition",
-      "id": "Month12Msg",
-      "name": "Month 12 Message",
-      "status": "active",
-      "kind": "CommunicationRequest",
-      "timingTiming": {
-        "repeat": {
-          "frequency": 1,
-          "period": 48,
-          "periodUnit": "wk",
-          "timeOfDay": [
-            "08:41:00"
-          ]
-        }
-      },
-      "dynamicValue": [
-        {
-          "path": "payload.contentString",
-          "expression": {
-            "language": "text/cql",
-            "expression": "Hey {name} - Just wanted to say hello. Hope things are going OK. - {userName}"
+            "expression": "{name}, Hope everything is going well.  {userName}"
           }
         }
       ]
