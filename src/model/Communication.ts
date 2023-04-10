@@ -95,7 +95,7 @@ export default class Communication implements ICommunication {
     if (sentDateTimeString) c.sent = sentDateTimeString;
     if (receivedDateTimeString) c.received = receivedDateTimeString;
     if (note) c.setNote(note);
-    c.recipient = [{ reference: patient.reference }];
+    c.subject = { reference: patient.reference };
     c.setText(messageContent);
     return c;
   }
