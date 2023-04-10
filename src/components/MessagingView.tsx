@@ -667,7 +667,15 @@ export default class MessagingView extends React.Component<
                 {`${message.sent?"sent":"received"} on ${MessagingView.displayDateTime(message.sent?message.sent: message.received)}`}
             </Typography>
         </>
-    ) : noteDisplay;
+    ) : <>
+            {noteDisplay}
+            <Typography 
+                variant="caption"
+                color="text.secondary"
+            >
+             {`${incoming ? "reply (from patient)": "response (from provider)"}`}
+            </Typography>
+        </>
 
     
     
@@ -752,10 +760,10 @@ export default class MessagingView extends React.Component<
               ))}
             </Stack>
           )}
+          {comment}
           {timestamp && (
             <Typography variant={"caption"}>{timestamp}</Typography>
           )}
-          {comment}
         </Stack>
       </Grid>
     );
