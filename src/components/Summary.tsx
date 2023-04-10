@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 
 import {
-    ContactPointSystemKind, IBundle_Entry,
+    IBundle_Entry,
     ICodeableConcept,
     ICoding,
     IContactPoint,

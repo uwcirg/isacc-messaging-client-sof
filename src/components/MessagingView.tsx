@@ -38,7 +38,7 @@ import Client from "fhirclient/lib/Client";
 import {Bundle} from "../model/Bundle";
 import {getEnv} from "../util/util";
 
-type MessageType  = "sms" | "manual" | "note";
+type MessageType  = "sms" | "manual" | "comment";
 type MessageStatus = "sent" |  "received";
 
 interface Message {
@@ -300,35 +300,8 @@ export default class MessagingView extends React.Component<
         >
             <Tab value="sms" label="ISSAC send" {...formProps} />
             <Tab value="manual" label="Enter manual message" />
-            <Tab value="note" label="Enter note" />
+            <Tab value="comment" label="Enter comment" />
         </Tabs>
-        {/* <RadioGroup
-          row
-          aria-labelledby="message type radio group"
-          name="messageTypes"
-          value={this.state.activeMessage?.type}
-          //@ts-ignore
-          onChange={(event: React.ChangeEvent, value: MessageType) => {
-            this.setState({ activeMessage: {...this.state.activeMessage, type: value} });
-          }}
-          sx={{ marginTop: 1.5 }}
-        >
-          <FormControlLabel
-            value="sms"
-            label="ISSAC send"
-            {...formProps}
-          />
-          <FormControlLabel
-            value="manual"
-            label="Enter manual message"
-            {...formProps}
-          />
-           <FormControlLabel
-            value="note"
-            label="Enter comment"
-            {...formProps}
-          />
-        </RadioGroup> */}
         <IconButton
           color="info"
           size="small"
@@ -531,8 +504,8 @@ export default class MessagingView extends React.Component<
     return (
       <>
         <Stack direction={"column"} spacing={1}>
-          {activeType === "note" && this._buildNoteEntryComponent()}
-          {activeType !== "note" && this._buildManualMessageEntryComponent()}
+          {activeType === "comment" && this._buildNoteEntryComponent()}
+          {activeType !== "comment" && this._buildManualMessageEntryComponent()}
         </Stack>
         <Box sx={{ marginTop: 1, textAlign: "right"}}>
           <LoadingButton
