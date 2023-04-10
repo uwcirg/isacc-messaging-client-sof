@@ -110,7 +110,6 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             let currentSelection = this.state.practitioners.filter(
                 (p: IPractitioner) => {
                     return patient.generalPractitioner?.find((gpRef: IReference) => {
-                        console.log("ref id ", gpRef.reference)
                         return gpRef.type === "Practitioner" && gpRef.reference.includes(p.id);
                     });
                 });
