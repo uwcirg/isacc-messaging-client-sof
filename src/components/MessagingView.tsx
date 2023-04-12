@@ -391,7 +391,7 @@ export default class MessagingView extends React.Component<
         fullWidth
         placeholder="Enter contact/note on recipient"
         value={this.state.activeMessage?.content ?? ""}
-        minRows={4}
+        minRows={6}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
           this.setState({
             activeMessage: {
@@ -563,6 +563,7 @@ export default class MessagingView extends React.Component<
         : null;
     const noteAboutCommunication = `Non-SMS ${this.state.activeMessage?.type} message, staff entered`;
     // new communication
+    // TODO implement sender, requires Practitioner resource set for the user
     const newCommunication = Communication.create(
       this.state.activeMessage.content,
       context.patient,
@@ -709,7 +710,13 @@ export default class MessagingView extends React.Component<
       <>
         {noteDisplay}
         <Typography variant="caption" color="text.secondary">
-          {`${incoming ? "reply (from recipient)" : "response (from provider)"}`}
+          {`${
+            incoming
+              ? "reply (from recipient)"
+              : message.sent
+              ? "response (from provider)"
+              : ""
+          }`}
         </Typography>
       </>
     );

@@ -81,7 +81,8 @@ export default class Communication implements ICommunication {
     sentDateTimeString: string,
     receivedDateTimeString: string,
     messageType: Coding,
-    note: string
+    note: string,
+    senderId: string = null
   ): Communication {
     if (!messageType) {
       messageType = IsaccMessageCategory.isaccManuallySentMessage;
@@ -97,6 +98,7 @@ export default class Communication implements ICommunication {
     if (note) c.setNote(note);
     c.subject = { reference: patient.reference };
     c.setText(messageContent);
+    if (senderId) c.sender = {reference: senderId};
     return c;
   }
   
