@@ -83,7 +83,7 @@ export default class MessagingView extends React.Component<
       temporaryCommunications: [],
       messagesLoading: false,
       saveLoading: false,
-      infoOpen: false
+      infoOpen: false,
     };
   }
 
@@ -141,40 +141,42 @@ export default class MessagingView extends React.Component<
     // Communication?part-of=CarePlan/${carePlanId}
     let params = new URLSearchParams({
       "part-of": `CarePlan/${carePlanId}`,
-     // _sort: "-sent",
+      // _sort: "-sent",
     }).toString();
-    return await client.request({
-        url : `/Communication?${params}`, 
+    return await client
+      .request({
+        url: `/Communication?${params}`,
         headers: {
-            "Cache-Control": "no-cache",
-        }
-    }).then(
-      (bundle: Bundle) => {
-        if (bundle.type === "searchset") {
-          if (!bundle.entry) return [];
+          "Cache-Control": "no-cache",
+        },
+      })
+      .then(
+        (bundle: Bundle) => {
+          if (bundle.type === "searchset") {
+            if (!bundle.entry) return [];
 
-          let communications: Communication[] = bundle.entry.map(
-            (e: IBundle_Entry) => {
-              if (e.resource.resourceType !== "Communication") {
-                this.setState({ error: "Unexpected resource type returned" });
-                return null;
-              } else {
-                console.log("Communication loaded:", e);
-                return Communication.from(e.resource);
+            let communications: Communication[] = bundle.entry.map(
+              (e: IBundle_Entry) => {
+                if (e.resource.resourceType !== "Communication") {
+                  this.setState({ error: "Unexpected resource type returned" });
+                  return null;
+                } else {
+                  console.log("Communication loaded:", e);
+                  return Communication.from(e.resource);
+                }
               }
-            }
-          );
-          return communications;
-        } else {
-          this.setState({ error: "Unexpected bundle type returned" });
+            );
+            return communications;
+          } else {
+            this.setState({ error: "Unexpected bundle type returned" });
+            return null;
+          }
+        },
+        (reason: any) => {
+          this.setState({ error: reason.toString() });
           return null;
         }
-      },
-      (reason: any) => {
-        this.setState({ error: reason.toString() });
-        return null;
-      }
-    );
+      );
   }
 
   render(): React.ReactNode {
@@ -205,7 +207,9 @@ export default class MessagingView extends React.Component<
 
     let messages = (
       <Stack direction={"row"} justifyContent={"flex-end"} sx={messageBoxProps}>
-        <Typography variant={"body1"} color="text.secondary">{"No messages"}</Typography>
+        <Typography variant={"body1"} color="text.secondary">
+          {"No messages"}
+        </Typography>
       </Stack>
     );
 
@@ -252,10 +256,12 @@ export default class MessagingView extends React.Component<
         {this._buildMessageTypeSelector()}
 
         <Box sx={{ backgroundColor: grey[50], padding: 1 }}>
-          {this.state.activeMessage.type === "sms" && this._buildSMSEntryComponent()}
-          {this.state.activeMessage.type !== "sms" && this._buildNonSMSEntryComponent()}
+          {this.state.activeMessage.type === "sms" &&
+            this._buildSMSEntryComponent()}
+          {this.state.activeMessage.type !== "sms" &&
+            this._buildNonSMSEntryComponent()}
         </Box>
-        
+
         {this.state.error && (
           <Alert severity="error" sx={{ marginTop: 2 }}>
             {typeof this.state.error === "string"
@@ -272,35 +278,32 @@ export default class MessagingView extends React.Component<
       this.setState({
         infoOpen: false,
       });
-    const formProps = {
-        //control : <Radio size="small" />
-        sx: {
-            textAlign: "left"
-        }
-    };
     return (
       <Stack direction={"row"}>
         <Tabs
-            value={this.state.activeMessage?.type}
-            onChange={(event: React.SyntheticEvent, value: MessageType) => {
-                this.setState({ activeMessage: {...this.state.activeMessage, type: value} });
-            }}
-            textColor="primary"
-            indicatorColor="primary"
-            aria-label="secondary tabs example"
-            scrollButtons
-            allowScrollButtonsMobile
-            sx={{
-                marginTop: 1,
-                marginBottom: 1,
-                padding: (theme) => theme.spacing(0, 1, 0),
-                borderBottom: 1,
-                borderColor: "divider"
-            }}
+          value={this.state.activeMessage?.type}
+          onChange={(event: React.SyntheticEvent, value: MessageType) => {
+            this.setState({
+              activeMessage: { ...this.state.activeMessage, type: value },
+            });
+          }}
+          textColor="primary"
+          indicatorColor="primary"
+          aria-label="secondary tabs example"
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+          sx={{
+            marginTop: 1,
+            marginBottom: 1,
+            padding: (theme) => theme.spacing(0, 1, 0),
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
         >
-            <Tab value="sms" label="ISSAC send" {...formProps} />
-            <Tab value="manual" label="Enter manual message" />
-            <Tab value="comment" label="Enter comment" />
+          <Tab value="sms" label="Issac send"/>
+          <Tab value="manual" label="Enter manual message" />
+          <Tab value="comment" label="Enter comment" />
         </Tabs>
         <IconButton
           color="info"
@@ -318,11 +321,23 @@ export default class MessagingView extends React.Component<
           <DialogTitle>Information about message types</DialogTitle>
           <DialogContent>
             <Typography variant="body1">
-              <p><b>ISACC send</b> are messages sent or received directly by ISACC, which include texts, “sms”, iMessages, etc.</p>
-              <p><b>Manual messages</b> mean messages external to ISACC, including manually entered notifications of emails, phone calls, postal mail, or other non-automated communication.</p>
-              <p><b>Comments</b> are contact/note on the patient.</p>
+              <p>
+                <b>ISACC send</b> are messages sent or received directly by
+                ISACC, which include texts, “sms”, iMessages, etc.
+              </p>
+              <p>
+                <b>Manual messages</b> mean messages external to ISACC,
+                including manually entered notifications of emails, phone calls,
+                postal mail, or other non-automated communication.
+              </p>
+              <p>
+                <b>Comments</b> are contact/note on the recipient.
+              </p>
             </Typography>
-            <Alert severity="info">Please note that messages external to ISACC and contact/note on the patient will not be sent/communicated to the patient.</Alert>
+            <Alert severity="info">
+              Please note that messages external to ISACC and contact/note on
+              the recipient will not be sent/communicated to the recipient.
+            </Alert>
           </DialogContent>
           <DialogActions>
             <Button variant="text" onClick={handleInfoClose}>
@@ -343,7 +358,10 @@ export default class MessagingView extends React.Component<
           placeholder={"Type message for ISSAC to send"}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
             this.setState({
-                activeMessage: {...this.state.activeMessage, content : event.target.value }
+              activeMessage: {
+                ...this.state.activeMessage,
+                content: event.target.value,
+              },
             });
           }}
           fullWidth
@@ -368,135 +386,143 @@ export default class MessagingView extends React.Component<
 
   private _buildNoteEntryComponent(): React.ReactNode {
     return (
-        <TextField
-            multiline
-            fullWidth
-            placeholder="Enter contact/note on patient"
-            value={this.state.activeMessage?.content ?? ""}
-            minRows={4}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-            this.setState({
-                activeMessage: {
-                ...this.state.activeMessage,
-                date: (new Date()).toISOString(),
-                content: event.target.value,
-                },
-            });
-            }}
-            sx={{
-                backgroundColor: "#FFF",
-            }}
-            autoFocus
-        ></TextField>
-    )
+      <TextField
+        multiline
+        fullWidth
+        placeholder="Enter contact/note on recipient"
+        value={this.state.activeMessage?.content ?? ""}
+        minRows={4}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          this.setState({
+            activeMessage: {
+              ...this.state.activeMessage,
+              date: new Date().toISOString(),
+              content: event.target.value,
+            },
+          });
+        }}
+        sx={{
+          backgroundColor: "#FFF",
+        }}
+        autoFocus
+      ></TextField>
+    );
   }
 
   private _buildManualMessageEntryComponent(): React.ReactNode {
-     const radioProps = {
-        control : <Radio size="small"  />,
-        sx: {
-            paddingLeft: 2
-        }
-     }
-     return (
-        <>
-            <Stack
-                direction={{
-                    xs: "column",
-                    sm: "row"
-                }} 
-                spacing={2}
-                alignItems={{
-                    xs: "flex-start",
-                    sm: "center"
-                }}
-                justifyContent={"space-around"}
-                sx={{
-                    marginBottom: 1
-                }}
-            >
-                <Typography variant="body2" color="text.secondary">
-                    Email / Phone / Letter
-                </Typography>
-                <RadioGroup
-                    aria-labelledby="message type radio group"
-                    name="messageStatuses"
-                    value={this.state.activeMessage?.status}
-                    //@ts-ignore
-                    onChange={(event: React.ChangeEvent, value: MessageStatus) => {
-                        this.setState({ activeMessage: {...this.state.activeMessage, status: value} });
-                    }}
-                    sx={{
-                        backgroundColor: "#FFF",
-                        borderRadius: 2
-                    }}
-                >
-                    <FormControlLabel
-                        value={"sent"}
-                        label={"sent"}
-                        {...radioProps}
-                    />
-                    <FormControlLabel
-                        value="received"
-                        label="received"
-                        {...radioProps}
-                    />
-                </RadioGroup>
-                <Typography variant="body2" color="text.secondary">
-                    at
-                </Typography>
-                <DateTimePicker
-                    label="date & time"
-                    inputFormat="ddd, MM/DD/YYYY hh:mm A"
-                    value={this.state.activeMessage?.date}
-                    renderInput={(params: TextFieldProps) => (
-                    <TextField
-                        {...params}
-                        sx={{ minWidth: 264, backgroundColor: "#FFF" }}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                            if (MessagingView.isValidDate(event.target.value)) {
-                                this.setState({
-                                    activeMessage: {
-                                    ...this.state.activeMessage,
-                                    date: event.target.value ? new Date(event.target.value).toISOString() : null,
-                                    },
-                                });
-                            }
-                        }}
-                    />
-                    )}
-                    onChange={(newValue: Date | null) => {
-                        this.setState({
-                            activeMessage: {
-                            ...this.state.activeMessage,
-                            date: newValue?.toISOString(),
-                            },
-                        });
-                    }}
-                    disableFuture
-                ></DateTimePicker>
-            </Stack>
-            {/* <Typography variant="subtitle2" sx={{marginTop: 3}}>{`Message ${this.state.activeMessage?.status} at ${displayDateTime(this.state.activeMessage?.date)}`}</Typography> */}
-            <TextField
-                multiline
-                rows={4}
-                fullWidth
-                placeholder="Enter info on email/phone/letter contact"
-                value={this.state.activeMessage?.content ?? ""}
+    const radioProps = {
+      control: <Radio size="small" />,
+      sx: {
+        paddingLeft: 2,
+      },
+    };
+    return (
+      <>
+        <Stack
+          direction={{
+            xs: "column",
+            sm: "row",
+          }}
+          spacing={1.5}
+          alignItems={{
+            xs: "flex-start",
+            sm: "center",
+          }}
+          justifyContent={"flex-start"}
+          sx={{
+            marginTop: 0.5,
+            marginBottom: 1,
+          }}
+        >
+          <Typography variant="body2" color="text.secondary">
+            Email / Phone / Letter
+          </Typography>
+          <RadioGroup
+            aria-labelledby="message type radio group"
+            name="messageStatuses"
+            value={this.state.activeMessage?.status}
+            //@ts-ignore
+            onChange={(event: React.ChangeEvent, value: MessageStatus) => {
+              this.setState({
+                activeMessage: { ...this.state.activeMessage, status: value },
+              });
+            }}
+            sx={{
+              backgroundColor: "#FFF",
+              borderRadius: 1,
+              border: "1px solid",
+              borderColor: "#c4c4c4"
+            }}
+          >
+            <FormControlLabel value={"sent"} label={"sent"} {...radioProps} />
+            <FormControlLabel
+              value="received"
+              label="received"
+              {...radioProps}
+            />
+          </RadioGroup>
+          <Typography variant="body2" color="text.secondary">
+            at
+          </Typography>
+          <DateTimePicker
+            label="date & time"
+            inputFormat="ddd, MM/DD/YYYY hh:mm A"
+            value={this.state.activeMessage?.date}
+            renderInput={(params: TextFieldProps) => (
+              <TextField
+                {...params}
+                sx={{ minWidth: 264, backgroundColor: "#FFF" }}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                this.setState({
-                    activeMessage: {
-                    ...this.state.activeMessage,
-                    content: event.target.value,
-                    },
-                });
+                  if (MessagingView.isValidDate(event.target.value)) {
+                    this.setState({
+                      activeMessage: {
+                        ...this.state.activeMessage,
+                        date: event.target.value
+                          ? new Date(event.target.value).toISOString()
+                          : null,
+                      },
+                    });
+                  }
                 }}
-                sx={{
-                    backgroundColor: "#FFF",
-                }}
-            ></TextField>
-        </>
-     )
+              />
+            )}
+            onChange={(newValue: Date | null) => {
+              this.setState({
+                activeMessage: {
+                  ...this.state.activeMessage,
+                  date: newValue?.toISOString(),
+                },
+              });
+            }}
+            disableFuture
+          ></DateTimePicker>
+        </Stack>
+        <TextField
+          multiline
+          rows={4}
+          fullWidth
+        //   label={`Message ${
+        //     this.state.activeMessage?.status
+        //   } at ${this.state.activeMessage?.date}`}
+        //   InputLabelProps={{ shrink: true, sx: {
+        //     color: "text.primary"
+        //   } }}
+          placeholder="Enter info on email/phone/letter contact"
+          value={this.state.activeMessage?.content ?? ""}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            this.setState({
+              activeMessage: {
+                ...this.state.activeMessage,
+                content: event.target.value,
+              },
+            });
+          }}
+          sx={{
+            backgroundColor: "#FFF"
+          }}
+        ></TextField>
+      </>
+    );
   }
 
   private _buildNonSMSEntryComponent(): React.ReactNode {
@@ -507,7 +533,7 @@ export default class MessagingView extends React.Component<
           {activeType === "comment" && this._buildNoteEntryComponent()}
           {activeType !== "comment" && this._buildManualMessageEntryComponent()}
         </Stack>
-        <Box sx={{ marginTop: 1, textAlign: "right"}}>
+        <Box sx={{ marginTop: 1, textAlign: "right" }}>
           <LoadingButton
             variant="contained"
             onClick={() => {
@@ -527,23 +553,34 @@ export default class MessagingView extends React.Component<
     // @ts-ignore
     let context: FhirClientContextType = this.context;
     this.setState({ saveLoading: true });
+    const sentDate =
+      this.state.activeMessage?.status === "sent"
+        ? this.state.activeMessage.date
+        : null;
+    const receivedDate =
+      this.state.activeMessage?.status === "received"
+        ? this.state.activeMessage.date
+        : null;
+    const noteAboutCommunication = `Non-SMS ${this.state.activeMessage?.type} message, staff entered`;
+    // new communication
     const newCommunication = Communication.create(
       this.state.activeMessage.content,
       context.patient,
       context.carePlan,
-      this.state.activeMessage?.status === "sent" ? this.state.activeMessage.date : null,
-      this.state.activeMessage?.status === "received" ? this.state.activeMessage.date : null,
+      sentDate,
+      receivedDate,
       IsaccMessageCategory.isaccNonSMSMessage,
-      `Non-SMS ${this.state.activeMessage?.type} message, staff entered`
+      noteAboutCommunication
     );
+    // save communication
     this._save(newCommunication, (savedResult: IResource) => {
-        console.log("Saved new communication:", savedResult);
-        this.setState({
-          activeMessage: defaultMessage,
-          error: null,
-        });
-        this.loadCommunications();
-        setTimeout(() => this.setState({ saveLoading: false }), 250);
+      console.log("Saved new communication:", savedResult);
+      this.setState({
+        activeMessage: defaultMessage,
+        error: null,
+      });
+      this.loadCommunications();
+      setTimeout(() => this.setState({ saveLoading: false }), 250);
     });
   }
 
@@ -557,22 +594,23 @@ export default class MessagingView extends React.Component<
         context.carePlan
       );
     this._save(newMessage, (savedCommunicationRequest: IResource) => {
-        console.log(
-            "Saved new CommunicationRequest:",
-            savedCommunicationRequest
-        );
-        this.state.temporaryCommunications.unshift(
-            Communication.tempCommunicationFrom(savedCommunicationRequest)
-        );
-        this.setState({
-            activeMessage: defaultMessage,
-            temporaryCommunications: this.state.temporaryCommunications,
-            error: null,
-        });
+      console.log("Saved new CommunicationRequest:", savedCommunicationRequest);
+      this.state.temporaryCommunications.unshift(
+        Communication.tempCommunicationFrom(savedCommunicationRequest)
+      );
+      this.setState({
+        activeMessage: defaultMessage,
+        temporaryCommunications: this.state.temporaryCommunications,
+        error: null,
+      });
     });
   }
 
-  private _save(newMessage: Communication | CommunicationRequest, succesCallback: Function, errorCallback: Function = null) {
+  private _save(
+    newMessage: Communication | CommunicationRequest,
+    succesCallback: Function,
+    errorCallback: Function = null
+  ) {
     // @ts-ignore
     let context: FhirClientContextType = this.context;
     console.log("Attempting to save new message:", newMessage);
@@ -580,10 +618,7 @@ export default class MessagingView extends React.Component<
       .create(newMessage)
       .then(
         (savedResult: IResource) => {
-          console.log(
-            "Saved resource:",
-            savedResult
-          );
+          console.log("Saved resource:", savedResult);
           if (succesCallback) succesCallback(savedResult);
         },
         (reason: any) => {
@@ -605,21 +640,25 @@ export default class MessagingView extends React.Component<
   ): React.ReactNode {
     let incoming = true;
     const isNonSmSMessage = message.category.find((c: ICodeableConcept) =>
-        c.coding.find((coding: ICoding) => IsaccMessageCategory.isaccNonSMSMessage.equals(coding))
-    ) ? true : false;
-   
+      c.coding.find((coding: ICoding) =>
+        IsaccMessageCategory.isaccNonSMSMessage.equals(coding)
+      )
+    )
+      ? true
+      : false;
+
     if (isNonSmSMessage) {
-        incoming = message.received ? true: false;
+      incoming = message.received ? true : false;
     } else if (
-        message.recipient &&
-        message.recipient.find((r: IReference) => r.reference.includes("Patient"))
+      message.recipient &&
+      message.recipient.find((r: IReference) => r.reference.includes("Patient"))
     ) {
-        incoming = false;
+      incoming = false;
     }
 
     let timestamp = null;
     let delivered = true;
-   
+
     if (!isNonSmSMessage && message.sent) {
       timestamp = MessagingView.displayDateTime(message.sent);
     } else {
@@ -648,37 +687,33 @@ export default class MessagingView extends React.Component<
     let themes: string[] = message.getThemes();
     const note = message.displayNote();
     const noteDisplay = note ? (
-        <Typography 
-            variant="caption"
-            color="text.secondary"
-        >
-            {note}
-        </Typography>
-     ) : false;
+      <Typography variant="caption" color="text.secondary">
+        {note}
+      </Typography>
+    ) : (
+      false
+    );
 
     const comment: React.ReactNode = isNonSmSMessage ? (
-        <>
-            {noteDisplay}
-            <Typography 
-                variant="caption"
-                color="text.secondary"
-                gutterBottom
-            >
-                {`${message.sent?"sent":"received"} on ${MessagingView.displayDateTime(message.sent?message.sent: message.received)}`}
-            </Typography>
-        </>
-    ) : <>
-            {noteDisplay}
-            <Typography 
-                variant="caption"
-                color="text.secondary"
-            >
-             {`${incoming ? "reply (from patient)": "response (from provider)"}`}
-            </Typography>
-        </>
+      <>
+        {noteDisplay}
+        <Typography variant="caption" color="text.secondary" gutterBottom>
+          {`${
+            message.sent ? "sent" : "received"
+          } on ${MessagingView.displayDateTime(
+            message.sent ? message.sent : message.received
+          )}`}
+        </Typography>
+      </>
+    ) : (
+      <>
+        {noteDisplay}
+        <Typography variant="caption" color="text.secondary">
+          {`${incoming ? "reply (from recipient)" : "response (from provider)"}`}
+        </Typography>
+      </>
+    );
 
-    
-    
     return this._alignedRow(
       incoming,
       msg,
@@ -837,29 +872,35 @@ export default class MessagingView extends React.Component<
   }
   private _hasMessageContent(): boolean {
     return !(
-        !this.state.activeMessage || 
-        (!this.state.activeMessage.content) || 
-        !String(this.state.activeMessage.content).trim()
+      !this.state.activeMessage ||
+      !this.state.activeMessage.content ||
+      !String(this.state.activeMessage.content).trim()
     );
   }
 
   private _hasMessageDate(): boolean {
-    return this.state.activeMessage && MessagingView.isValidDate(this.state.activeMessage.date);
+    return (
+      this.state.activeMessage &&
+      MessagingView.isValidDate(this.state.activeMessage.date)
+    );
   }
 
-  private static displayDateTime (dateString:string) :string {
+  private static displayDateTime(dateString: string): string {
     if (!dateString) return "";
     const dateObj = new Date(dateString);
     const dateDisplay = dateObj.toLocaleDateString("en-US", {
-        weekday: "short",
-        year: "numeric",
-        month: "numeric",
-        day: "numeric",
+      weekday: "short",
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
     });
-    const timeDisplay = dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const timeDisplay = dateObj.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
     return `${dateDisplay} ${timeDisplay}`;
   }
-  private static isValidDate (dateString:string) :boolean {
+  private static isValidDate(dateString: string): boolean {
     if (!dateString) return false;
     const dateVal = new Date(dateString);
     return dateVal instanceof Date && !isNaN(dateVal.getTime());
