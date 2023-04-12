@@ -216,7 +216,7 @@ export default class MessagingView extends React.Component<
       </Stack>
     );
 
-    if (this.state.communications && this.state.communications.length > 0) {
+    if ((this.state.communications && this.state.communications.length > 0) || this.state.temporaryCommunications.length) {
       let communications = [];
       communications.push(...this.state.communications);
       communications.push(...this.state.temporaryCommunications);
