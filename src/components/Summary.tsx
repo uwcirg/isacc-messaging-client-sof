@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 
 import {
-    ContactPointSystemKind, IBundle_Entry,
+    IBundle_Entry,
     ICodeableConcept,
     ICoding,
     IContactPoint,
@@ -110,10 +110,14 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             let currentSelection = this.state.practitioners.filter(
                 (p: IPractitioner) => {
                     return patient.generalPractitioner?.find((gpRef: IReference) => {
-                        return gpRef.type === "Practitioner" && p.id === gpRef.id;
+                        return gpRef.type === "Practitioner" && gpRef.reference.includes(p.id);
                     });
                 });
-            notifyPractitionersSelector = <Autocomplete
+            const selectedPractitionersDisplay = currentSelection.map((p: IPractitioner) => {
+                return <Typography variant="body2">{this.getPractitionerLabel(p)}</Typography>
+            });
+    
+            notifyPractitionersSelector = this.props.editable ? <Autocomplete
                 multiple
                 size="small"
                 defaultValue={currentSelection}
@@ -121,12 +125,16 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 getOptionLabel={(option) => this.getPractitionerLabel(option as IPractitioner)}
                 renderInput={(params) => <TextField {...params} placeholder={"Practitioners"}/>}
                 onChange={(event: any, value: (string | IPractitioner)[]) => {
+                    if (!value) {
+                        patient.generalPractitioner = null;
+                        return;
+                    }
                     patient.generalPractitioner = value.map((v) => ({
                         type: "Practitioner",
                         reference: `Practitioner/${(v as IPractitioner).id}`
                     }));
                 }}
-            />;
+            /> : selectedPractitionersDisplay;
         }
 
         let rows = [
@@ -160,7 +168,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                                 <TableCell component="th" scope="row">
                                     {row.label}
                                 </TableCell>
-                                <TableCell align="left">{row.value}</TableCell>
+                                <TableCell align="left" sx={{width: "100%"}}>{row.value}</TableCell>
 
                             </TableRow>
                         ))}
