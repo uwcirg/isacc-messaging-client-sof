@@ -5,6 +5,7 @@ import {FhirClientContext, FhirClientContextType} from "../FhirClientContext";
 import Communication from "../model/Communication";
 import {IBundle_Entry, ICodeableConcept, ICoding, IReference, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {
+  Alert,
   Box,
   Button,
   Chip,
@@ -19,6 +20,7 @@ import {
   List,
   Radio,
   RadioGroup,
+  Snackbar,
   Stack,
   Tab,
   Tabs,
@@ -31,7 +33,6 @@ import InfoIcon from "@mui/icons-material/Info";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import {amber, grey, lightBlue} from "@mui/material/colors";
 import {IsaccMessageCategory} from "../model/CodeSystem";
-import Alert from "@mui/material/Alert";
 import {Error, Refresh, Warning} from "@mui/icons-material";
 import {CommunicationRequest} from "../model/CommunicationRequest";
 import Client from "fhirclient/lib/Client";
@@ -65,6 +66,7 @@ export default class MessagingView extends React.Component<
     temporaryCommunications: Communication[];
     messagesLoading: boolean;
     saveLoading: boolean;
+    showSaveFeedback: boolean;
     infoOpen: boolean;
     // showAlert: boolean;
     // alertSeverity: "error" | "warning" | "info" | "success";
@@ -83,6 +85,7 @@ export default class MessagingView extends React.Component<
       temporaryCommunications: [],
       messagesLoading: false,
       saveLoading: false,
+      showSaveFeedback: false,
       infoOpen: false,
     };
   }
@@ -260,6 +263,15 @@ export default class MessagingView extends React.Component<
             this._buildSMSEntryComponent()}
           {this.state.activeMessage.type !== "sms" &&
             this._buildNonSMSEntryComponent()}
+          <Snackbar
+            open={this.state.showSaveFeedback}
+            autoHideDuration={2000}
+            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          >
+            <Alert severity="success">
+              Message saved. Please see messages list above.
+            </Alert>
+          </Snackbar>
         </Box>
 
         {this.state.error && (
@@ -581,7 +593,11 @@ export default class MessagingView extends React.Component<
         error: null,
       });
       this.loadCommunications();
+      this.setState({
+        showSaveFeedback: true
+      });
       setTimeout(() => this.setState({ saveLoading: false }), 250);
+      setTimeout(() => this.setState({showSaveFeedback: false}), 2000);
     });
   }
 
