@@ -5,14 +5,14 @@ import {FhirClientContext, FhirClientContextType} from "../FhirClientContext";
 import Client from "fhirclient/lib/Client";
 import {CommunicationRequest} from "../model/CommunicationRequest";
 import {makeCarePlan} from "../model/modelUtil";
-import {Button, CircularProgress} from "@mui/material";
+import {Alert, Button, CircularProgress} from "@mui/material";
 import CarePlan from "../model/CarePlan";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import {IBundle_Entry, ICommunicationRequest, IPlanDefinition, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
-import PlanDefinition, {getDefaultMessageSchedule} from "../model/PlanDefinition";
+import PlanDefinition from "../model/PlanDefinition";
 import {getUserName} from "../util/isacc_util";
 import Patient from "../model/Patient";
 import {Bundle} from "../model/Bundle";
@@ -58,6 +58,10 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
             const carePlan = makeCarePlan(planDefinition, patient, messages);
 
             return carePlan;
+        }).catch((reason: any) => {
+            this.setState({error: "Fetching PlanDefinition failed (see log)"});
+            console.log("Fetching PlanDefinition failed:", reason);
+            return null;
         })
 
     }
@@ -191,6 +195,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
 
     render(): React.ReactNode {
         if (!this.state || !this.context) return <CircularProgress/>;
+        if (this.state.error) return <Alert severity={'error'}>{this.state.error}</Alert>
 
         let view = <CircularProgress/>;
         if (this.state.activeCarePlan != null) {

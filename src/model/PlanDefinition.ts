@@ -28,7 +28,7 @@ export default class PlanDefinition implements IPlanDefinition {
     static from(raw: IPlanDefinition): PlanDefinition {
         if (!raw) return null;
         let planDefinition = Object.assign(new PlanDefinition(), raw);
-        planDefinition.activityDefinitions = planDefinition.action.map(function (action: IPlanDefinition_Action) {
+        planDefinition.activityDefinitions = planDefinition.action?.map(function (action: IPlanDefinition_Action) {
                 let id = action.definitionCanonical.slice(1);
                 let activityDefinition = planDefinition.contained.find((r: IResourceList) => r.id === id);
                 return ActivityDefinition.from(activityDefinition);
