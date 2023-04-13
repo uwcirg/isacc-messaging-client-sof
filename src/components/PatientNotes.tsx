@@ -40,14 +40,14 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
 
         return <>
             <CardContent>
-                <Typography variant={"h6"}>Patient notes</Typography>
+                <Typography variant={"h6"}>Recipient notes</Typography>
                 {this.state.editable ?
                     <TextField
                         InputProps={{sx: {typography: 'body2'}}}
                         multiline
                         fullWidth
                         value={this.state.updatedPatientNote ?? ""}
-                        placeholder={"Enter patient note"}
+                        placeholder={"Enter recipient note"}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                             this.setState({updatedPatientNote: event.target.value});
                         }}

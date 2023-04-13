@@ -99,7 +99,7 @@ export default class DiagnosisAndCareTeam extends React.Component<{}, {
 
         if (!infoRows && !careteamRows) {
             return <>
-                <Typography variant={"h6"}>Patient info</Typography>
+                <Typography variant={"h6"}>Recipient info</Typography>
                 <Typography variant={"caption"}>{"No diagnosis or care team information on file"}</Typography>
             </>;
         }
