@@ -17,7 +17,7 @@ export default function AppBanner() {
                         color='inherit'
                         variant={'outlined'}
                         href={getPatientListURL()}><ArrowBackIos/>
-                        Back to patient list
+                        Back to recipient list
                     </Button>
                 </IconButton>
                 <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>

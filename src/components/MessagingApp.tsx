@@ -14,7 +14,7 @@ export const MessagingApp = () => {
     let content;
     if (!context.carePlan) {
         content = <Alert
-            severity="error">{"Patient has no ISACC CarePlan. Ensure the patient is enrolled and has a message schedule CarePlan."}</Alert>;
+            severity="error">{"Recipient has no ISACC CarePlan. Ensure the recipient is enrolled and has a message schedule CarePlan."}</Alert>;
     } else {
         content = <Grid container direction={"row"} justifyContent={"center"}>
             <GridItemWithCard xs={12} sm={8} md={3} lg={3} xl={3}>
