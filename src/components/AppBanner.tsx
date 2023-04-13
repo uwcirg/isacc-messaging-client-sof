@@ -30,7 +30,7 @@ export default function AppBanner() {
                 href={getPatientListURL()}
               >
                 <ArrowBackIos />
-                Patient list
+                Recipient list
               </Button>
             </IconButton>
           </Toolbar>

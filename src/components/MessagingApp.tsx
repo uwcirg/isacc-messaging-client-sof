@@ -17,7 +17,7 @@ export const MessagingApp = () => {
     content = (
       <Alert severity="error">
         {
-          "Patient has no ISACC CarePlan. Ensure the patient is enrolled and has a message schedule CarePlan."
+          "Recipient has no ISACC CarePlan. Ensure the recipient is enrolled and has a message schedule CarePlan."
         }
       </Alert>
     );
