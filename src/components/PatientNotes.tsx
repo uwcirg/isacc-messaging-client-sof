@@ -54,7 +54,7 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
                   }}
                 />
               ) : (
-                <Typography variant={"body2"}>
+                <Typography variant={"body1"}>
                   {carePlan.description}
                 </Typography>
               )}
