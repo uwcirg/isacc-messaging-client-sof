@@ -166,7 +166,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         return <React.Fragment>
             <Typography variant={"h6"}>Recipient info</Typography>
             {patient && <TableContainer>
-                <Table sx={{width: "100%"}} size={"small"}>
+                <Table sx={{minWidth: 50}} size={"small"}>
                     <TableBody>
                         {rows.map((row) => (
                             <TableRow
