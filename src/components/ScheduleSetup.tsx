@@ -101,13 +101,13 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
                     {editing ?
                         <PatientNotes/> :
                         <>
-                            <Typography variant={'h6'}>{"Patient note"}</Typography>
+                            <Typography variant={'h6'}>{"Recipient note"}</Typography>
                             <TextField
                                 sx={{maxHeight: 400, overflow: 'auto', ...styles.patientNotesField}}
                                 fullWidth
                                 multiline
                                 value={this.state.carePlan.description ?? ""}
-                                placeholder={"Patient note"}
+                                placeholder={"Recipient note"}
                                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                                     const cp = this.state.carePlan;
                                     cp.description = event.target.value;

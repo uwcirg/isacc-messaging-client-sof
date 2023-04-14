@@ -69,7 +69,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         // @ts-ignore
         let patient: Patient = this.context.patient;
 
-        if (!patient) return <Alert severity={"error"}>{"No patient"}</Alert>;
+        if (!patient) return <Alert severity={"error"}>{"No recipient"}</Alert>;
 
         let emergencyContactString = "None on file";
         if (patient.contact) {
@@ -110,7 +110,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             let currentSelection = this.state.practitioners.filter(
                 (p: IPractitioner) => {
                     return patient.generalPractitioner?.find((gpRef: IReference) => {
-                        return gpRef.type === "Practitioner" && p.id === gpRef.id;
+                        return gpRef.type === "Practitioner" && gpRef.reference.includes(p.id);
                     });
                 });
             notifyPractitionersSelector = <Autocomplete
@@ -148,7 +148,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
 
 
         return <React.Fragment>
-            <Typography variant={"h6"}>Patient info</Typography>
+            <Typography variant={"h6"}>Recipient info</Typography>
             {patient && <TableContainer>
                 <Table sx={{minWidth: 50}} size={"small"}>
                     <TableBody>

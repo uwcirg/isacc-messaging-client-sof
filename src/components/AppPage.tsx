@@ -5,7 +5,7 @@ import VersionString from "./VersionString";
 import AppBanner from "./AppBanner";
 import Box from "@mui/material/Box";
 
-const styles = {content: { "padding": "16px" }};
+const styles = {content: { "padding": "64px 16px 16px" }};
 
 type AppPageScaffoldProps = {
     title?: string | JSX.Element;
@@ -35,16 +35,13 @@ export const PageTitle: FunctionComponent<React.PropsWithChildren & PageTitlePro
 }
 
 export const AppPageScaffold: FunctionComponent<React.PropsWithChildren & AppPageScaffoldProps> = (props: React.PropsWithChildren<AppPageScaffoldProps>) => {
-
     function _content() {
         if (props.title) {
             // return title and divider with padding, followed by page content
             return <PageTitle title={props.title}>{props.children}</PageTitle>;
         }
         // return just the page content
-        return <Box sx={ styles.content }>
-            {props.children}
-        </Box>;
+        return <Box sx={styles.content}>{props.children}</Box>;
     }
 
     return (

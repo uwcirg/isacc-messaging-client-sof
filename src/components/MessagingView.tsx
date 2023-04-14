@@ -239,7 +239,7 @@ export default class MessagingView extends React.Component<
     return (
       <Grid container direction={"column"}>
         <Stack direction={"row"} justifyContent={"space-between"}>
-          <Typography variant={"h6"} sx={{ paddingTop: 2 }}>
+          <Typography variant={"h6"}>
             {"Messages"}
           </Typography>
           {this.state.messagesLoading ? (
