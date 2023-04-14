@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 
 import {
-    ContactPointSystemKind, IBundle_Entry,
+    IBundle_Entry,
     ICodeableConcept,
     ICoding,
     IContactPoint,
@@ -110,7 +110,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             let currentSelection = this.state.practitioners.filter(
                 (p: IPractitioner) => {
                     return patient.generalPractitioner?.find((gpRef: IReference) => {
-                        return gpRef.type === "Practitioner" && p.id === gpRef.id;
+                        return gpRef.type === "Practitioner" && gpRef.reference.includes(p.id);
                     });
                 });
             notifyPractitionersSelector = <Autocomplete
