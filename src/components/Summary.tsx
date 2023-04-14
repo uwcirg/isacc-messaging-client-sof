@@ -113,9 +113,10 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                         return gpRef.type === "Practitioner" && gpRef.reference.includes(p.id);
                     });
                 });
-            const selectedPractitionersDisplay = currentSelection.map((p: IPractitioner) => {
-                return <Typography variant="body2">{this.getPractitionerLabel(p)}</Typography>
-            });
+            const selectedPractitionersDisplay = currentSelection.length ?
+                currentSelection.map((p: IPractitioner) => {
+                    return <Typography variant="body2">{this.getPractitionerLabel(p)}</Typography>
+                }) : "None on file";
     
             notifyPractitionersSelector = this.props.editable ? <Autocomplete
                 multiple
