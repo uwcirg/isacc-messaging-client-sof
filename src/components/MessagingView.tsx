@@ -384,7 +384,10 @@ export default class MessagingView extends React.Component<
             });
           }}
           fullWidth
-          sx={{ backgroundColor: "#FFF" }}
+          InputProps={{sx: {
+            borderRadius: (theme) => theme.spacing(4),
+            backgroundColor: "#FFF"
+          }}}
         />
         <Stack
           direction={"row"}
