@@ -1,7 +1,9 @@
 import React, {ReactNode} from 'react';
 import {FhirClientContext} from '../FhirClientContext';
 import {
-    Alert, Autocomplete,
+    Alert,
+    Autocomplete,
+    Chip,
     CircularProgress,
     Table,
     TableBody,
@@ -114,8 +116,13 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                     });
                 });
             const selectedPractitionersDisplay = currentSelection.length ?
-                currentSelection.map((p: IPractitioner) => {
-                    return <Typography variant="body2">{this.getPractitionerLabel(p)}</Typography>
+                currentSelection.map((p: IPractitioner, index) => {
+                    return <Chip
+                        key={`notify_p_display_${index}`}
+                        label={this.getPractitionerLabel(p)}
+                        variant="outlined"
+                        sx={{marginBottom: 0.5}}
+                    ></Chip>
                 }) : "None on file";
     
             notifyPractitionersSelector = this.props.editable ? <Autocomplete
@@ -159,7 +166,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         return <React.Fragment>
             <Typography variant={"h6"}>Recipient info</Typography>
             {patient && <TableContainer>
-                <Table sx={{minWidth: 50}} size={"small"}>
+                <Table sx={{width: "100%"}} size={"small"}>
                     <TableBody>
                         {rows.map((row) => (
                             <TableRow
@@ -169,8 +176,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                                 <TableCell component="th" scope="row">
                                     {row.label}
                                 </TableCell>
-                                <TableCell align="left" sx={{width: "100%"}}>{row.value}</TableCell>
-
+                                <TableCell align="left">{row.value}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
