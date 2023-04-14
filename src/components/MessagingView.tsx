@@ -197,12 +197,12 @@ export default class MessagingView extends React.Component<
     }
 
     let messageBoxProps = {
-      maxHeight: 600,
+      maxHeight: 548,
       minHeight: 40,
       overflow: "auto",
       display: "flex",
       flexDirection: "column-reverse",
-      border: "1px solid lightgrey",
+      border: "2px solid lightgrey",
       borderRadius: 1,
       paddingLeft: 0.5,
       paddingRight: 0.5,
@@ -210,7 +210,7 @@ export default class MessagingView extends React.Component<
 
     let messages = (
       <Stack direction={"row"} justifyContent={"flex-end"} sx={messageBoxProps}>
-        <Typography variant={"body1"} color="text.secondary">
+        <Typography variant={"body1"} color="text.secondary" sx={{padding: 2}}>
           {"No messages"}
         </Typography>
       </Stack>
@@ -290,6 +290,12 @@ export default class MessagingView extends React.Component<
       this.setState({
         infoOpen: false,
       });
+    const tabProps = {
+        sx: {
+            fontSize: "0.85rem",
+            padding: (theme: any) => theme.spacing(1, 2.5)
+        }
+    };
     return (
       <Stack direction={"row"}>
         <Tabs
@@ -306,16 +312,17 @@ export default class MessagingView extends React.Component<
           scrollButtons="auto"
           allowScrollButtonsMobile
           sx={{
-            marginTop: 1,
+            marginTop: 1.5,
             marginBottom: 1,
             padding: (theme) => theme.spacing(0, 1, 0),
             borderBottom: 1,
             borderColor: "divider",
+            minHeight: "40px"
           }}
         >
-          <Tab value="sms" label="Issac send"/>
-          <Tab value="manual" label="Enter manual message" />
-          <Tab value="comment" label="Enter comment" />
+          <Tab value="sms" label="Issac send" {...tabProps}/>
+          <Tab value="manual" label="Enter manual message"  {...tabProps}/>
+          <Tab value="comment" label="Enter comment" {...tabProps} />
         </Tabs>
         <IconButton
           color="info"
@@ -382,7 +389,7 @@ export default class MessagingView extends React.Component<
         <Stack
           direction={"row"}
           justifyContent={"flex-end"}
-          sx={{ marginTop: 1, marginBottom: 1 }}
+          sx={{ marginTop: 1}}
         >
           <Button
             variant="contained"
@@ -631,6 +638,7 @@ export default class MessagingView extends React.Component<
     // @ts-ignore
     let context: FhirClientContextType = this.context;
     console.log("Attempting to save new message:", newMessage);
+    this.setState({showSaveFeedback: false});
     context.client
       .create(newMessage)
       .then(
