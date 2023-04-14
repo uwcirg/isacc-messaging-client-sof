@@ -191,7 +191,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
             view = this.getCarePlanAlreadyExistsView();
         }
 
-        return <AppPageScaffold title={"Patient enrollment"}>
+        return <AppPageScaffold title={"Recipient enrollment"}>
             {view}
         </AppPageScaffold>;
     }
@@ -203,9 +203,9 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
         // @ts-ignore
         let existingCarePlan: CarePlan = this.context.carePlan;
         let creationDate = existingCarePlan?.created
-        let alertMessage = `The patient already has a CarePlan. Would you like to edit this CarePlan or revoke it and create a new one?`;
+        let alertMessage = `The recipient already has a CarePlan. Would you like to edit this CarePlan or revoke it and create a new one?`;
         if (creationDate) {
-            alertMessage = `The patient already has a CarePlan (created ${new Date(creationDate)}). Would you like to edit this CarePlan or revoke it and create a new one?`;
+            alertMessage = `The recipient already has a CarePlan (created ${new Date(creationDate)}). Would you like to edit this CarePlan or revoke it and create a new one?`;
         }
 
         return <DialogContent>

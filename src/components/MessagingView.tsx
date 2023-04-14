@@ -141,7 +141,7 @@ export default class MessagingView extends React.Component<{}, {
             <Typography variant={"caption"}>{"No messages"}</Typography>
         </Stack>
 
-        if (this.state.communications && this.state.communications.length > 0) {
+        if ((this.state.communications && this.state.communications.length > 0) || (this.state.temporaryCommunications && this.state.temporaryCommunications.length)) {
             let communications = [];
             communications.push(...this.state.communications);
             communications.push(...this.state.temporaryCommunications);
@@ -156,9 +156,9 @@ export default class MessagingView extends React.Component<{}, {
         }
 
 
-        return <Grid container direction={"column"}>
+        return <Grid container direction={"column"} sx={{backgroundColor: "#FFF"}}>
             <Stack direction={'row'} justifyContent={'space-between'}>
-                <Typography variant={'h6'} sx={{paddingTop: 2}}>{"Messages"}</Typography>
+                <Typography variant={'h6'}>{"Messages"}</Typography>
                 {this.state.messagesLoading ? <CircularProgress/> :
                     <IconButton color="primary" onClick={() => this.loadCommunications()}><Refresh/></IconButton>}
             </Stack>
@@ -167,6 +167,7 @@ export default class MessagingView extends React.Component<{}, {
 
             <TextField
                 multiline
+                InputProps={{sx: {marginTop: 0.25}}}
                 value={this.state.activeMessage ?? ""}
                 placeholder={"Enter message"}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
