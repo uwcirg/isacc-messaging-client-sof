@@ -598,8 +598,12 @@ export default class MessagingView extends React.Component<
     // save communication
     this._save(newCommunication, (savedResult: IResource) => {
       console.log("Saved new communication:", savedResult);
+      const currentMessageType = this.state.activeMessage.type;
       this.setState({
-        activeMessage: defaultMessage,
+        activeMessage: {
+            ...defaultMessage,
+            type: currentMessageType
+        },
         error: null,
       });
       this.loadCommunications();
