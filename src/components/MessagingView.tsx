@@ -5,32 +5,32 @@ import {FhirClientContext, FhirClientContextType} from "../FhirClientContext";
 import Communication from "../model/Communication";
 import {IBundle_Entry, ICodeableConcept, ICoding, IReference, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControlLabel,
-  Grid,
-  IconButton,
-  List,
-  Radio,
-  RadioGroup,
-  Snackbar,
-  Stack,
-  Tab,
-  Tabs,
-  TextField,
-  TextFieldProps,
-  Typography,
+    Alert,
+    Box,
+    Button,
+    Chip,
+    CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    FormControlLabel,
+    Grid,
+    IconButton,
+    List,
+    Radio,
+    RadioGroup,
+    Snackbar,
+    Stack,
+    Tab,
+    Tabs,
+    TextField,
+    TextFieldProps,
+    Typography,
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
 import InfoIcon from "@mui/icons-material/Info";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
 import {amber, grey, lightBlue} from "@mui/material/colors";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import {Error, Refresh, Warning} from "@mui/icons-material";
@@ -39,8 +39,8 @@ import Client from "fhirclient/lib/Client";
 import {Bundle} from "../model/Bundle";
 import {getEnv} from "../util/util";
 
-type MessageType  = "sms" | "manual" | "comment";
-type MessageStatus = "sent" |  "received";
+type MessageType = "sms" | "manual" | "comment";
+type MessageStatus = "sent" | "received";
 
 interface Message {
     date: string,
@@ -49,7 +49,7 @@ interface Message {
     status: MessageStatus
 }
 
-const defaultMessage : Message = {
+const defaultMessage: Message = {
     date: new Date().toISOString(),
     content: "",
     type: "sms",
@@ -57,38 +57,38 @@ const defaultMessage : Message = {
 };
 
 export default class MessagingView extends React.Component<
-  {},
-  {
-    // messages: MessageDraft[];
-    activeMessage: Message;
-    error: any;
-    communications: Communication[];
-    temporaryCommunications: Communication[];
-    messagesLoading: boolean;
-    saveLoading: boolean;
-    showSaveFeedback: boolean;
-    infoOpen: boolean;
-    // showAlert: boolean;
-    // alertSeverity: "error" | "warning" | "info" | "success";
-    // alertText: string;
-  }
+    {},
+    {
+        // messages: MessageDraft[];
+        activeMessage: Message;
+        error: any;
+        communications: Communication[];
+        temporaryCommunications: Communication[];
+        messagesLoading: boolean;
+        saveLoading: boolean;
+        showSaveFeedback: boolean;
+        infoOpen: boolean;
+        // showAlert: boolean;
+        // alertSeverity: "error" | "warning" | "info" | "success";
+        // alertText: string;
+    }
 > {
-  static contextType = FhirClientContext;
-  interval: any;
+    static contextType = FhirClientContext;
+    interval: any;
 
-  constructor(props: {}) {
-    super(props);
-    this.state = {
-      activeMessage: defaultMessage,
-      error: null,
-      communications: null,
-      temporaryCommunications: [],
-      messagesLoading: false,
-      saveLoading: false,
-      showSaveFeedback: false,
-      infoOpen: false,
-    };
-  }
+    constructor(props: {}) {
+        super(props);
+        this.state = {
+            activeMessage: defaultMessage,
+            error: null,
+            communications: null,
+            temporaryCommunications: [],
+            messagesLoading: false,
+            saveLoading: false,
+            showSaveFeedback: false,
+            infoOpen: false,
+        };
+    }
 
   componentDidMount() {
     if (!this.state) return;
@@ -104,269 +104,269 @@ export default class MessagingView extends React.Component<
     clearInterval(this.interval);
   }
 
-  loadCommunications() {
-    // @ts-ignore
-    let context: FhirClientContextType = this.context;
-    this.setState({ messagesLoading: true });
+    loadCommunications() {
+        // @ts-ignore
+        let context: FhirClientContextType = this.context;
+        this.setState({messagesLoading: true});
 
-    this.getCommunications(context.client, context.carePlan.id)
-      .then(
-        (result: Communication[]) => {
-          let temporaryCommunications =
-            this.state.temporaryCommunications.filter((tc: Communication) => {
-              return !result?.find((c: Communication) => {
-                return c.basedOn?.find((b: IReference) => {
-                  return b.reference?.split("/")[1] === tc.id;
-                });
-              });
+        this.getCommunications(context.client, context.carePlan.id)
+            .then(
+                (result: Communication[]) => {
+                    let temporaryCommunications =
+                        this.state.temporaryCommunications.filter((tc: Communication) => {
+                            return !result?.find((c: Communication) => {
+                                return c.basedOn?.find((b: IReference) => {
+                                    return b.reference?.split("/")[1] === tc.id;
+                                });
+                            });
+                        });
+
+                    this.setState({
+                        communications: result,
+                        messagesLoading: false,
+                        temporaryCommunications: temporaryCommunications,
+                    });
+                },
+                (reason: any) =>
+                    this.setState({error: reason, messagesLoading: false})
+            )
+            .catch((e) => {
+                console.log("Error fetching Communications", e);
+                this.setState({error: e, messagesLoading: false});
             });
+    }
 
-          this.setState({
-            communications: result,
-            messagesLoading: false,
-            temporaryCommunications: temporaryCommunications,
-          });
-        },
-        (reason: any) =>
-          this.setState({ error: reason, messagesLoading: false })
-      )
-      .catch((e) => {
-        console.log("Error fetching Communications", e);
-        this.setState({ error: e, messagesLoading: false });
-      });
-  }
+    async getCommunications(
+        client: Client,
+        carePlanId: string
+    ): Promise<Communication[]> {
+        if (!client) return;
+        // Communication?part-of=CarePlan/${carePlanId}
+        let params = new URLSearchParams({
+            "part-of": `CarePlan/${carePlanId}`,
+            // _sort: "-sent",
+        }).toString();
+        return await client
+            .request({
+                url: `/Communication?${params}`,
+                headers: {
+                    "Cache-Control": "no-cache",
+                },
+            })
+            .then(
+                (bundle: Bundle) => {
+                    if (bundle.type === "searchset") {
+                        if (!bundle.entry) return [];
 
-  async getCommunications(
-    client: Client,
-    carePlanId: string
-  ): Promise<Communication[]> {
-    if (!client) return;
-    // Communication?part-of=CarePlan/${carePlanId}
-    let params = new URLSearchParams({
-      "part-of": `CarePlan/${carePlanId}`,
-      // _sort: "-sent",
-    }).toString();
-    return await client
-      .request({
-        url: `/Communication?${params}`,
-        headers: {
-          "Cache-Control": "no-cache",
-        },
-      })
-      .then(
-        (bundle: Bundle) => {
-          if (bundle.type === "searchset") {
-            if (!bundle.entry) return [];
-
-            let communications: Communication[] = bundle.entry.map(
-              (e: IBundle_Entry) => {
-                if (e.resource.resourceType !== "Communication") {
-                  this.setState({ error: "Unexpected resource type returned" });
-                  return null;
-                } else {
-                  console.log("Communication loaded:", e);
-                  return Communication.from(e.resource);
+                        let communications: Communication[] = bundle.entry.map(
+                            (e: IBundle_Entry) => {
+                                if (e.resource.resourceType !== "Communication") {
+                                    this.setState({error: "Unexpected resource type returned"});
+                                    return null;
+                                } else {
+                                    console.log("Communication loaded:", e);
+                                    return Communication.from(e.resource);
+                                }
+                            }
+                        );
+                        return communications;
+                    } else {
+                        this.setState({error: "Unexpected bundle type returned"});
+                        return null;
+                    }
+                },
+                (reason: any) => {
+                    this.setState({error: reason.toString()});
+                    return null;
                 }
-              }
             );
-            return communications;
-          } else {
-            this.setState({ error: "Unexpected bundle type returned" });
-            return null;
-          }
-        },
-        (reason: any) => {
-          this.setState({ error: reason.toString() });
-          return null;
+    }
+
+    render(): React.ReactNode {
+        if (!this.state) return <CircularProgress/>;
+
+        // @ts-ignore
+        let context: FhirClientContextType = this.context;
+
+        if (context.error) {
+            return <Alert severity="error">{context.error}</Alert>;
         }
-      );
-  }
 
-  render(): React.ReactNode {
-    if (!this.state) return <CircularProgress />;
-
-    // @ts-ignore
-    let context: FhirClientContextType = this.context;
-
-    if (context.error) {
-      return <Alert severity="error">{context.error}</Alert>;
-    }
-
-    if (!context.carePlan || !this.state.communications) {
-      return <CircularProgress />;
-    }
-
-    let messageBoxProps = {
-      maxHeight: 548,
-      minHeight: 40,
-      overflow: "auto",
-      display: "flex",
-      flexDirection: "column-reverse",
-      border: "2px solid lightgrey",
-      borderRadius: 1,
-      paddingLeft: 0.5,
-      paddingRight: 0.5,
-    };
-
-    let messages = (
-      <Stack direction={"row"} justifyContent={"flex-end"} sx={messageBoxProps}>
-        <Typography variant={"body1"} color="text.secondary" sx={{padding: 2}}>
-          {"No messages"}
-        </Typography>
-      </Stack>
-    );
-
-    if ((this.state.communications && this.state.communications.length > 0) || this.state.temporaryCommunications.length) {
-      let communications = [];
-      communications.push(...this.state.communications);
-      communications.push(...this.state.temporaryCommunications);
-      communications.sort((a, b) => {
-        let d1 = a.sent ? a.sent : a.received ?? a.meta.lastUpdated;
-        let d2 = b.sent ? b.sent : b.received ?? b.meta.lastUpdated;
-        const t1 = d1 ? new Date(d1).getTime() : 0;
-        const t2 = d2 ? new Date(d2).getTime() : 0;
-        return t1 < t2 ? 1 : -1;
-      });
-      messages = (
-        <List sx={messageBoxProps}>
-          {communications.map((message: Communication, index) =>
-            this._buildMessageRow(message, index)
-          )}
-        </List>
-      );
-    }
-
-    return (
-      <Grid container direction={"column"}>
-        <Stack direction={"row"} justifyContent={"space-between"}>
-          <Typography variant={"h6"}>
-            {"Messages"}
-          </Typography>
-          {this.state.messagesLoading ? (
-            <CircularProgress />
-          ) : (
-            <IconButton
-              color="primary"
-              onClick={() => this.loadCommunications()}
-            >
-              <Refresh />
-            </IconButton>
-          )}
-        </Stack>
-
-        {messages}
-
-        {this._buildMessageTypeSelector()}
-
-        <Box sx={{ backgroundColor: grey[50], padding: 1 }}>
-          {this.state.activeMessage.type === "sms" &&
-            this._buildSMSEntryComponent()}
-          {this.state.activeMessage.type !== "sms" &&
-            this._buildNonSMSEntryComponent()}
-          <Snackbar
-            open={this.state.showSaveFeedback}
-            autoHideDuration={2000}
-            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-          >
-            <Alert severity="success">
-              Message saved. Please see messages list above.
-            </Alert>
-          </Snackbar>
-        </Box>
-
-        {this.state.error && (
-          <Alert severity="error" sx={{ marginTop: 2 }}>
-            {typeof this.state.error === "string"
-              ? this.state.error
-              : "Error occurred.  See console for detail."}
-          </Alert>
-        )}
-      </Grid>
-    );
-  }
-
-  private _buildMessageTypeSelector(): React.ReactNode {
-    const handleInfoClose = () =>
-      this.setState({
-        infoOpen: false,
-      });
-    const tabProps = {
-        sx: {
-            fontSize: "0.85rem",
-            padding: (theme: any) => theme.spacing(1, 2.5)
+        if (!context.carePlan || !this.state.communications) {
+            return <CircularProgress/>;
         }
-    };
-    return (
-      <Stack direction={"row"}>
-        <Tabs
-          value={this.state.activeMessage?.type}
-          onChange={(event: React.SyntheticEvent, value: MessageType) => {
-            this.setState({
-              activeMessage: { ...this.state.activeMessage, type: value },
+
+        let messageBoxProps = {
+            maxHeight: 548,
+            minHeight: 40,
+            overflow: "auto",
+            display: "flex",
+            flexDirection: "column-reverse",
+            border: "2px solid lightgrey",
+            borderRadius: 1,
+            paddingLeft: 0.5,
+            paddingRight: 0.5,
+        };
+
+        let messages = (
+            <Stack direction={"row"} justifyContent={"flex-end"} sx={messageBoxProps}>
+                <Typography variant={"body1"} color="text.secondary" sx={{padding: 2}}>
+                    {"No messages"}
+                </Typography>
+            </Stack>
+        );
+
+        if ((this.state.communications && this.state.communications.length > 0) || this.state.temporaryCommunications.length) {
+            let communications = [];
+            communications.push(...this.state.communications);
+            communications.push(...this.state.temporaryCommunications);
+            communications.sort((a, b) => {
+                let d1 = a.sent ? a.sent : a.received ?? a.meta.lastUpdated;
+                let d2 = b.sent ? b.sent : b.received ?? b.meta.lastUpdated;
+                const t1 = d1 ? new Date(d1).getTime() : 0;
+                const t2 = d2 ? new Date(d2).getTime() : 0;
+                return t1 < t2 ? 1 : -1;
             });
-          }}
-          textColor="primary"
-          indicatorColor="primary"
-          aria-label="secondary tabs example"
-          variant="scrollable"
-          scrollButtons="auto"
-          allowScrollButtonsMobile
-          sx={{
-            marginTop: 1.5,
-            marginBottom: 1,
-            padding: (theme) => theme.spacing(0, 1, 0),
-            borderBottom: 1,
-            borderColor: "divider",
-            minHeight: "40px"
-          }}
-        >
-          <Tab value="sms" label="Issac send" {...tabProps}/>
-          <Tab value="manual" label="Enter manual message"  {...tabProps}/>
-          <Tab value="comment" label="Enter comment" {...tabProps} />
-        </Tabs>
-        <IconButton
-          color="info"
-          size="small"
-          onClick={() => this.setState({ infoOpen: true })}
-        >
-          <InfoIcon></InfoIcon>
-        </IconButton>
-        <Dialog
-          open={this.state.infoOpen}
-          onClose={handleInfoClose}
-          aria-labelledby="non-sms-dialog"
-          aria-describedby="non-sms-dialog-description"
-        >
-          <DialogTitle>Information about message types</DialogTitle>
-          <DialogContent>
-            <Typography variant="body1">
-              <p>
-                <b>ISACC send</b> are messages sent or received directly by
-                ISACC, which include texts, “sms”, iMessages, etc.
-              </p>
-              <p>
-                <b>Manual messages</b> mean messages external to ISACC,
-                including manually entered notifications of emails, phone calls,
-                postal mail, or other non-automated communication.
-              </p>
-              <p>
-                <b>Comments</b> are contact/note on the recipient.
-              </p>
-            </Typography>
-            <Alert severity="info">
-              Please note that messages external to ISACC and contact/note on
-              the recipient will not be sent/communicated to the recipient.
-            </Alert>
-          </DialogContent>
-          <DialogActions>
-            <Button variant="text" onClick={handleInfoClose}>
-              Close
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Stack>
-    );
-  }
+            messages = (
+                <List sx={messageBoxProps}>
+                    {communications.map((message: Communication, index) =>
+                        this._buildMessageRow(message, index)
+                    )}
+                </List>
+            );
+        }
+
+        return (
+            <Grid container direction={"column"}>
+                <Stack direction={"row"} justifyContent={"space-between"}>
+                    <Typography variant={"h6"}>
+                        {"Messages"}
+                    </Typography>
+                    {this.state.messagesLoading ? (
+                        <CircularProgress/>
+                    ) : (
+                        <IconButton
+                            color="primary"
+                            onClick={() => this.loadCommunications()}
+                        >
+                            <Refresh/>
+                        </IconButton>
+                    )}
+                </Stack>
+
+                {messages}
+
+                {this._buildMessageTypeSelector()}
+
+                <Box sx={{backgroundColor: grey[50], padding: 1}}>
+                    {this.state.activeMessage.type === "sms" &&
+                        this._buildSMSEntryComponent()}
+                    {this.state.activeMessage.type !== "sms" &&
+                        this._buildNonSMSEntryComponent()}
+                    <Snackbar
+                        open={this.state.showSaveFeedback}
+                        autoHideDuration={2000}
+                        anchorOrigin={{vertical: "bottom", horizontal: "center"}}
+                    >
+                        <Alert severity="success">
+                            Message saved. Please see messages list above.
+                        </Alert>
+                    </Snackbar>
+                </Box>
+
+                {this.state.error && (
+                    <Alert severity="error" sx={{marginTop: 2}}>
+                        {typeof this.state.error === "string"
+                            ? this.state.error
+                            : "Error occurred.  See console for detail."}
+                    </Alert>
+                )}
+            </Grid>
+        );
+    }
+
+    private _buildMessageTypeSelector(): React.ReactNode {
+        const handleInfoClose = () =>
+            this.setState({
+                infoOpen: false,
+            });
+        const tabProps = {
+            sx: {
+                fontSize: "0.85rem",
+                padding: (theme: any) => theme.spacing(1, 2.5)
+            }
+        };
+        return (
+            <Stack direction={"row"}>
+                <Tabs
+                    value={this.state.activeMessage?.type}
+                    onChange={(event: React.SyntheticEvent, value: MessageType) => {
+                        this.setState({
+                            activeMessage: {...this.state.activeMessage, type: value},
+                        });
+                    }}
+                    textColor="primary"
+                    indicatorColor="primary"
+                    aria-label="secondary tabs example"
+                    variant="scrollable"
+                    scrollButtons="auto"
+                    allowScrollButtonsMobile
+                    sx={{
+                        marginTop: 1.5,
+                        marginBottom: 1,
+                        padding: (theme) => theme.spacing(0, 1, 0),
+                        borderBottom: 1,
+                        borderColor: "divider",
+                        minHeight: "40px"
+                    }}
+                >
+                    <Tab value="sms" label="Issac send" {...tabProps}/>
+                    <Tab value="manual" label="Enter manual message"  {...tabProps}/>
+                    <Tab value="comment" label="Enter comment" {...tabProps} />
+                </Tabs>
+                <IconButton
+                    color="info"
+                    size="small"
+                    onClick={() => this.setState({infoOpen: true})}
+                >
+                    <InfoIcon></InfoIcon>
+                </IconButton>
+                <Dialog
+                    open={this.state.infoOpen}
+                    onClose={handleInfoClose}
+                    aria-labelledby="non-sms-dialog"
+                    aria-describedby="non-sms-dialog-description"
+                >
+                    <DialogTitle>Information about message types</DialogTitle>
+                    <DialogContent>
+                        <Typography variant="body1">
+                            <p>
+                                <b>ISACC send</b> are messages sent or received directly by
+                                ISACC, which include texts, “sms”, iMessages, etc.
+                            </p>
+                            <p>
+                                <b>Manual messages</b> mean messages external to ISACC,
+                                including manually entered notifications of emails, phone calls,
+                                postal mail, or other non-automated communication.
+                            </p>
+                            <p>
+                                <b>Comments</b> are contact/note on the recipient.
+                            </p>
+                        </Typography>
+                        <Alert severity="info">
+                            Please note that messages external to ISACC and contact/note on
+                            the recipient will not be sent/communicated to the recipient.
+                        </Alert>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button variant="text" onClick={handleInfoClose}>
+                            Close
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </Stack>
+        );
+    }
 
   private _buildSMSEntryComponent(): React.ReactNode {
     return (
@@ -406,474 +406,474 @@ export default class MessagingView extends React.Component<
     );
   }
 
-  private _buildNoteEntryComponent(): React.ReactNode {
-    return (
-      <TextField
-        multiline
-        fullWidth
-        placeholder="Enter contact/note on recipient"
-        value={this.state.activeMessage?.content ?? ""}
-        minRows={6}
-        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-          this.setState({
-            activeMessage: {
-              ...this.state.activeMessage,
-              date: new Date().toISOString(),
-              content: event.target.value,
-            },
-          });
-        }}
-        sx={{
-          backgroundColor: "#FFF",
-        }}
-        autoFocus
-      ></TextField>
-    );
-  }
-
-  private _buildManualMessageEntryComponent(): React.ReactNode {
-    const radioProps = {
-      control: <Radio size="small" />,
-      sx: {
-        paddingLeft: 2,
-      },
-    };
-    return (
-      <>
-        <Stack
-          direction={{
-            xs: "column",
-            sm: "row",
-          }}
-          spacing={1.5}
-          alignItems={{
-            xs: "flex-start",
-            sm: "center",
-          }}
-          justifyContent={"flex-start"}
-          sx={{
-            marginTop: 0.5,
-            marginBottom: 1,
-          }}
-        >
-          <Typography variant="body2" color="text.secondary">
-            Email / Phone / Letter
-          </Typography>
-          <RadioGroup
-            aria-labelledby="message type radio group"
-            name="messageStatuses"
-            value={this.state.activeMessage?.status}
-            //@ts-ignore
-            onChange={(event: React.ChangeEvent, value: MessageStatus) => {
-              this.setState({
-                activeMessage: { ...this.state.activeMessage, status: value },
-              });
-            }}
-            sx={{
-              backgroundColor: "#FFF",
-              borderRadius: 1,
-              border: "1px solid",
-              borderColor: "#c4c4c4"
-            }}
-          >
-            <FormControlLabel value={"sent"} label={"sent"} {...radioProps} />
-            <FormControlLabel
-              value="received"
-              label="received"
-              {...radioProps}
-            />
-          </RadioGroup>
-          <Typography variant="body2" color="text.secondary">
-            at
-          </Typography>
-          <DateTimePicker
-            label="date & time"
-            inputFormat="ddd, MM/DD/YYYY hh:mm A"
-            value={this.state.activeMessage?.date}
-            renderInput={(params: TextFieldProps) => (
-              <TextField
-                {...params}
-                sx={{ minWidth: 264, backgroundColor: "#FFF" }}
+    private _buildNoteEntryComponent(): React.ReactNode {
+        return (
+            <TextField
+                multiline
+                fullWidth
+                placeholder="Enter contact/note on recipient"
+                value={this.state.activeMessage?.content ?? ""}
+                minRows={6}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                  if (MessagingView.isValidDate(event.target.value)) {
                     this.setState({
-                      activeMessage: {
-                        ...this.state.activeMessage,
-                        date: event.target.value
-                          ? new Date(event.target.value).toISOString()
-                          : null,
-                      },
+                        activeMessage: {
+                            ...this.state.activeMessage,
+                            date: new Date().toISOString(),
+                            content: event.target.value,
+                        },
                     });
-                  }
                 }}
-              />
-            )}
-            onChange={(newValue: Date | null) => {
-              this.setState({
-                activeMessage: {
-                  ...this.state.activeMessage,
-                  date: newValue?.toISOString(),
-                },
-              });
-            }}
-            disableFuture
-          ></DateTimePicker>
-        </Stack>
-        <TextField
-          multiline
-          rows={4}
-          fullWidth
-        //   label={`Message ${
-        //     this.state.activeMessage?.status
-        //   } at ${this.state.activeMessage?.date}`}
-        //   InputLabelProps={{ shrink: true, sx: {
-        //     color: "text.primary"
-        //   } }}
-          placeholder="Enter info on email/phone/letter contact"
-          value={this.state.activeMessage?.content ?? ""}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                sx={{
+                    backgroundColor: "#FFF",
+                }}
+                autoFocus
+            ></TextField>
+        );
+    }
+
+    private _buildManualMessageEntryComponent(): React.ReactNode {
+        const radioProps = {
+            control: <Radio size="small"/>,
+            sx: {
+                paddingLeft: 2,
+            },
+        };
+        return (
+            <>
+                <Stack
+                    direction={{
+                        xs: "column",
+                        sm: "row",
+                    }}
+                    spacing={1.5}
+                    alignItems={{
+                        xs: "flex-start",
+                        sm: "center",
+                    }}
+                    justifyContent={"flex-start"}
+                    sx={{
+                        marginTop: 0.5,
+                        marginBottom: 1,
+                    }}
+                >
+                    <Typography variant="body2" color="text.secondary">
+                        Email / Phone / Letter
+                    </Typography>
+                    <RadioGroup
+                        aria-labelledby="message type radio group"
+                        name="messageStatuses"
+                        value={this.state.activeMessage?.status}
+                        //@ts-ignore
+                        onChange={(event: React.ChangeEvent, value: MessageStatus) => {
+                            this.setState({
+                                activeMessage: {...this.state.activeMessage, status: value},
+                            });
+                        }}
+                        sx={{
+                            backgroundColor: "#FFF",
+                            borderRadius: 1,
+                            border: "1px solid",
+                            borderColor: "#c4c4c4"
+                        }}
+                    >
+                        <FormControlLabel value={"sent"} label={"sent"} {...radioProps} />
+                        <FormControlLabel
+                            value="received"
+                            label="received"
+                            {...radioProps}
+                        />
+                    </RadioGroup>
+                    <Typography variant="body2" color="text.secondary">
+                        at
+                    </Typography>
+                    <DateTimePicker
+                        label="date & time"
+                        inputFormat="ddd, MM/DD/YYYY hh:mm A"
+                        value={this.state.activeMessage?.date}
+                        renderInput={(params: TextFieldProps) => (
+                            <TextField
+                                {...params}
+                                sx={{minWidth: 264, backgroundColor: "#FFF"}}
+                                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                    if (MessagingView.isValidDate(event.target.value)) {
+                                        this.setState({
+                                            activeMessage: {
+                                                ...this.state.activeMessage,
+                                                date: event.target.value
+                                                    ? new Date(event.target.value).toISOString()
+                                                    : null,
+                                            },
+                                        });
+                                    }
+                                }}
+                            />
+                        )}
+                        onChange={(newValue: Date | null) => {
+                            this.setState({
+                                activeMessage: {
+                                    ...this.state.activeMessage,
+                                    date: newValue?.toISOString(),
+                                },
+                            });
+                        }}
+                        disableFuture
+                    ></DateTimePicker>
+                </Stack>
+                <TextField
+                    multiline
+                    rows={4}
+                    fullWidth
+                    //   label={`Message ${
+                    //     this.state.activeMessage?.status
+                    //   } at ${this.state.activeMessage?.date}`}
+                    //   InputLabelProps={{ shrink: true, sx: {
+                    //     color: "text.primary"
+                    //   } }}
+                    placeholder="Enter info on email/phone/letter contact"
+                    value={this.state.activeMessage?.content ?? ""}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                        this.setState({
+                            activeMessage: {
+                                ...this.state.activeMessage,
+                                content: event.target.value,
+                            },
+                        });
+                    }}
+                    sx={{
+                        backgroundColor: "#FFF"
+                    }}
+                ></TextField>
+            </>
+        );
+    }
+
+    private _buildNonSMSEntryComponent(): React.ReactNode {
+        const activeType = this.state.activeMessage.type;
+        return (
+            <>
+                <Stack direction={"column"} spacing={1}>
+                    {activeType === "comment" && this._buildNoteEntryComponent()}
+                    {activeType !== "comment" && this._buildManualMessageEntryComponent()}
+                </Stack>
+                <Box sx={{marginTop: 1, textAlign: "right"}}>
+                    <LoadingButton
+                        variant="contained"
+                        onClick={() => {
+                            this.saveNonSMSMessage();
+                        }}
+                        loading={this.state.saveLoading}
+                        disabled={!this._hasMessageContent() || !this._hasMessageDate()}
+                    >
+                        Save
+                    </LoadingButton>
+                </Box>
+            </>
+        );
+    }
+
+    private saveNonSMSMessage() {
+        // @ts-ignore
+        let context: FhirClientContextType = this.context;
+        this.setState({saveLoading: true});
+        const sentDate =
+            this.state.activeMessage?.status === "sent"
+                ? this.state.activeMessage.date
+                : null;
+        const receivedDate =
+            this.state.activeMessage?.status === "received"
+                ? this.state.activeMessage.date
+                : null;
+        const noteAboutCommunication = `Non-SMS ${this.state.activeMessage?.type} message, staff entered`;
+        // new communication
+        // TODO implement sender, requires Practitioner resource set for the user
+        const newCommunication = Communication.create(
+            this.state.activeMessage.content,
+            context.patient,
+            context.carePlan,
+            sentDate,
+            receivedDate,
+            IsaccMessageCategory.isaccNonSMSMessage,
+            noteAboutCommunication
+        );
+        // save communication
+        this._save(newCommunication, (savedResult: IResource) => {
+            console.log("Saved new communication:", savedResult);
+            const currentMessageType = this.state.activeMessage.type;
             this.setState({
-              activeMessage: {
-                ...this.state.activeMessage,
-                content: event.target.value,
-              },
+                activeMessage: {
+                    ...defaultMessage,
+                    type: currentMessageType
+                },
+                error: null,
             });
-          }}
-          sx={{
-            backgroundColor: "#FFF"
-          }}
-        ></TextField>
-      </>
-    );
-  }
+            this.loadCommunications();
+            this.setState({
+                showSaveFeedback: true
+            });
+            setTimeout(() => this.setState({saveLoading: false}), 250);
+            setTimeout(() => this.setState({showSaveFeedback: false}), 2000);
+        });
+    }
 
-  private _buildNonSMSEntryComponent(): React.ReactNode {
-    const activeType = this.state.activeMessage.type;
-    return (
-      <>
-        <Stack direction={"column"} spacing={1}>
-          {activeType === "comment" && this._buildNoteEntryComponent()}
-          {activeType !== "comment" && this._buildManualMessageEntryComponent()}
-        </Stack>
-        <Box sx={{ marginTop: 1, textAlign: "right" }}>
-          <LoadingButton
-            variant="contained"
-            onClick={() => {
-              this.saveNonSMSMessage();
-            }}
-            loading={this.state.saveLoading}
-            disabled={!this._hasMessageContent() || !this._hasMessageDate()}
-          >
-            Save
-          </LoadingButton>
-        </Box>
-      </>
-    );
-  }
+    private saveSMSMessage() {
+        // @ts-ignore
+        let context: FhirClientContextType = this.context;
+        let newMessage: CommunicationRequest =
+            CommunicationRequest.createNewManualOutgoingMessage(
+                this.state.activeMessage.content,
+                context.patient,
+                context.carePlan
+            );
+        this._save(newMessage, (savedCommunicationRequest: IResource) => {
+            console.log("Saved new CommunicationRequest:", savedCommunicationRequest);
+            this.state.temporaryCommunications.unshift(
+                Communication.tempCommunicationFrom(savedCommunicationRequest)
+            );
+            this.setState({
+                activeMessage: defaultMessage,
+                temporaryCommunications: this.state.temporaryCommunications,
+                error: null,
+            });
+        });
+    }
 
-  private saveNonSMSMessage() {
-    // @ts-ignore
-    let context: FhirClientContextType = this.context;
-    this.setState({ saveLoading: true });
-    const sentDate =
-      this.state.activeMessage?.status === "sent"
-        ? this.state.activeMessage.date
-        : null;
-    const receivedDate =
-      this.state.activeMessage?.status === "received"
-        ? this.state.activeMessage.date
-        : null;
-    const noteAboutCommunication = `Non-SMS ${this.state.activeMessage?.type} message, staff entered`;
-    // new communication
-    // TODO implement sender, requires Practitioner resource set for the user
-    const newCommunication = Communication.create(
-      this.state.activeMessage.content,
-      context.patient,
-      context.carePlan,
-      sentDate,
-      receivedDate,
-      IsaccMessageCategory.isaccNonSMSMessage,
-      noteAboutCommunication
-    );
-    // save communication
-    this._save(newCommunication, (savedResult: IResource) => {
-      console.log("Saved new communication:", savedResult);
-      const currentMessageType = this.state.activeMessage.type;
-      this.setState({
-        activeMessage: {
-            ...defaultMessage,
-            type: currentMessageType
-        },
-        error: null,
-      });
-      this.loadCommunications();
-      this.setState({
-        showSaveFeedback: true
-      });
-      setTimeout(() => this.setState({ saveLoading: false }), 250);
-      setTimeout(() => this.setState({showSaveFeedback: false}), 2000);
-    });
-  }
-
-  private saveSMSMessage() {
-    // @ts-ignore
-    let context: FhirClientContextType = this.context;
-    let newMessage: CommunicationRequest =
-      CommunicationRequest.createNewManualOutgoingMessage(
-        this.state.activeMessage.content,
-        context.patient,
-        context.carePlan
-      );
-    this._save(newMessage, (savedCommunicationRequest: IResource) => {
-      console.log("Saved new CommunicationRequest:", savedCommunicationRequest);
-      this.state.temporaryCommunications.unshift(
-        Communication.tempCommunicationFrom(savedCommunicationRequest)
-      );
-      this.setState({
-        activeMessage: defaultMessage,
-        temporaryCommunications: this.state.temporaryCommunications,
-        error: null,
-      });
-    });
-  }
-
-  private _save(
-    newMessage: Communication | CommunicationRequest,
-    succesCallback: Function,
-    errorCallback: Function = null
-  ) {
-    // @ts-ignore
-    let context: FhirClientContextType = this.context;
-    console.log("Attempting to save new message:", newMessage);
-    this.setState({showSaveFeedback: false});
-    context.client
-      .create(newMessage)
-      .then(
-        (savedResult: IResource) => {
-          console.log("Saved resource:", savedResult);
-          if (succesCallback) succesCallback(savedResult);
-        },
-        (reason: any) => {
-          console.log("Failed to create new CommunicationRequest:", reason);
-          this.setState({ error: reason, saveLoading: false });
-          if (errorCallback) errorCallback(reason);
-        }
-      )
-      .catch((reason: any) => {
-        console.log("Failed to create new CommunicationRequest:", reason);
-        this.setState({ error: reason, saveLoading: false });
-        if (errorCallback) errorCallback(reason);
-      });
-  }
-
-  private _buildMessageRow(
-    message: Communication,
-    index: number
-  ): React.ReactNode {
-    let incoming = true;
-    const isNonSmSMessage = message.category.find((c: ICodeableConcept) =>
-      c.coding.find((coding: ICoding) =>
-        IsaccMessageCategory.isaccNonSMSMessage.equals(coding)
-      )
-    )
-      ? true
-      : false;
-
-    if (isNonSmSMessage) {
-      incoming = message.received ? true : false;
-    } else if (
-      message.recipient &&
-      message.recipient.find((r: IReference) => r.reference.includes("Patient"))
+    private _save(
+        newMessage: Communication | CommunicationRequest,
+        successCallback: Function,
+        errorCallback: Function = null
     ) {
-      incoming = false;
+        // @ts-ignore
+        let context: FhirClientContextType = this.context;
+        console.log("Attempting to save new message:", newMessage);
+        this.setState({showSaveFeedback: false});
+        context.client
+            .create(newMessage)
+            .then(
+                (savedResult: IResource) => {
+                    console.log("Saved resource:", savedResult);
+                    if (successCallback) successCallback(savedResult);
+                },
+                (reason: any) => {
+                    console.log("Failed to create new CommunicationRequest:", reason);
+                    this.setState({error: reason, saveLoading: false});
+                    if (errorCallback) errorCallback(reason);
+                }
+            )
+            .catch((reason: any) => {
+                console.log("Failed to create new CommunicationRequest:", reason);
+                this.setState({error: reason, saveLoading: false});
+                if (errorCallback) errorCallback(reason);
+            });
     }
 
-    let timestamp = null;
-    let delivered = true;
-
-    if (!isNonSmSMessage && message.sent) {
-      timestamp = MessagingView.displayDateTime(message.sent);
-    } else {
-      delivered = false;
-    }
-    let msg = message.displayText();
-    let autoMessage = true;
-    if (!message.category) {
-      console.log("Communication is missing category");
-    } else if (
-      message.category.find((c: ICodeableConcept) =>
-        c.coding.find((coding: ICoding) =>
-          IsaccMessageCategory.isaccManuallySentMessage.equals(coding)
+    private _buildMessageRow(
+        message: Communication,
+        index: number
+    ): React.ReactNode {
+        let incoming = true;
+        const isNonSmSMessage = message.category.find((c: ICodeableConcept) =>
+            c.coding.find((coding: ICoding) =>
+                IsaccMessageCategory.isaccNonSMSMessage.equals(coding)
+            )
         )
-      )
+            ? true
+            : false;
+
+        if (isNonSmSMessage) {
+            incoming = message.received ? true : false;
+        } else if (
+            message.recipient &&
+            message.recipient.find((r: IReference) => r.reference.includes("Patient"))
+        ) {
+            incoming = false;
+        }
+
+        let timestamp = null;
+        let delivered = true;
+
+        if (!isNonSmSMessage && message.sent) {
+            timestamp = MessagingView.displayDateTime(message.sent);
+        } else {
+            delivered = false;
+        }
+        let msg = message.displayText();
+        let autoMessage = true;
+        if (!message.category) {
+            console.log("Communication is missing category");
+        } else if (
+            message.category.find((c: ICodeableConcept) =>
+                c.coding.find((coding: ICoding) =>
+                    IsaccMessageCategory.isaccManuallySentMessage.equals(coding)
+                )
+            )
+        ) {
+            autoMessage = false;
+        }
+        let bubbleStyle = MessagingView.getBubbleStyle(
+            incoming,
+            autoMessage,
+            delivered,
+            isNonSmSMessage
+        );
+        let priority = message.priority;
+        let themes: string[] = message.getThemes();
+        const note = message.displayNote();
+        const noteDisplay = note ? (
+            <Typography variant="caption" color="text.secondary">
+                {note}
+            </Typography>
+        ) : (
+            false
+        );
+
+        const comment: React.ReactNode = isNonSmSMessage ? (
+            <>
+                {noteDisplay}
+                <Typography variant="caption" color="text.secondary" gutterBottom>
+                    {`${
+                        message.sent ? "sent" : "received"
+                    } on ${MessagingView.displayDateTime(
+                        message.sent ? message.sent : message.received
+                    )}`}
+                </Typography>
+            </>
+        ) : (
+            <>
+                {noteDisplay}
+                <Typography variant="caption" color="text.secondary">
+                    {`${
+                        incoming
+                            ? "reply (from recipient)"
+                            : message.sent
+                                ? "response (from provider)"
+                                : ""
+                    }`}
+                </Typography>
+            </>
+        );
+
+        return this._alignedRow(
+            incoming,
+            msg,
+            timestamp,
+            bubbleStyle,
+            priority,
+            index,
+            themes,
+            comment
+        );
+    }
+
+    private _alignedRow(
+        incoming: boolean,
+        message: string,
+        timestamp: string,
+        bubbleStyle: object,
+        priority: string,
+        index: number,
+        themes: string[],
+        comment: React.ReactNode
     ) {
-      autoMessage = false;
+        let priorityIndicator = null;
+        if (getEnv("REACT_APP_SHOW_PRIORITY_INDICATOR")?.toLowerCase() === "true") {
+            if (priority === "urgent") {
+                priorityIndicator = <Warning color={"warning"}/>;
+            } else if (priority === "stat") {
+                priorityIndicator = <Error color={"error"}/>;
+            }
+        }
+        let align = incoming ? "flex-start" : "flex-end";
+
+        let box = (
+            <Box
+                sx={{
+                    borderRadius: "12px",
+                    padding: 1,
+                    ...bubbleStyle,
+                }}
+            >
+                <Typography variant={"body2"}>{message}</Typography>
+            </Box>
+        );
+
+        let bubbleAndPriorityRow;
+        if (incoming) {
+            // different order based on message direction
+            bubbleAndPriorityRow = (
+                <>
+                    {box}
+                    {priorityIndicator}
+                </>
+            );
+        } else {
+            bubbleAndPriorityRow = (
+                <>
+                    {priorityIndicator}
+                    {box}
+                </>
+            );
+        }
+
+        let messageGroup = (
+            <Grid item xs={11} md={10} lg={8}>
+                <Stack direction={"column"} alignItems={align} paddingBottom={0.5}>
+                    <Stack direction={"row"} alignItems={"center"} spacing={1}>
+                        {bubbleAndPriorityRow}
+                    </Stack>
+                    {themes.length > 0 && (
+                        <Stack direction={"row"} spacing={0.5} paddingTop={0.5}>
+                            {themes.map((theme: string, index: number) => (
+                                <Chip
+                                    size={"small"}
+                                    variant="outlined"
+                                    label={theme}
+                                    onClick={(event) => console.log(event)}
+                                    key={`theme_chip_${index}`}
+                                />
+                            ))}
+                        </Stack>
+                    )}
+                    {comment}
+                    {timestamp && (
+                        <Typography variant={"caption"}>{timestamp}</Typography>
+                    )}
+                </Stack>
+            </Grid>
+        );
+
+        let spacer = <Grid item xs={1} md={2} lg={4}/>;
+
+        let messageAndSpacerRow;
+        if (incoming) {
+            // different order based on message direction
+            messageAndSpacerRow = (
+                <>
+                    {messageGroup}
+                    {spacer}
+                </>
+            );
+        } else {
+            messageAndSpacerRow = (
+                <>
+                    {spacer}
+                    {messageGroup}
+                </>
+            );
+        }
+
+        return (
+            <Grid
+                container
+                key={index}
+                direction={"row"}
+                justifyContent={align}
+                alignItems={"center"}
+                spacing={0.5}
+            >
+                {messageAndSpacerRow}
+            </Grid>
+        );
     }
-    let bubbleStyle = MessagingView.getBubbleStyle(
-      incoming,
-      autoMessage,
-      delivered,
-      isNonSmSMessage
-    );
-    let priority = message.priority;
-    let themes: string[] = message.getThemes();
-    const note = message.displayNote();
-    const noteDisplay = note ? (
-      <Typography variant="caption" color="text.secondary">
-        {note}
-      </Typography>
-    ) : (
-      false
-    );
-
-    const comment: React.ReactNode = isNonSmSMessage ? (
-      <>
-        {noteDisplay}
-        <Typography variant="caption" color="text.secondary" gutterBottom>
-          {`${
-            message.sent ? "sent" : "received"
-          } on ${MessagingView.displayDateTime(
-            message.sent ? message.sent : message.received
-          )}`}
-        </Typography>
-      </>
-    ) : (
-      <>
-        {noteDisplay}
-        <Typography variant="caption" color="text.secondary">
-          {`${
-            incoming
-              ? "reply (from recipient)"
-              : message.sent
-              ? "response (from provider)"
-              : ""
-          }`}
-        </Typography>
-      </>
-    );
-
-    return this._alignedRow(
-      incoming,
-      msg,
-      timestamp,
-      bubbleStyle,
-      priority,
-      index,
-      themes,
-      comment
-    );
-  }
-
-  private _alignedRow(
-    incoming: boolean,
-    message: string,
-    timestamp: string,
-    bubbleStyle: object,
-    priority: string,
-    index: number,
-    themes: string[],
-    comment: React.ReactNode
-  ) {
-    let priorityIndicator = null;
-    if (getEnv("REACT_APP_SHOW_PRIORITY_INDICATOR")?.toLowerCase() === "true") {
-      if (priority === "urgent") {
-        priorityIndicator = <Warning color={"warning"} />;
-      } else if (priority === "stat") {
-        priorityIndicator = <Error color={"error"} />;
-      }
-    }
-    let align = incoming ? "flex-start" : "flex-end";
-
-    let box = (
-      <Box
-        sx={{
-          borderRadius: "12px",
-          padding: 1,
-          ...bubbleStyle,
-        }}
-      >
-        <Typography variant={"body2"}>{message}</Typography>
-      </Box>
-    );
-
-    let bubbleAndPriorityRow;
-    if (incoming) {
-      // different order based on message direction
-      bubbleAndPriorityRow = (
-        <>
-          {box}
-          {priorityIndicator}
-        </>
-      );
-    } else {
-      bubbleAndPriorityRow = (
-        <>
-          {priorityIndicator}
-          {box}
-        </>
-      );
-    }
-
-    let messageGroup = (
-      <Grid item xs={11} md={10} lg={8}>
-        <Stack direction={"column"} alignItems={align} paddingBottom={0.5}>
-          <Stack direction={"row"} alignItems={"center"} spacing={1}>
-            {bubbleAndPriorityRow}
-          </Stack>
-          {themes.length > 0 && (
-            <Stack direction={"row"} spacing={0.5} paddingTop={0.5}>
-              {themes.map((theme: string, index: number) => (
-                <Chip
-                  size={"small"}
-                  variant="outlined"
-                  label={theme}
-                  onClick={(event) => console.log(event)}
-                  key={`theme_chip_${index}`}
-                />
-              ))}
-            </Stack>
-          )}
-          {comment}
-          {timestamp && (
-            <Typography variant={"caption"}>{timestamp}</Typography>
-          )}
-        </Stack>
-      </Grid>
-    );
-
-    let spacer = <Grid item xs={1} md={2} lg={4} />;
-
-    let messageAndSpacerRow;
-    if (incoming) {
-      // different order based on message direction
-      messageAndSpacerRow = (
-        <>
-          {messageGroup}
-          {spacer}
-        </>
-      );
-    } else {
-      messageAndSpacerRow = (
-        <>
-          {spacer}
-          {messageGroup}
-        </>
-      );
-    }
-
-    return (
-      <Grid
-        container
-        key={index}
-        direction={"row"}
-        justifyContent={align}
-        alignItems={"center"}
-        spacing={0.5}
-      >
-        {messageAndSpacerRow}
-      </Grid>
-    );
-  }
 
   private static getBubbleStyle(
     incoming: boolean,
@@ -916,12 +916,12 @@ export default class MessagingView extends React.Component<
     );
   }
 
-  private _hasMessageDate(): boolean {
-    return (
-      this.state.activeMessage &&
-      MessagingView.isValidDate(this.state.activeMessage.date)
-    );
-  }
+    private _hasMessageDate(): boolean {
+        return (
+            this.state.activeMessage &&
+            MessagingView.isValidDate(this.state.activeMessage.date)
+        );
+    }
 
   private static displayDateTime(dateString: string): string {
     if (!dateString) return "";
