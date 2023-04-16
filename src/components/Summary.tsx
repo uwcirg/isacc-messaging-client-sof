@@ -5,6 +5,7 @@ import {
     Autocomplete,
     Chip,
     CircularProgress,
+    Stack,
     Table,
     TableBody,
     TableCell,
@@ -115,15 +116,21 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                         return gpRef.type === "Practitioner" && gpRef.reference.includes(p.id);
                     });
                 });
-            const selectedPractitionersDisplay = currentSelection.length ?
-                currentSelection.map((p: IPractitioner, index) => {
-                    return <Chip
-                        key={`notify_p_display_${index}`}
-                        label={this.getPractitionerLabel(p)}
-                        variant="outlined"
-                        sx={{marginBottom: 0.5}}
+            const selectedPractitionersDisplay = currentSelection.length ? (
+              <Stack spacing={1}>
+                {currentSelection.map((p: IPractitioner, index) => {
+                  return (
+                    <Chip
+                      key={`notify_p_display_${index}`}
+                      label={this.getPractitionerLabel(p)}
+                      variant="outlined"
                     ></Chip>
-                }) : "None on file";
+                  );
+                })}
+              </Stack>
+            ) : (
+              "None on file"
+            );
     
             notifyPractitionersSelector = this.props.editable ? <Autocomplete
                 multiple
