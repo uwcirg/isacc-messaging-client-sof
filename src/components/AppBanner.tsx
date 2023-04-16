@@ -17,7 +17,7 @@ export default function AppBanner() {
                 href={getPatientListURL()}
               >
                 <ArrowBackIos />
-                Recipient list
+                Back to recipient list
               </Button>
             </IconButton>
             <Stack
