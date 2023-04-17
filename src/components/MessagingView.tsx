@@ -671,7 +671,7 @@ export default class MessagingView extends React.Component<
         index: number
     ): React.ReactNode {
         let incoming = true;
-        const isNonSmSMessage = message.category.find((c: ICodeableConcept) =>
+        const isNonSmsMessage = message.category.find((c: ICodeableConcept) =>
             c.coding.find((coding: ICoding) =>
                 IsaccMessageCategory.isaccNonSMSMessage.equals(coding)
             )
@@ -679,7 +679,7 @@ export default class MessagingView extends React.Component<
             ? true
             : false;
 
-        if (isNonSmSMessage) {
+        if (isNonSmsMessage) {
             incoming = message.received ? true : false;
         } else if (
             message.recipient &&
@@ -691,7 +691,7 @@ export default class MessagingView extends React.Component<
         let timestamp = null;
         let delivered = true;
 
-        if (!isNonSmSMessage && message.sent) {
+        if (!isNonSmsMessage && message.sent) {
             timestamp = MessagingView.displayDateTime(message.sent);
         } else {
             delivered = false;
@@ -713,7 +713,7 @@ export default class MessagingView extends React.Component<
             incoming,
             autoMessage,
             delivered,
-            isNonSmSMessage
+            isNonSmsMessage
         );
         let priority = message.priority;
         let themes: string[] = message.getThemes();
@@ -726,7 +726,7 @@ export default class MessagingView extends React.Component<
             false
         );
 
-        const comment: React.ReactNode = isNonSmSMessage ? (
+        const comment: React.ReactNode = isNonSmsMessage ? (
             <>
                 {noteDisplay}
                 <Typography variant="caption" color="text.secondary" gutterBottom>
