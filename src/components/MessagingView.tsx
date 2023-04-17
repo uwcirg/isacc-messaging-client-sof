@@ -14,7 +14,6 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
-    Divider,
     FormControlLabel,
     Grid,
     IconButton,
@@ -32,7 +31,7 @@ import {
 import LoadingButton from "@mui/lab/LoadingButton";
 import InfoIcon from "@mui/icons-material/Info";
 import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
-import {amber, grey, lightBlue} from "@mui/material/colors";
+import {grey, lightBlue} from "@mui/material/colors";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import {Error, Refresh, Warning} from "@mui/icons-material";
 import {CommunicationRequest} from "../model/CommunicationRequest";
@@ -40,7 +39,7 @@ import Client from "fhirclient/lib/Client";
 import {Bundle} from "../model/Bundle";
 import {getEnv} from "../util/util";
 
-type MessageType = "sms" | "manual" | "comment";
+type MessageType = "sms" | "manual message" | "comment";
 type MessageStatus = "sent" | "received";
 
 interface Message {
@@ -146,6 +145,7 @@ export default class MessagingView extends React.Component<
     return await client
       .request({
         url: `/Communication?${params}`,
+        // TODO refactor this out for general use
         headers: {
           "Cache-Control": "no-cache",
         },
@@ -260,9 +260,14 @@ export default class MessagingView extends React.Component<
 
         {this._buildMessageTypeSelector()}
 
-        <Divider></Divider>
-
-        <Box sx={{ padding: (theme) => theme.spacing(1.5, 1, 1), borderWidth: "0 1px 1px", borderStyle: "solid", borderColor:grey[200] }}>
+        <Box
+          sx={{
+            padding: (theme) => theme.spacing(1.5, 1, 1),
+            borderWidth: "1px",
+            borderStyle: "solid",
+            borderColor: grey[200],
+          }}
+        >
           {this.state.activeMessage.type === "sms" &&
             this._buildSMSEntryComponent()}
           {this.state.activeMessage.type !== "sms" &&
@@ -294,13 +299,29 @@ export default class MessagingView extends React.Component<
       this.setState({
         infoOpen: false,
       });
+    const tabRootStyleProps = {
+        marginTop: 1.5,
+        minHeight: "40px",
+        "& .MuiTab-root": {
+            borderBottom: `1px solid ${grey[200]}`
+        },
+        "& .Mui-selected": {
+            borderWidth: "1px 1px 0",
+            borderStyle: "solid solid none",
+            borderColor: `${grey[200]} ${grey[200]} transparent`,
+            borderRadius: "8px 8px 0 0"
+        },
+        position: "relative",
+        top: "1px",
+        backgroundColor: "#FFF"
+    };
     const tabProps = {
       sx: {
         padding: (theme: any) => theme.spacing(1, 2.5),
       },
     };
     return (
-      <Stack direction={"row"} alignItems={"center"}>
+      <Stack direction={{xs: "column", sm: "row"}} alignItems={"center"}>
         <Tabs
           value={this.state.activeMessage?.type}
           onChange={(event: React.SyntheticEvent, value: MessageType) => {
@@ -309,26 +330,30 @@ export default class MessagingView extends React.Component<
             });
           }}
           textColor="primary"
-          indicatorColor="primary"
           aria-label="message type tabs"
+          selectionFollowsFocus
           variant="scrollable"
           scrollButtons="auto"
           allowScrollButtonsMobile
-          sx={{
-            marginTop: 1.5,
-            minHeight: "40px",
+          TabIndicatorProps={{
+            sx: {
+                backgroundColor: "#FFF",
+            }
           }}
+          sx={tabRootStyleProps}
         >
           <Tab value="sms" label="ISACC send" {...tabProps} />
-          <Tab value="manual" label="Enter manual message" {...tabProps} />
+          <Tab value="manual message" label="Enter manual message" {...tabProps} />
           <Tab value="comment" label="Enter comment" {...tabProps} />
         </Tabs>
-        <IconButton
-          color="info"
-          onClick={() => this.setState({ infoOpen: true })}
-        >
-          <InfoIcon></InfoIcon>
-        </IconButton>
+        <Box>
+            <IconButton
+            color="info"
+            onClick={() => this.setState({ infoOpen: true })}
+            >
+            <InfoIcon></InfoIcon>
+            </IconButton>
+        </Box>
         <Dialog
           open={this.state.infoOpen}
           onClose={handleInfoClose}
@@ -430,79 +455,87 @@ export default class MessagingView extends React.Component<
     return (
       <>
         <Stack
-          direction={"row"}
+          direction={{ xs: "column", sm: "row" }}
           spacing={1.5}
           alignItems={{
             xs: "flex-start",
             sm: "center",
           }}
-          justifyContent={"flex-start"}
           sx={{
             marginTop: 0.5,
             marginBottom: 1,
           }}
         >
-          <Typography variant="body2" color="text.secondary">
-            Email / Phone / Letter
-          </Typography>
-          <RadioGroup
-            aria-labelledby="message type radio group"
-            name="messageStatuses"
-            value={this.state.activeMessage?.status}
-            //@ts-ignore
-            onChange={(event: React.ChangeEvent, value: MessageStatus) => {
-              this.setState({
-                activeMessage: { ...this.state.activeMessage, status: value },
-              });
-            }}
-            sx={{
-              borderRadius: 1,
-              border: "1px solid",
-              borderColor: "#c4c4c4",
-            }}
+          <Stack
+            direction={"row"}
+            spacing={1}
+            alignItems={"center"}
           >
-            <FormControlLabel value={"sent"} label={"sent"} {...radioProps} />
-            <FormControlLabel
-              value="received"
-              label="received"
-              {...radioProps}
-            />
-          </RadioGroup>
-          <Typography variant="body2" color="text.secondary">
-            at
-          </Typography>
-          <DateTimePicker
-            label="Date & time"
-            inputFormat="ddd, MM/DD/YYYY hh:mm A"
-            value={this.state.activeMessage?.date}
-            renderInput={(params: TextFieldProps) => (
-              <TextField
-                {...params}
-                sx={{ minWidth: 264, backgroundColor: "#FFF" }}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                  if (MessagingView.isValidDate(event.target.value)) {
-                    this.setState({
-                      activeMessage: {
-                        ...this.state.activeMessage,
-                        date: event.target.value
-                          ? new Date(event.target.value).toISOString()
-                          : null,
-                      },
-                    });
-                  }
-                }}
+            <Typography variant="body2" color="text.secondary">
+              Email / Phone / Letter
+            </Typography>
+            <RadioGroup
+              aria-labelledby="message type radio group"
+              name="messageStatuses"
+              value={this.state.activeMessage?.status}
+              //@ts-ignore
+              onChange={(event: React.ChangeEvent, value: MessageStatus) => {
+                this.setState({
+                  activeMessage: { ...this.state.activeMessage, status: value },
+                });
+              }}
+            >
+              <FormControlLabel value={"sent"} label={"sent"} {...radioProps} />
+              <FormControlLabel
+                value="received"
+                label="received"
+                {...radioProps}
               />
-            )}
-            onChange={(newValue: Date | null) => {
-              this.setState({
-                activeMessage: {
-                  ...this.state.activeMessage,
-                  date: newValue?.toISOString(),
-                },
-              });
-            }}
-            disableFuture
-          ></DateTimePicker>
+            </RadioGroup>
+          </Stack>
+          <Stack
+            direction={"row"}
+            spacing={1}
+            alignItems={"center"}
+            sx={{ flexGrow: 1, alignSelf: "stretch" }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              at
+            </Typography>
+
+            <DateTimePicker
+              label="Date & time"
+              inputFormat="ddd, MM/DD/YYYY hh:mm A"
+              value={this.state.activeMessage?.date}
+              renderInput={(params: TextFieldProps) => (
+                <TextField
+                  {...params}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    if (MessagingView.isValidDate(event.target.value)) {
+                      this.setState({
+                        activeMessage: {
+                          ...this.state.activeMessage,
+                          date: event.target.value
+                            ? new Date(event.target.value).toISOString()
+                            : null,
+                        },
+                      });
+                    }
+                  }}
+                  sx={{ width: "100%", flexGrow: 1 }}
+                />
+              )}
+              onChange={(newValue: Date | null) => {
+                this.setState({
+                  activeMessage: {
+                    ...this.state.activeMessage,
+                    date: newValue?.toISOString(),
+                  },
+                });
+              }}
+              disableFuture
+            ></DateTimePicker>
+          </Stack>
         </Stack>
         <TextField
           multiline
@@ -692,7 +725,7 @@ export default class MessagingView extends React.Component<
     let priority = message.priority;
     let themes: string[] = message.getThemes();
     const note = message.displayNote();
-    const messageLabel : string = isNonSmsMessage
+    const itemLabel : string = isNonSmsMessage
       ? [
           note,
           `${
@@ -720,7 +753,7 @@ export default class MessagingView extends React.Component<
       priority,
       index,
       themes,
-      messageLabel
+      itemLabel
     );
   }
 
@@ -852,7 +885,8 @@ export default class MessagingView extends React.Component<
   ): object {
     if (info)
       return {
-        backgroundColor: amber[100],
+        backgroundColor: grey[100],
+        borderRadius: 0,
         color: "#000",
       };
     if (!delivered)
