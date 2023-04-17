@@ -374,7 +374,7 @@ export default class MessagingView extends React.Component<
         <TextField
           multiline
           value={this.state.activeMessage?.content ?? ""}
-          placeholder={"Type message for ISSAC to send"}
+          placeholder={"Type message for ISACC to send"}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
             this.setState({
               activeMessage: {
