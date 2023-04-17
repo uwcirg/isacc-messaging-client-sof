@@ -733,7 +733,7 @@ export default class MessagingView extends React.Component<
           } on ${MessagingView.displayDateTime(
             message.sent ? message.sent : message.received
           )}`,
-        ].join("\n")
+        ].join("\n").trim()
       : [
           note,
           `${
@@ -743,7 +743,7 @@ export default class MessagingView extends React.Component<
               ? "response (from author)"
               : ""
           }`,
-        ].join("\n");
+        ].join("\n").trim();
 
     return this._alignedRow(
       incoming,
@@ -826,18 +826,20 @@ export default class MessagingView extends React.Component<
               ))}
             </Stack>
           )}
-          {comment && (
+          {timestamp && (
+            <Typography variant={"caption"}>{timestamp}</Typography>
+          )}
+           {comment && (
             <Typography
               variant="caption"
               color="text.secondary"
               gutterBottom
-              sx={{ whiteSpace: "pre-line" }}
+              sx={{
+                whiteSpace: "pre"
+              }}
             >
               {comment}
             </Typography>
-          )}
-          {timestamp && (
-            <Typography variant={"caption"}>{timestamp}</Typography>
           )}
         </Stack>
       </Grid>
