@@ -12,75 +12,133 @@ import {
     IReference,
     IResourceList
 } from "@ahryman40k/ts-fhir-types/lib/R4";
-import {ExtensionUrl} from "./CodeSystem";
+import { Coding, ExtensionUrl, IsaccMessageCategory } from "./CodeSystem";
+import Patient from "./Patient";
+import CarePlan from "./CarePlan";
+
 
 export default class Communication implements ICommunication {
-    _implicitRules?: IElement;
-    _instantiatesUri?: IElement[];
-    _language?: IElement;
-    _priority?: IElement;
-    _received?: IElement;
-    _sent?: IElement;
-    _status?: IElement;
-    about?: IReference[];
-    basedOn?: IReference[];
-    category?: ICodeableConcept[];
-    contained?: IResourceList[];
-    encounter?: IReference;
-    extension?: IExtension[];
-    id?: string;
-    identifier?: IIdentifier[];
-    implicitRules?: string;
-    inResponseTo?: IReference[];
-    instantiatesCanonical?: string[];
-    instantiatesUri?: string[];
-    language?: string;
-    medium?: ICodeableConcept[];
-    meta?: any;
-    modifierExtension?: IExtension[];
-    note?: IAnnotation[];
-    partOf?: IReference[];
-    priority?: string;
-    reasonCode?: ICodeableConcept[];
-    reasonReference?: IReference[];
-    received?: string;
-    recipient?: IReference[];
-    resourceType: "Communication";
-    sender?: IReference;
-    sent?: string;
-    status?: string;
-    statusReason?: ICodeableConcept;
-    subject?: IReference;
-    text?: INarrative;
-    topic?: ICodeableConcept;
+  _implicitRules?: IElement;
+  _instantiatesUri?: IElement[];
+  _language?: IElement;
+  _priority?: IElement;
+  _received?: IElement;
+  _sent?: IElement;
+  _status?: IElement;
+  about?: IReference[];
+  basedOn?: IReference[];
+  category?: ICodeableConcept[];
+  contained?: IResourceList[];
+  encounter?: IReference;
+  extension?: IExtension[];
+  id?: string;
+  identifier?: IIdentifier[];
+  implicitRules?: string;
+  inResponseTo?: IReference[];
+  instantiatesCanonical?: string[];
+  instantiatesUri?: string[];
+  language?: string;
+  medium?: ICodeableConcept[];
+  meta?: any;
+  modifierExtension?: IExtension[];
+  note?: IAnnotation[];
+  partOf?: IReference[];
+  priority?: string;
+  reasonCode?: ICodeableConcept[];
+  reasonReference?: IReference[];
+  received?: string;
+  recipient?: IReference[];
+  resourceType: "Communication";
+  sender?: IReference;
+  sent?: string;
+  status?: string;
+  statusReason?: ICodeableConcept;
+  subject?: IReference;
+  text?: INarrative;
+  topic?: ICodeableConcept;
 
-    payload?: CommunicationPayload[];
+  payload?: CommunicationPayload[];
 
+  static from(communication: any): Communication {
+    if (!communication) return null;
+    let c: Communication = Object.assign(new Communication(), communication);
+    c.payload = c.payload.map((p: CommunicationPayload) =>
+      CommunicationPayload.from(p)
+    );
+    return c;
+  }
 
-    static from(communication: any): Communication {
-        if (!communication) return null;
-        let c: Communication = Object.assign(new Communication(), communication);
-        c.payload = c.payload.map((p: CommunicationPayload) => CommunicationPayload.from(p));
-        return c;
+  static tempCommunicationFrom(communicationRequest: any): Communication {
+    let c = Communication.from(communicationRequest);
+    c.sent = null;
+    return c;
+  }
+
+  static create(
+    messageContent: string,
+    patient: Patient,
+    carePlan: CarePlan,
+    sentDateTimeString: string,
+    receivedDateTimeString: string,
+    messageType: Coding,
+    note: string,
+    senderId: string = null
+  ): Communication {
+    if (!messageType) {
+      messageType = IsaccMessageCategory.isaccManuallySentMessage;
     }
-
-    static tempCommunicationFrom(communicationRequest: any) : Communication {
-        let c = Communication.from(communicationRequest);
-        c.sent = null;
-        return c;
+    let c = new Communication();
+    c.resourceType = "Communication";
+    if (carePlan) {
+      c.partOf = [{ reference: carePlan.reference }];
     }
+    c.category = [{ coding: [messageType] }];
+    if (sentDateTimeString) c.sent = sentDateTimeString;
+    if (receivedDateTimeString) c.received = receivedDateTimeString;
+    if (note) c.setNote(note);
+    c.subject = { reference: patient.reference };
+    c.setText(messageContent);
+    if (senderId) c.sender = {reference: senderId};
+    return c;
+  }
+  
+  displayText() {
+    return this.payload
+      .map((p: CommunicationPayload) => {
+        return p.contentStringLocalized();
+      })
+      .join("\n");
+  }
 
-    displayText() {
-        return this.payload.map((p: CommunicationPayload) => {
-            return p.contentStringLocalized()
-        }).join("\n");
-    }
+  setText(text: string) {
+    let c = new CommunicationPayload();
+    c.contentString = text;
+    this.payload = [c];
+  }
 
-    getThemes(): string[] {
-        let themes: string[] = this.extension?.filter((extension: IExtension) => extension.url === ExtensionUrl.messageThemeUrl)?.map((extension: IExtension) => extension.valueString);
-        if (themes) return themes;
-        return [];
-    }
+  displayNote() {
+    if (!this.note) return "";
+    return this.note.map((n: IAnnotation) => {
+        return n.text
+    }).join("\n");
+  }
+
+  setNote(note: string) {
+    let n = new Annotation();
+    n.text = note;
+    this.note = [n];
+  }
+
+  getThemes(): string[] {
+    let themes: string[] = this.extension
+      ?.filter(
+        (extension: IExtension) =>
+          extension.url === ExtensionUrl.messageThemeUrl
+      )
+      ?.map((extension: IExtension) => extension.valueString);
+    if (themes) return themes;
+    return [];
+  }
 }
 
 class CommunicationPayload implements ICommunication_Payload {
@@ -100,4 +158,10 @@ class CommunicationPayload implements ICommunication_Payload {
     contentStringLocalized() {
         return FhirTranslations.extractTranslation(this.contentString, this._contentString);
     }
+}
+
+class Annotation implements IAnnotation {
+    text: string;
+    // other props
+
 }

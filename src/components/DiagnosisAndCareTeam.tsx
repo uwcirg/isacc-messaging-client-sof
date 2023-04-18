@@ -107,11 +107,11 @@ export default class DiagnosisAndCareTeam extends React.Component<{}, {
         return <>
             <Typography variant={"h6"}>Diagnoses</Typography>
             {!infoRows ?
-                <Typography variant={"caption"}>{"No diagnoses on file"}</Typography> :
+                <Typography variant={"body1"}>{"No diagnoses on file"}</Typography> :
                 infoRows.map((row) => <DisplayRow item={row}/>)}
             <Typography variant={"h6"}>Care team</Typography>
             {!careteamRows ?
-                <Typography variant={"caption"}>{"No care team information on file"}</Typography> :
+                <Typography variant={"body1"}>{"No care team information on file"}</Typography> :
                 careteamRows.map((row) => <DisplayRow item={row}/>)}
         </>
 
@@ -121,8 +121,8 @@ export default class DiagnosisAndCareTeam extends React.Component<{}, {
 const DisplayRow = ({item}: { item: DisplayItem }) => <>
     <Typography variant={"body1"}>{item.title}</Typography>
     {
-        item.info.map((infoItem) => {
-            return <Stack direction={"row"} alignItems={"flex-end"} spacing={0.5}>
+        item.info.map((infoItem, index) => {
+            return <Stack direction={"row"} alignItems={"flex-end"} spacing={0.5} key={`infoItem_${index}`}>
                 <Typography variant={"caption"}>{`${infoItem.label}: `}</Typography>
                 <Typography variant={"body2"}>{`${infoItem.value}`}</Typography>
             </Stack>;
