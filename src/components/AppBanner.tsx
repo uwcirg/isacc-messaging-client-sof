@@ -21,7 +21,7 @@ export default function AppBanner() {
               </Button>
             </IconButton>
             <Stack
-              sx={{ flexGrow: 1 }}
+              sx={{ flexGrow: 1, marginLeft: 1 }}
               direction="row"
               justifyContent="flex-start"
               alignItems="center"
