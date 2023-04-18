@@ -10,19 +10,6 @@ export default function AppBanner() {
       <Box sx={{ flexGrow: 1 }}>
         <AppBar position="fixed">
           <Toolbar>
-            <Stack sx={{ flexGrow: 1 }} direction="row" justifyContent="flex-start" spacing={2}>
-              <Typography variant="h4" component="h1">
-                ISACC
-              </Typography>
-              <Box>
-                <Typography variant="body2">
-                  {patient.fullNameDisplay}
-                </Typography>
-                <Typography variant="body2">
-                  {patient.birthDate}
-                </Typography>
-              </Box>
-            </Stack>
             <IconButton size="large" edge="start" color="inherit">
               <Button
                 color="inherit"
@@ -30,9 +17,26 @@ export default function AppBanner() {
                 href={getPatientListURL()}
               >
                 <ArrowBackIos />
-                Recipient list
+                Back to recipient list
               </Button>
             </IconButton>
+            <Stack
+              sx={{ flexGrow: 1 }}
+              direction="row"
+              justifyContent="flex-start"
+              alignItems="center"
+              spacing={2}
+            >
+              <Typography variant="h3" component="h1">
+                ISACC
+              </Typography>
+              <Box>
+                <Typography variant="body2">
+                  {patient.fullNameDisplay}
+                </Typography>
+                <Typography variant="body2">{patient.birthDate}</Typography>
+              </Box>
+            </Stack>
           </Toolbar>
         </AppBar>
       </Box>
