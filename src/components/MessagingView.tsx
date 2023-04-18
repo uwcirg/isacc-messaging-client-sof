@@ -31,7 +31,7 @@ import {
 import LoadingButton from "@mui/lab/LoadingButton";
 import InfoIcon from "@mui/icons-material/Info";
 import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
-import {grey, lightBlue} from "@mui/material/colors";
+import {grey, lightBlue, yellow} from "@mui/material/colors";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import {Error, Refresh, Warning} from "@mui/icons-material";
 import {CommunicationRequest} from "../model/CommunicationRequest";
@@ -894,7 +894,7 @@ export default class MessagingView extends React.Component<
   ): object {
     if (info)
       return {
-        backgroundColor: grey[100],
+        backgroundColor: yellow[50],
         borderRadius: 0,
         color: "#000",
         boxShadow: `1px 1px 2px ${grey[700]}`
