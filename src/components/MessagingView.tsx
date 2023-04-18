@@ -897,7 +897,8 @@ export default class MessagingView extends React.Component<
         backgroundColor: yellow[50],
         borderRadius: 0,
         color: "#000",
-        boxShadow: `1px 1px 2px ${grey[700]}`
+        boxShadow: `1px 1px 2px ${grey[700]}`,
+        borderBottomRightRadius: "72px 4px"
       };
     if (!delivered)
       return {
