@@ -1,8 +1,11 @@
 import React, {ReactNode} from 'react';
 import {FhirClientContext} from '../FhirClientContext';
 import {
-    Alert, Autocomplete,
+    Alert,
+    Autocomplete,
+    Chip,
     CircularProgress,
+    Stack,
     Table,
     TableBody,
     TableCell,
@@ -113,7 +116,23 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                         return gpRef.type === "Practitioner" && gpRef.reference.includes(p.id);
                     });
                 });
-            notifyPractitionersSelector = <Autocomplete
+            const selectedPractitionersDisplay = currentSelection.length ? (
+              <Stack spacing={1}>
+                {currentSelection.map((p: IPractitioner, index) => {
+                  return (
+                    <Chip
+                      key={`notify_p_display_${index}`}
+                      label={this.getPractitionerLabel(p)}
+                      variant="outlined"
+                    ></Chip>
+                  );
+                })}
+              </Stack>
+            ) : (
+              "None on file"
+            );
+    
+            notifyPractitionersSelector = this.props.editable ? <Autocomplete
                 multiple
                 size="small"
                 defaultValue={currentSelection}
@@ -121,12 +140,16 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 getOptionLabel={(option) => this.getPractitionerLabel(option as IPractitioner)}
                 renderInput={(params) => <TextField {...params} placeholder={"Practitioners"}/>}
                 onChange={(event: any, value: (string | IPractitioner)[]) => {
+                    if (!value) {
+                        patient.generalPractitioner = null;
+                        return;
+                    }
                     patient.generalPractitioner = value.map((v) => ({
                         type: "Practitioner",
                         reference: `Practitioner/${(v as IPractitioner).id}`
                     }));
                 }}
-            />;
+            /> : selectedPractitionersDisplay;
         }
 
         let rows = [
@@ -161,7 +184,6 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                                     {row.label}
                                 </TableCell>
                                 <TableCell align="left">{row.value}</TableCell>
-
                             </TableRow>
                         ))}
                     </TableBody>
