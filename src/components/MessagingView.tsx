@@ -263,7 +263,7 @@ export default class MessagingView extends React.Component<
         <Box
           sx={{
             padding: (theme) => theme.spacing(1.5, 1, 1),
-            borderWidth: "1px",
+            borderWidth: "2px",
             borderStyle: "solid",
             borderColor: grey[200],
           }}
@@ -303,16 +303,16 @@ export default class MessagingView extends React.Component<
         marginTop: 1.5,
         minHeight: "40px",
         "& .MuiTab-root": {
-            borderBottom: `1px solid ${grey[200]}`
+            borderBottom: `2px solid ${grey[200]}`
         },
         "& .Mui-selected": {
-            borderWidth: "1px 1px 0",
+            borderWidth: "2px 2px 0",
             borderStyle: "solid solid none",
             borderColor: `${grey[200]} ${grey[200]} transparent`,
             borderRadius: "8px 8px 0 0"
         },
         position: "relative",
-        top: "1px",
+        top: "2px",
         backgroundColor: "#FFF"
     };
     const tabProps = {
@@ -321,7 +321,10 @@ export default class MessagingView extends React.Component<
       },
     };
     return (
-      <Stack direction={{xs: "column", sm: "row"}} alignItems={"center"}>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        alignItems={{ xs: "flex-end", sm: "center" }}
+      >
         <Tabs
           value={this.state.activeMessage?.type}
           onChange={(event: React.SyntheticEvent, value: MessageType) => {
@@ -337,22 +340,26 @@ export default class MessagingView extends React.Component<
           allowScrollButtonsMobile
           TabIndicatorProps={{
             sx: {
-                backgroundColor: "#FFF",
-            }
+              backgroundColor: "#FFF",
+            },
           }}
           sx={tabRootStyleProps}
         >
           <Tab value="sms" label="ISACC send" {...tabProps} />
-          <Tab value="manual message" label="Enter manual message" {...tabProps} />
+          <Tab
+            value="manual message"
+            label="Enter manual message"
+            {...tabProps}
+          />
           <Tab value="comment" label="Enter comment" {...tabProps} />
         </Tabs>
         <Box>
-            <IconButton
+          <IconButton
             color="info"
             onClick={() => this.setState({ infoOpen: true })}
-            >
+          >
             <InfoIcon></InfoIcon>
-            </IconButton>
+          </IconButton>
         </Box>
         <Dialog
           open={this.state.infoOpen}
@@ -835,7 +842,7 @@ export default class MessagingView extends React.Component<
               color="text.secondary"
               gutterBottom
               sx={{
-                whiteSpace: "pre"
+                whiteSpace: "pre" // preserve line break character
               }}
             >
               {comment}
@@ -890,6 +897,7 @@ export default class MessagingView extends React.Component<
         backgroundColor: grey[100],
         borderRadius: 0,
         color: "#000",
+        boxShadow: `1px 1px 2px ${grey[700]}`
       };
     if (!delivered)
       return {
