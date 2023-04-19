@@ -140,7 +140,8 @@ export default class MessagingView extends React.Component<
     if (!client) return;
     // Communication?part-of=CarePlan/${carePlanId}
     let params = new URLSearchParams({
-      "part-of": `CarePlan/${carePlanId}`
+      "part-of": `CarePlan/${carePlanId}`,
+        "_count": "200"
     }).toString();
     return await client
       .request({
