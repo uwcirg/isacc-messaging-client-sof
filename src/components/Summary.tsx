@@ -152,7 +152,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
       const selectedPractitionersDisplay =
         this.state.selectedPractitioners &&
         this.state.selectedPractitioners.length ? (
-          <Stack spacing={0.5}>
+          <Stack spacing={0.5} alignItems={"flex-start"}>
             {this.state.selectedPractitioners.map(
               (p: string | IPractitioner, index) => {
                 return (
