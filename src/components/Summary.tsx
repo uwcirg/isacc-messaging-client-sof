@@ -221,7 +221,12 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
 
   private _buildPractitionerSelector() {
     // @ts-ignore
-    let patient: Patient = this.context.patient;
+    const patient: Patient = this.context.patient;
+    const toReferences = (practitioners: (string | IPractitioner)[]) =>
+      practitioners?.map((v) => ({
+        type: "Practitioner",
+        reference: `Practitioner/${(v as IPractitioner).id}`,
+      }));
     return (
       <>
         <Autocomplete
@@ -246,10 +251,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
               patient.generalPractitioner = null;
               return;
             }
-            patient.generalPractitioner = value?.map((v) => ({
-              type: "Practitioner",
-              reference: `Practitioner/${(v as IPractitioner).id}`,
-            }));
+            patient.generalPractitioner = toReferences(value);
           }}
         />
         <FormControlLabel
@@ -265,11 +267,8 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                     ? this.state.practitioners
                     : null,
                 });
-                patient.generalPractitioner = this.state.practitioners?.map(
-                  (v) => ({
-                    type: "Practitioner",
-                    reference: `Practitioner/${(v as IPractitioner).id}`,
-                  })
+                patient.generalPractitioner = toReferences(
+                  this.state.practitioners
                 );
               }}
             />
