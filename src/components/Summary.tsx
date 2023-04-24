@@ -138,7 +138,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 defaultValue={currentSelection}
                 options={this.state.practitioners}
                 getOptionLabel={(option) => this.getPractitionerLabel(option as IPractitioner)}
-                renderInput={(params) => <TextField {...params} placeholder={"Select users"}/>}
+                renderInput={(params) => <TextField {...params} placeholder={"Users"}/>}
                 onChange={(event: any, value: (string | IPractitioner)[]) => {
                     if (!value) {
                         patient.generalPractitioner = null;
