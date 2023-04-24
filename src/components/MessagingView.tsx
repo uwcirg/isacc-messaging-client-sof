@@ -38,6 +38,7 @@ import {CommunicationRequest} from "../model/CommunicationRequest";
 import Client from "fhirclient/lib/Client";
 import {Bundle} from "../model/Bundle";
 import {getEnv} from "../util/util";
+import {getUserName } from "../util/isacc_util";
 
 type MessageType = "sms" | "manual message" | "comment";
 type MessageStatus = "sent" | "received";
@@ -344,6 +345,14 @@ export default class MessagingView extends React.Component<
               backgroundColor: "#FFF",
             },
           }}
+          TabScrollButtonProps={{
+            sx: {
+                borderBottom: `2px solid ${grey[200]}`,
+                "&.Mui-disabled": {
+                    width: 0
+                },
+            }
+          }}
           sx={tabRootStyleProps}
         >
           <Tab value="sms" label="ISACC send" {...tabProps} />
@@ -600,7 +609,9 @@ export default class MessagingView extends React.Component<
       this.state.activeMessage?.status === "received"
         ? this.state.activeMessage.date
         : null;
-    const noteAboutCommunication = `non-SMS ${this.state.activeMessage?.type}, staff-entered`;
+    const userName = getUserName(context.client);
+    const enteredByText =  userName ? `entered by ${userName}`: "staff-entered";
+    const noteAboutCommunication = `${this.state.activeMessage?.type}, ${enteredByText}`;
     // new communication
     // TODO implement sender, requires Practitioner resource set for the user
     const newCommunication = Communication.create(
@@ -612,7 +623,6 @@ export default class MessagingView extends React.Component<
       IsaccMessageCategory.isaccNonSMSMessage,
       noteAboutCommunication
     );
-    // save communication
     this._save(newCommunication, (savedResult: IResource) => {
       console.log("Saved new communication:", savedResult);
       const currentMessageType = this.state.activeMessage.type;
@@ -843,6 +853,7 @@ export default class MessagingView extends React.Component<
               color="text.secondary"
               gutterBottom
               sx={{
+                textAlign: "right",
                 whiteSpace: "pre" // preserve line break character
               }}
             >
