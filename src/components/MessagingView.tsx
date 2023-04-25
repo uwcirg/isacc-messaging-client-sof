@@ -204,6 +204,7 @@ export default class MessagingView extends React.Component<
       borderRadius: 1,
       paddingLeft: 0.5,
       paddingRight: 0.5,
+      boxShadow: `inset 0 2px 2px 0 ${grey[100]}`
     };
 
     let messages = (
@@ -902,7 +903,7 @@ export default class MessagingView extends React.Component<
               color="text.secondary"
               gutterBottom
               sx={{
-                whiteSpace: "pre" // preserve line break character
+                whiteSpace: "pre", // preserve line break character
               }}
             >
               {comment}
