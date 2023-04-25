@@ -136,12 +136,15 @@ export default class MessagingView extends React.Component<
       });
   }
 
-  async getCommunications(client: Client, carePlanId: string): Promise<Communication[]> {
+  async getCommunications(
+    client: Client,
+    carePlanId: string
+  ): Promise<Communication[]> {
     if (!client) return;
     // Communication?part-of=CarePlan/${carePlanId}
     let params = new URLSearchParams({
       "part-of": `CarePlan/${carePlanId}`,
-        "_count": "200"
+      _count: "200",
     }).toString();
     return await client
       .request({
@@ -195,7 +198,7 @@ export default class MessagingView extends React.Component<
     }
 
     let messageBoxProps = {
-      maxHeight: 600,
+      maxHeight: 548,
       minHeight: 40,
       overflow: "auto",
       display: "flex",
@@ -243,18 +246,26 @@ export default class MessagingView extends React.Component<
 
     return (
       <Grid container direction={"column"}>
-        <Stack direction={"row"} justifyContent={"space-between"}>
+        <Stack
+          direction={"row"}
+          justifyContent={"space-between"}
+          alignItems={"center"}
+          spacing={1}
+        >
           <Typography variant={"h6"}>{"Messages"}</Typography>
-          {this.state.messagesLoading ? (
-            <CircularProgress />
-          ) : (
-            <IconButton
-              color="primary"
-              onClick={() => this.loadCommunications()}
-            >
-              <Refresh />
-            </IconButton>
-          )}
+          <Stack spacing={1} direction="row">
+            {this._buildLegend()}
+            {this.state.messagesLoading ? (
+              <CircularProgress />
+            ) : (
+              <IconButton
+                color="primary"
+                onClick={() => this.loadCommunications()}
+              >
+                <Refresh />
+              </IconButton>
+            )}
+          </Stack>
         </Stack>
 
         {messages}
@@ -301,20 +312,20 @@ export default class MessagingView extends React.Component<
         infoOpen: false,
       });
     const tabRootStyleProps = {
-        marginTop: 1.5,
-        minHeight: "40px",
-        "& .MuiTab-root": {
-            borderBottom: `2px solid ${grey[200]}`
-        },
-        "& .Mui-selected": {
-            borderWidth: "2px 2px 0",
-            borderStyle: "solid solid none",
-            borderColor: `${grey[200]} ${grey[200]} transparent`,
-            borderRadius: "8px 8px 0 0"
-        },
-        position: "relative",
-        top: "2px",
-        backgroundColor: "#FFF"
+      marginTop: 1,
+      minHeight: "40px",
+      "& .MuiTab-root": {
+        borderBottom: `2px solid ${grey[200]}`,
+      },
+      "& .Mui-selected": {
+        borderWidth: "2px 2px 0",
+        borderStyle: "solid solid none",
+        borderColor: `${grey[200]} ${grey[200]} transparent`,
+        borderRadius: "8px 8px 0 0",
+      },
+      position: "relative",
+      top: "2px",
+      backgroundColor: "#FFF",
     };
     const tabProps = {
       sx: {
@@ -444,7 +455,7 @@ export default class MessagingView extends React.Component<
               ...this.state.activeMessage,
               date: new Date().toISOString(),
               content: event.target.value,
-              status: "sent"
+              status: "sent",
             },
           });
         }}
@@ -474,11 +485,7 @@ export default class MessagingView extends React.Component<
             marginBottom: 1,
           }}
         >
-          <Stack
-            direction={"row"}
-            spacing={1}
-            alignItems={"center"}
-          >
+          <Stack direction={"row"} spacing={1} alignItems={"center"}>
             <Typography variant="body2" color="text.secondary">
               Email / Phone / Letter
             </Typography>
@@ -585,6 +592,61 @@ export default class MessagingView extends React.Component<
           </LoadingButton>
         </Box>
       </>
+    );
+  }
+
+  private _buildLegend(): React.ReactNode {
+    const keys = Object.keys(MessagingView.colorsByType);
+    const halfwayIndex = Math.ceil(keys.length / 2 - 1);
+    const group1 = keys.filter((item, index) => index <= halfwayIndex);
+    const group2 = keys.filter((item, index) => index > halfwayIndex);
+    const labels: any = {
+      incoming: "reply from recipient",
+      info: "non-SMS manual message or comment",
+      pending: "pending message",
+      system: "sent by system",
+      smsByAuthor: "sent by user",
+    };
+    const legendIconStyle = (key: string) => ({
+      backgroundColor:
+        key === "pending" ? "#FFF" : MessagingView.colorsByType[key],
+      width: 12,
+      height: 12,
+      borderRadius: "100vmax",
+      border:
+        key === "pending"
+          ? `1px dashed ${MessagingView.colorsByType[key]}`
+          : "none",
+    });
+    const legendItem = (key: string) => (
+      <Stack spacing={0.5} direction={"row"} alignItems={"center"}>
+        <Box sx={legendIconStyle(key)} key={`legend_${key}`}></Box>
+        <Typography variant="caption">{labels[key]}</Typography>
+      </Stack>
+    );
+    return (
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={{ xs: 0, sm: 2 }}
+        alignItems={"flex-start"}
+        justifyContent={"flex-end"}
+        sx={{
+          border: `1px solid ${grey[200]}`,
+          padding: 1,
+          marginBottom: 1,
+          borderRadius: 1,
+        }}
+      >
+        {[group1, group2].map((item, index) => {
+          return (
+            <Box key={`legend_group_${index}`}>
+              {item.map((key) => {
+                return legendItem(key);
+              })}
+            </Box>
+          );
+        })}
+      </Stack>
     );
   }
 
@@ -733,7 +795,7 @@ export default class MessagingView extends React.Component<
     let priority = message.priority;
     let themes: string[] = message.getThemes();
     const note = message.displayNote();
-    const itemLabel : string = isNonSmsMessage
+    const itemLabel: string = isNonSmsMessage
       ? [
           note,
           `${
@@ -741,7 +803,9 @@ export default class MessagingView extends React.Component<
           } on ${MessagingView.displayDateTime(
             message.sent ? message.sent : message.received
           )}`,
-        ].join("\n").trim()
+        ]
+          .join("\n")
+          .trim()
       : [
           note,
           `${
@@ -751,7 +815,9 @@ export default class MessagingView extends React.Component<
               ? "response (from author)"
               : ""
           }`,
-        ].join("\n").trim();
+        ]
+          .join("\n")
+          .trim();
 
     return this._alignedRow(
       incoming,
@@ -837,13 +903,13 @@ export default class MessagingView extends React.Component<
           {timestamp && (
             <Typography variant={"caption"}>{timestamp}</Typography>
           )}
-           {comment && (
+          {comment && (
             <Typography
               variant="caption"
               color="text.secondary"
               gutterBottom
               sx={{
-                whiteSpace: "pre" // preserve line break character
+                whiteSpace: "pre", // preserve line break character
               }}
             >
               {comment}
@@ -887,6 +953,14 @@ export default class MessagingView extends React.Component<
     );
   }
 
+  private static colorsByType: any = {
+    incoming: grey[300],
+    system: lightBlue[100],
+    smsByAuthor: lightBlue[700],
+    pending: grey[700],
+    info: yellow[300],
+  };
+
   private static getBubbleStyle(
     incoming: boolean,
     auto: boolean,
@@ -895,31 +969,31 @@ export default class MessagingView extends React.Component<
   ): object {
     if (info)
       return {
-        backgroundColor: yellow[50],
+        backgroundColor: MessagingView.colorsByType["info"],
         borderRadius: 0,
         color: "#000",
         boxShadow: `1px 1px 2px ${grey[700]}`,
-        borderBottomRightRadius: "72px 4px"
+        borderBottomRightRadius: "72px 4px",
       };
     if (!delivered)
       return {
         borderStyle: "dashed",
-        borderColor: grey[700],
+        borderColor: MessagingView.colorsByType["pending"],
         borderWidth: "1px",
         color: "#000",
       };
     if (incoming)
       return {
-        backgroundColor: grey[300],
+        backgroundColor: MessagingView.colorsByType["incoming"],
         color: "#000",
       };
     if (auto)
       return {
-        backgroundColor: lightBlue[100],
+        backgroundColor: MessagingView.colorsByType["system"],
         color: "#000",
       };
     return {
-      backgroundColor: lightBlue[700],
+      backgroundColor: MessagingView.colorsByType["smsByAuthor"],
       color: "#fff",
     };
   }
