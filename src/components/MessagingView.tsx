@@ -136,10 +136,7 @@ export default class MessagingView extends React.Component<
       });
   }
 
-  async getCommunications(
-    client: Client,
-    carePlanId: string
-  ): Promise<Communication[]> {
+  async getCommunications(client: Client, carePlanId: string): Promise<Communication[]> {
     if (!client) return;
     // Communication?part-of=CarePlan/${carePlanId}
     let params = new URLSearchParams({
@@ -455,7 +452,7 @@ export default class MessagingView extends React.Component<
               ...this.state.activeMessage,
               date: new Date().toISOString(),
               content: event.target.value,
-              status: "sent",
+              status: "sent"
             },
           });
         }}
@@ -803,9 +800,7 @@ export default class MessagingView extends React.Component<
           } on ${MessagingView.displayDateTime(
             message.sent ? message.sent : message.received
           )}`,
-        ]
-          .join("\n")
-          .trim()
+        ].join("\n").trim()
       : [
           note,
           `${
@@ -815,9 +810,7 @@ export default class MessagingView extends React.Component<
               ? "response (from author)"
               : ""
           }`,
-        ]
-          .join("\n")
-          .trim();
+        ].join("\n").trim();
 
     return this._alignedRow(
       incoming,
@@ -909,7 +902,7 @@ export default class MessagingView extends React.Component<
               color="text.secondary"
               gutterBottom
               sx={{
-                whiteSpace: "pre", // preserve line break character
+                whiteSpace: "pre" // preserve line break character
               }}
             >
               {comment}
