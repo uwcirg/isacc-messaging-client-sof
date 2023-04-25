@@ -10,14 +10,20 @@ export default function AppBanner() {
       <Box sx={{ flexGrow: 1 }}>
         <AppBar position="fixed">
           <Toolbar>
-            <IconButton size="large" edge="start" color="inherit">
+            <IconButton size="medium" edge="start" color="inherit">
               <Button
                 color="inherit"
                 variant={"outlined"}
                 href={getPatientListURL()}
+                title="Back to recipient list"
               >
                 <ArrowBackIos />
-                Back to recipient list
+                <Typography variant="body2" sx={{
+                    display: {
+                        xs: "none",
+                        sm: "inline-block"
+                    }
+                }}>Back to recipient list</Typography>
               </Button>
             </IconButton>
             <Stack
