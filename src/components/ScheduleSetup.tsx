@@ -96,8 +96,8 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
                 </Alert>
                 : null}
             <Grid container spacing={2}>
-                <Grid item xs={6}><Summary editable={true}/></Grid>
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}><Summary editable={true}/></Grid>
+                <Grid item xs={12} sm={6}>
                     {editing ?
                         <PatientNotes/> :
                         <>
@@ -189,7 +189,7 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
         let client: Client = this.context.client;
 
         if (!patient.smsContactPoint) {
-            return new Promise((resolve,reject) => resolve());
+            return new Promise((resolve,reject) => reject("No contact information entered."));
         }
 
         let params = new URLSearchParams({
