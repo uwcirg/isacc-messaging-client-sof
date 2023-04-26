@@ -71,6 +71,10 @@ export const IsaccMessageCategory = {
   isaccNonSMSMessage: Coding.make(
     "https://isacc.app/CodeSystem/communication-type",
     "isacc-non-sms-message"
+  ),
+  isaccComment: Coding.make(
+    "https://isacc.app/CodeSystem/communication-type",
+    "isacc-comment"
   )
 };
 

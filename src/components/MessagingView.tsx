@@ -31,13 +31,14 @@ import {
 import LoadingButton from "@mui/lab/LoadingButton";
 import InfoIcon from "@mui/icons-material/Info";
 import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
-import {grey, lightBlue, yellow} from "@mui/material/colors";
+import {grey, lightBlue, pink, yellow} from "@mui/material/colors";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import {Error, Refresh, Warning} from "@mui/icons-material";
 import {CommunicationRequest} from "../model/CommunicationRequest";
 import Client from "fhirclient/lib/Client";
 import {Bundle} from "../model/Bundle";
 import {getEnv} from "../util/util";
+import {getUserName } from "../util/isacc_util";
 
 type MessageType = "sms" | "manual message" | "comment";
 type MessageStatus = "sent" | "received";
@@ -344,6 +345,14 @@ export default class MessagingView extends React.Component<
               backgroundColor: "#FFF",
             },
           }}
+          TabScrollButtonProps={{
+            sx: {
+                borderBottom: `2px solid ${grey[200]}`,
+                "&.Mui-disabled": {
+                    width: 0
+                },
+            }
+          }}
           sx={tabRootStyleProps}
         >
           <Tab value="sms" label="ISACC send" {...tabProps} />
@@ -600,7 +609,9 @@ export default class MessagingView extends React.Component<
       this.state.activeMessage?.status === "received"
         ? this.state.activeMessage.date
         : null;
-    const noteAboutCommunication = `non-SMS ${this.state.activeMessage?.type}, staff-entered`;
+    const userName = getUserName(context.client);
+    const enteredByText =  userName ? `entered by ${userName}`: "staff-entered";
+    const noteAboutCommunication = `${this.state.activeMessage?.type}, ${enteredByText}`;
     // new communication
     // TODO implement sender, requires Practitioner resource set for the user
     const newCommunication = Communication.create(
@@ -609,10 +620,11 @@ export default class MessagingView extends React.Component<
       context.carePlan,
       sentDate,
       receivedDate,
-      IsaccMessageCategory.isaccNonSMSMessage,
+      this.state.activeMessage?.type === "comment"
+        ? IsaccMessageCategory.isaccComment
+        : IsaccMessageCategory.isaccNonSMSMessage,
       noteAboutCommunication
     );
-    // save communication
     this._save(newCommunication, (savedResult: IResource) => {
       console.log("Saved new communication:", savedResult);
       const currentMessageType = this.state.activeMessage.type;
@@ -690,8 +702,12 @@ export default class MessagingView extends React.Component<
     let incoming = true;
     const isNonSmsMessage = !!message.category.find((c: ICodeableConcept) =>
       c.coding.find((coding: ICoding) =>
-        IsaccMessageCategory.isaccNonSMSMessage.equals(coding)
+        IsaccMessageCategory.isaccNonSMSMessage.equals(coding) ||
+        IsaccMessageCategory.isaccComment.equals(coding)
       )
+    );
+    const isComment = !!message.category.find((c: ICodeableConcept) =>
+      c.coding.find((coding: ICoding) => IsaccMessageCategory.isaccComment.equals(coding))
     );
 
     if (isNonSmsMessage) {
@@ -728,7 +744,8 @@ export default class MessagingView extends React.Component<
       incoming,
       autoMessage,
       delivered,
-      isNonSmsMessage
+      isNonSmsMessage,
+      isComment
     );
     let priority = message.priority;
     let themes: string[] = message.getThemes();
@@ -843,6 +860,7 @@ export default class MessagingView extends React.Component<
               color="text.secondary"
               gutterBottom
               sx={{
+                textAlign: "right",
                 whiteSpace: "pre" // preserve line break character
               }}
             >
@@ -891,8 +909,17 @@ export default class MessagingView extends React.Component<
     incoming: boolean,
     auto: boolean,
     delivered: boolean,
-    info: boolean
+    info: boolean,
+    comment: boolean
   ): object {
+    if (comment)
+      return {
+        backgroundColor: pink[50],
+        borderRadius: 0,
+        color: "#000",
+        boxShadow: `1px 1px 2px ${grey[700]}`,
+        borderBottomRightRadius: "72px 4px"
+      };
     if (info)
       return {
         backgroundColor: yellow[50],
