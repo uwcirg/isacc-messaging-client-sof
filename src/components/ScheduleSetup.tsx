@@ -194,6 +194,9 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
 
         let params = new URLSearchParams({
             "telecom": `${patient.smsContactPoint}`
+            // FIXME
+            // "_id:not: `${patient.id}`"  // this DOES NOT WORK, at least when tried against SMIT, R4 FHIR server 
+            // need to figure out the correct search paramter for excluding a patient id
         }).toString();
         return client.request(`/Patient?${params}`).then((bundle: Bundle): Promise<void> => {
             return new Promise((resolve, reject) => {
@@ -208,7 +211,7 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
                                 return Patient.from(entry.resource);
                             }
                         })
-                        if (patients.find(o => o.id !== patient.id)) { // exclude current patient
+                        if (patients.find(o => o.id !== patient.id)) { // exclude current patient, workaround for above FIXME
                             reject(`Phone number is already associated with: ${patients.map(
                                 (p: Patient) => `${p.fullNameDisplay} (${p.reference})`
                             ).join("; ")}.`);
