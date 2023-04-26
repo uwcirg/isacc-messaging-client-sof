@@ -31,7 +31,7 @@ import {
 import LoadingButton from "@mui/lab/LoadingButton";
 import InfoIcon from "@mui/icons-material/Info";
 import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
-import {grey, lightBlue, yellow} from "@mui/material/colors";
+import {grey, lightBlue, pink, yellow} from "@mui/material/colors";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import {Error, Refresh, Warning} from "@mui/icons-material";
 import {CommunicationRequest} from "../model/CommunicationRequest";
@@ -620,7 +620,9 @@ export default class MessagingView extends React.Component<
       context.carePlan,
       sentDate,
       receivedDate,
-      IsaccMessageCategory.isaccNonSMSMessage,
+      this.state.activeMessage?.type === "comment"
+        ? IsaccMessageCategory.isaccComment
+        : IsaccMessageCategory.isaccNonSMSMessage,
       noteAboutCommunication
     );
     this._save(newCommunication, (savedResult: IResource) => {
@@ -700,8 +702,12 @@ export default class MessagingView extends React.Component<
     let incoming = true;
     const isNonSmsMessage = !!message.category.find((c: ICodeableConcept) =>
       c.coding.find((coding: ICoding) =>
-        IsaccMessageCategory.isaccNonSMSMessage.equals(coding)
+        IsaccMessageCategory.isaccNonSMSMessage.equals(coding) ||
+        IsaccMessageCategory.isaccComment.equals(coding)
       )
+    );
+    const isComment = !!message.category.find((c: ICodeableConcept) =>
+      c.coding.find((coding: ICoding) => IsaccMessageCategory.isaccComment.equals(coding))
     );
 
     if (isNonSmsMessage) {
@@ -738,7 +744,8 @@ export default class MessagingView extends React.Component<
       incoming,
       autoMessage,
       delivered,
-      isNonSmsMessage
+      isNonSmsMessage,
+      isComment
     );
     let priority = message.priority;
     let themes: string[] = message.getThemes();
@@ -902,8 +909,17 @@ export default class MessagingView extends React.Component<
     incoming: boolean,
     auto: boolean,
     delivered: boolean,
-    info: boolean
+    info: boolean,
+    comment: boolean
   ): object {
+    if (comment)
+      return {
+        backgroundColor: pink[50],
+        borderRadius: 0,
+        color: "#000",
+        boxShadow: `1px 1px 2px ${grey[700]}`,
+        borderBottomRightRadius: "72px 4px"
+      };
     if (info)
       return {
         backgroundColor: yellow[50],
