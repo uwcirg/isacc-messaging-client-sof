@@ -208,7 +208,7 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
                                 return Patient.from(entry.resource);
                             }
                         })
-                        if (patients) {
+                        if (patients.find(o => o.id !== patient.id)) { // exclude current patient
                             reject(`Phone number is already associated with: ${patients.map(
                                 (p: Patient) => `${p.fullNameDisplay} (${p.reference})`
                             ).join("; ")}.`);
