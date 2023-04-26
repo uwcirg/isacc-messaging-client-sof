@@ -30,6 +30,9 @@ import {
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
 import InfoIcon from "@mui/icons-material/Info";
+import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import moment from "moment";
 import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
 import {grey, lightBlue, pink, yellow} from "@mui/material/colors";
 import {IsaccMessageCategory} from "../model/CodeSystem";
@@ -495,39 +498,45 @@ export default class MessagingView extends React.Component<
             <Typography variant="body2" color="text.secondary">
               at
             </Typography>
-
-            <DateTimePicker
-              label="Date & time"
-              inputFormat="ddd, MM/DD/YYYY hh:mm A"
-              value={this.state.activeMessage?.date}
-              renderInput={(params: TextFieldProps) => (
-                <TextField
-                  {...params}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    if (MessagingView.isValidDate(event.target.value)) {
-                      this.setState({
-                        activeMessage: {
-                          ...this.state.activeMessage,
-                          date: event.target.value
-                            ? new Date(event.target.value).toISOString()
-                            : null,
-                        },
-                      });
-                    }
-                  }}
-                  sx={{ width: "100%", flexGrow: 1 }}
-                />
-              )}
-              onChange={(newValue: Date | null) => {
-                this.setState({
-                  activeMessage: {
-                    ...this.state.activeMessage,
-                    date: newValue?.toISOString(),
-                  },
-                });
-              }}
-              disableFuture
-            ></DateTimePicker>
+            <LocalizationProvider dateAdapter={AdapterMoment}>
+              <DateTimePicker
+                label="Date & time"
+                format="ddd, MM/DD/YYYY hh:mm A"
+                // @ts-ignore
+                value={moment(this.state.activeMessage?.date)}
+                sx={{
+                    flexGrow: 1,
+                    width: "100%"
+                }}
+                renderInput={(params: TextFieldProps) => (
+                  <TextField
+                    {...params}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                      if (MessagingView.isValidDate(event.target.value)) {
+                        this.setState({
+                          activeMessage: {
+                            ...this.state.activeMessage,
+                            date: event.target.value
+                              ? new Date(event.target.value).toISOString()
+                              : null,
+                          },
+                        });
+                      }
+                    }}
+                    sx={{ width: "100%", flexGrow: 1 }}
+                  />
+                )}
+                onChange={(newValue: Date | null) => {
+                  this.setState({
+                    activeMessage: {
+                      ...this.state.activeMessage,
+                      date: newValue?.toISOString(),
+                    },
+                  });
+                }}
+                disableFuture
+              ></DateTimePicker>
+            </LocalizationProvider>
           </Stack>
         </Stack>
         <TextField

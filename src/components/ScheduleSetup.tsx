@@ -13,7 +13,10 @@ import {
     Typography
 } from "@mui/material";
 import ClearIcon from '@mui/icons-material/Clear';
-import {DateTimePicker} from "@mui/x-date-pickers";
+import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import moment from "moment";
+import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
 import {FhirClientContext} from "../FhirClientContext";
 import {IBundle_Entry, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {CommunicationRequest} from "../model/CommunicationRequest";
@@ -328,49 +331,58 @@ const MessageScheduleList = (props: {
 }) => {
 
     const buildMessageItem = (message: CommunicationRequest, index: number) => {
-        return <ListItem key={index} sx={{
-            width: '100%'
-        }} secondaryAction={
-            message.status === "completed" ? <></> :
-                <IconButton hidden={message.status === "completed"} onClick={() => {
-                    removeMessage(index);
-                }}>
-                    <ClearIcon/>
-                </IconButton>
-        }>
-            <Grid container direction={"row"} flexDirection={"row"} spacing={2}
-                  sx={{paddingTop: 2}}>
-
-                <Grid item>
-                    <DateTimePicker
-                        label={message.status === "completed" ? "Delivered Date & Time" : "Scheduled Date & Time"}
-                        value={message.occurrenceDateTime}
-                        inputFormat="ddd, MM/DD/YYYY hh:mm A" // example output display: Thu, 03/09/2023 09:34 AM
-                        disabled={message.status === "completed"}
-                        onChange={(newValue: Date | null) => {
-                            message.setOccurrenceDate(newValue);
-                            props.onMessagePlanChanged(props.messagePlan);
-                        }}
-                        renderInput={(params: TextFieldProps) => <TextField {...params} sx={{width: "264px"}}/>}
-                    />
+        return (
+            <ListItem key={index} sx={{
+                width: '100%'
+            }} secondaryAction={
+                message.status === "completed" ? <></> :
+                    <IconButton hidden={message.status === "completed"} onClick={() => {
+                        removeMessage(index);
+                    }}>
+                        <ClearIcon/>
+                    </IconButton>
+            }>
+                <Grid container direction={"row"} flexDirection={"row"} spacing={2}
+                      sx={{paddingTop: 2}}>
+                    <Grid item>
+                        <LocalizationProvider dateAdapter={AdapterMoment}>
+                            <DateTimePicker
+                                label={message.status === "completed" ? "Delivered Date & Time" : "Scheduled Date & Time"}
+                                // @ts-ignore
+                                value={moment(message.occurrenceDateTime)}
+                                format="ddd, MM/DD/YYYY hh:mm A" // example output display: Thu, 03/09/2023 09:34 AM
+                                disabled={message.status === "completed"}
+                                onChange={(newValue: Date | null) => {
+                                    message.setOccurrenceDate(newValue);
+                                    props.onMessagePlanChanged(props.messagePlan);
+                                }}
+                                sx={{
+                                    width: "100%",
+                                    minWidth: "264px",
+                                    flexGrow: 1
+                                }}
+                                renderInput={(params: TextFieldProps) => <TextField {...params} />}
+                            />
+                        </LocalizationProvider>
+                    </Grid>
+                    <Grid item flexGrow={1}>
+                        <TextField
+                            error={message.getText().length === 0}
+                            helperText={message.getText().length === 0 ? "Enter a message" : ""}
+                            label={message.status === "completed" ? "Delivered Message" : "Scheduled Message"}
+                            fullWidth
+                            multiline
+                            value={message.getText() ?? ""}
+                            placeholder={"Enter message"}
+                            disabled={message.status === "completed"}
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                message.setText(event.target.value);
+                                props.onMessagePlanChanged(props.messagePlan);
+                            }}/>
+                    </Grid>
                 </Grid>
-                <Grid item flexGrow={1}>
-                    <TextField
-                        error={message.getText().length === 0}
-                        helperText={message.getText().length === 0 ? "Enter a message" : ""}
-                        label={message.status === "completed" ? "Delivered Message" : "Scheduled Message"}
-                        fullWidth
-                        multiline
-                        value={message.getText() ?? ""}
-                        placeholder={"Enter message"}
-                        disabled={message.status === "completed"}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                            message.setText(event.target.value);
-                            props.onMessagePlanChanged(props.messagePlan);
-                        }}/>
-                </Grid>
-            </Grid>
-        </ListItem>
+            </ListItem>
+        );
     }
 
     const removeMessage = (index: number) => {
