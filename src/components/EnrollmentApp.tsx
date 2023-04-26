@@ -5,7 +5,7 @@ import {FhirClientContext, FhirClientContextType} from "../FhirClientContext";
 import Client from "fhirclient/lib/Client";
 import {CommunicationRequest} from "../model/CommunicationRequest";
 import {makeCarePlan} from "../model/modelUtil";
-import {Button, CircularProgress} from "@mui/material";
+import {Alert, Button, CircularProgress} from "@mui/material";
 import CarePlan from "../model/CarePlan";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
@@ -209,12 +209,12 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
         }
 
         return <DialogContent>
-            <DialogContentText>{alertMessage}</DialogContentText>
+            <DialogContentText><Alert severity="warning">{alertMessage}</Alert></DialogContentText>
             <DialogActions>
                 <Button
-                    onClick={edit} autoFocus>Edit</Button>
+                    onClick={edit} variant="contained">Edit</Button>
                 <Button
-                    onClick={createNew} autoFocus>Revoke and create new</Button>
+                    onClick={createNew} variant="outlined">Revoke and create new</Button>
             </DialogActions>
         </DialogContent>;
 

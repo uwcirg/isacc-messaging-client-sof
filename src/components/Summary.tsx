@@ -189,7 +189,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
       {
         label: "Notify on incoming message",
         value:
-          notifyPractitionersSelector ?? "No practitioner records available",
+          notifyPractitionersSelector ?? "No user records available",
       },
     ];
 
@@ -238,7 +238,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             this.getPractitionerLabel(option as IPractitioner)
           }
           renderInput={(params) => (
-            <TextField {...params} placeholder={"Practitioners"} />
+            <TextField {...params} placeholder={"Users"} />
           )}
           onChange={(event: any, value: (string | IPractitioner)[]) => {
             this.setState({
@@ -256,6 +256,11 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         />
         <FormControlLabel
           label="Select all"
+          componentsProps={{
+            typography: {
+                variant: "body2"
+            }
+          }}
           control={
             <Checkbox
               size="small"
