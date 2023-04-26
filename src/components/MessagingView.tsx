@@ -178,7 +178,7 @@ export default class MessagingView extends React.Component<
           this.setState({ error: reason.toString() });
           return null;
         }
-      );
+      )
   }
 
   render(): React.ReactNode {
@@ -802,7 +802,7 @@ export default class MessagingView extends React.Component<
     }
     let align = incoming ? "flex-start" : "flex-end";
 
-    let box = (
+    let box = message ? (
       <Box
         sx={{
           borderRadius: "12px",
@@ -812,6 +812,8 @@ export default class MessagingView extends React.Component<
       >
         <Typography variant={"body2"}>{message}</Typography>
       </Box>
+    ) : (
+        <Alert severity="warning">No message content</Alert>
     );
 
     let bubbleAndPriorityRow;
