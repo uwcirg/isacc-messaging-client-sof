@@ -710,7 +710,7 @@ export default class MessagingView extends React.Component<
       c.coding.find((coding: ICoding) => IsaccMessageCategory.isaccComment.equals(coding))
     );
 
-    if (isNonSmsMessage) {
+    if (isNonSmsMessage || isComment) {
       incoming = !!message.received;
     } else if (
       message.recipient &&
@@ -860,7 +860,8 @@ export default class MessagingView extends React.Component<
               color="text.secondary"
               gutterBottom
               sx={{
-                whiteSpace: "pre" // preserve line break character
+                whiteSpace: "pre", // preserve line break character
+                textAlign: incoming ? "left": "right"
               }}
             >
               {comment}
