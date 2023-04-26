@@ -138,7 +138,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 defaultValue={currentSelection}
                 options={this.state.practitioners}
                 getOptionLabel={(option) => this.getPractitionerLabel(option as IPractitioner)}
-                renderInput={(params) => <TextField {...params} placeholder={"Practitioners"}/>}
+                renderInput={(params) => <TextField {...params} placeholder={"Users"}/>}
                 onChange={(event: any, value: (string | IPractitioner)[]) => {
                     if (!value) {
                         patient.generalPractitioner = null;
@@ -165,7 +165,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             },
             {
                 label: "Notify on incoming message",
-                value: notifyPractitionersSelector ?? "No practitioner records available"
+                value: notifyPractitionersSelector ?? "No user records available"
             }
         ]
 
