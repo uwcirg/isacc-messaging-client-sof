@@ -137,7 +137,10 @@ export default class MessagingView extends React.Component<
       });
   }
 
-  async getCommunications(client: Client, carePlanId: string): Promise<Communication[]> {
+  async getCommunications(
+    client: Client,
+    carePlanId: string
+  ): Promise<Communication[]> {
     if (!client) return;
     // Communication?part-of=CarePlan/${carePlanId}
     let params = new URLSearchParams({
@@ -205,7 +208,7 @@ export default class MessagingView extends React.Component<
       borderRadius: 1,
       paddingLeft: 0.5,
       paddingRight: 0.5,
-      boxShadow: `inset 0 2px 2px 0 ${grey[100]}`
+      boxShadow: `inset 0 2px 2px 0 ${grey[100]}`,
     };
 
     let messages = (
@@ -244,72 +247,78 @@ export default class MessagingView extends React.Component<
     }
 
     return (
-      <Grid container direction={"column"}>
-        <Stack
-          direction={"row"}
-          justifyContent={"space-between"}
-          alignItems={"center"}
-          spacing={1}
-        >
-          <Typography variant={"h6"}>{"Messages"}</Typography>
-          <Stack spacing={1} direction="row">
-            {this._buildLegend()}
-            {this.state.messagesLoading ? (
-              <CircularProgress />
-            ) : (
-              <IconButton
-                color="primary"
-                onClick={() => this.loadCommunications()}
-              >
-                <Refresh />
-              </IconButton>
-            )}
-          </Stack>
-        </Stack>
-
-        {messages}
-
-        {this._buildMessageTypeSelector()}
-
-        <Box
-          sx={{
-            padding: (theme) => theme.spacing(1.5, 1, 1),
-            borderWidth: "2px",
-            borderStyle: "solid",
-            borderColor: grey[200],
-          }}
-        >
-          {this.state.activeMessage.type === "sms" &&
-            this._buildSMSEntryComponent()}
-          {this.state.activeMessage.type !== "sms" &&
-            this._buildNonSMSEntryComponent()}
-          <Snackbar
-            open={this.state.showSaveFeedback}
-            autoHideDuration={2000}
-            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      <>
+        <Grid container direction={"column"}>
+          <Stack
+            direction={"row"}
+            justifyContent={"space-between"}
+            alignItems={"center"}
+            spacing={1}
           >
-            <Alert severity="success">
-              Message saved. Please see messages list above.
-            </Alert>
-          </Snackbar>
-        </Box>
+            <Stack direction={"row"} alignItems={"center"}>
+              <Typography variant={"h6"}>{"Messages"}</Typography>
+              <IconButton
+                color="info"
+                onClick={() => this.setState({ infoOpen: true })}
+              >
+                <InfoIcon></InfoIcon>
+              </IconButton>
+            </Stack>
+            <Stack spacing={1} direction="row">
+              {this.state.messagesLoading ? (
+                <CircularProgress />
+              ) : (
+                <IconButton
+                  color="primary"
+                  onClick={() => this.loadCommunications()}
+                >
+                  <Refresh />
+                </IconButton>
+              )}
+            </Stack>
+          </Stack>
 
-        {this.state.error && (
-          <Alert severity="error" sx={{ marginTop: 2 }}>
-            {typeof this.state.error === "string"
-              ? this.state.error
-              : "Error occurred.  See console for detail."}
-          </Alert>
-        )}
-      </Grid>
+          {messages}
+
+          {this._buildMessageTypeSelector()}
+
+          <Box
+            sx={{
+              padding: (theme) => theme.spacing(1.5, 1, 1),
+              borderWidth: "2px",
+              borderStyle: "solid",
+              borderColor: grey[200],
+            }}
+          >
+            {this.state.activeMessage.type === "sms" &&
+              this._buildSMSEntryComponent()}
+            {this.state.activeMessage.type !== "sms" &&
+              this._buildNonSMSEntryComponent()}
+            <Snackbar
+              open={this.state.showSaveFeedback}
+              autoHideDuration={2000}
+              anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            >
+              <Alert severity="success">
+                Message saved. Please see messages list above.
+              </Alert>
+            </Snackbar>
+          </Box>
+
+          {this.state.error && (
+            <Alert severity="error" sx={{ marginTop: 2 }}>
+              {typeof this.state.error === "string"
+                ? this.state.error
+                : "Error occurred.  See console for detail."}
+            </Alert>
+          )}
+        </Grid>
+        {this._buildInfoDialog()}
+      </>
     );
   }
 
   private _buildMessageTypeSelector(): React.ReactNode {
-    const handleInfoClose = () =>
-      this.setState({
-        infoOpen: false,
-      });
     const tabRootStyleProps = {
       marginTop: 1,
       minHeight: "40px",
@@ -356,11 +365,11 @@ export default class MessagingView extends React.Component<
           }}
           TabScrollButtonProps={{
             sx: {
-                borderBottom: `2px solid ${grey[200]}`,
-                "&.Mui-disabled": {
-                    width: 0
-                },
-            }
+              borderBottom: `2px solid ${grey[200]}`,
+              "&.Mui-disabled": {
+                width: 0,
+              },
+            },
           }}
           sx={tabRootStyleProps}
         >
@@ -372,44 +381,6 @@ export default class MessagingView extends React.Component<
           />
           <Tab value="comment" label="Enter comment" {...tabProps} />
         </Tabs>
-        <Box>
-          <IconButton
-            color="info"
-            onClick={() => this.setState({ infoOpen: true })}
-          >
-            <InfoIcon></InfoIcon>
-          </IconButton>
-        </Box>
-        <Dialog
-          open={this.state.infoOpen}
-          onClose={handleInfoClose}
-          aria-labelledby="non-sms-dialog"
-          aria-describedby="non-sms-dialog-description"
-        >
-          <DialogTitle>Information about message types</DialogTitle>
-          <DialogContent>
-            <Typography variant="body1">
-              <p>
-                <b>ISACC messages</b> are messages sent or received directly by
-                ISACC, including text messages (SMS), iMessages, etc.
-              </p>
-              <p>
-                <b>Manual messages</b> are manually entered records of
-                communications that took place outside of ISACC, such as emails,
-                phone calls, postal mail, or other non-automated communication.
-              </p>
-            </Typography>
-            <Alert severity="info">
-              Please note that messages external to ISACC and contact/note on
-              the recipient will not be sent/communicated to the recipient.
-            </Alert>
-          </DialogContent>
-          <DialogActions>
-            <Button variant="text" onClick={handleInfoClose}>
-              Close
-            </Button>
-          </DialogActions>
-        </Dialog>
       </Stack>
     );
   }
@@ -462,7 +433,7 @@ export default class MessagingView extends React.Component<
               ...this.state.activeMessage,
               date: new Date().toISOString(),
               content: event.target.value,
-              status: "sent"
+              status: "sent",
             },
           });
         }}
@@ -602,6 +573,65 @@ export default class MessagingView extends React.Component<
     );
   }
 
+  private _buildInfoDialog(): React.ReactNode {
+    const handleInfoClose = () =>
+      this.setState({
+        infoOpen: false,
+      });
+    return (
+      <Dialog
+        open={this.state.infoOpen}
+        onClose={handleInfoClose}
+        aria-labelledby="non-sms-dialog"
+        aria-describedby="non-sms-dialog-description"
+      >
+        <DialogTitle
+          sx={{
+            backgroundColor: (theme) => theme.palette.primary.main,
+            color: "#FFF",
+          }}
+        >
+          Information about message types
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">
+            <p>
+              <b>ISACC messages</b> are messages sent or received directly by
+              ISACC, including text messages (SMS), iMessages, etc.
+            </p>
+            <p>
+              <b>Manual messages</b> are manually entered records of
+              communications that took place outside of ISACC, such as emails,
+              phone calls, postal mail, or other non-automated communication.
+            </p>
+          </Typography>
+          <Alert severity="info">
+            Please note that messages external to ISACC and contact/note on the
+            recipient will not be sent/communicated to the recipient.
+          </Alert>
+          <Box
+            sx={{
+              marginTop: 2,
+              border: `1px solid ${grey[200]}`,
+              padding: 1,
+              borderRadius: 1,
+            }}
+          >
+            <Typography variant="subtitle2" gutterBottom>
+              Legend
+            </Typography>
+            {this._buildLegend()}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="text" onClick={handleInfoClose}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
+
   private _buildLegend(): React.ReactNode {
     const keys = Object.keys(MessagingView.colorsByType);
     const halfwayIndex = Math.ceil(keys.length / 2 - 1);
@@ -613,13 +643,13 @@ export default class MessagingView extends React.Component<
       pending: "pending message",
       system: "sent by system",
       smsByAuthor: "sent by user",
-      comment: "comment"
+      comment: "comment",
     };
     const legendIconStyle = (key: string) => ({
       backgroundColor:
         key === "pending" ? "#FFF" : MessagingView.colorsByType[key],
-      width: 12,
-      height: 12,
+      width: 16,
+      height: 16,
       borderRadius: "100vmax",
       border:
         key === "pending"
@@ -627,31 +657,29 @@ export default class MessagingView extends React.Component<
           : "none",
     });
     const legendItem = (key: string) => (
-      <Stack spacing={0.5} direction={"row"} alignItems={"center"}>
+      <Stack spacing={1} direction={"row"} alignItems={"center"}>
         <Box sx={legendIconStyle(key)} key={`legend_${key}`}></Box>
-        <Typography variant="caption">{labels[key]}</Typography>
+        <Typography variant="body2">{labels[key]}</Typography>
       </Stack>
     );
     return (
       <Stack
         direction={{ xs: "column", sm: "row" }}
-        spacing={{ xs: 0, sm: 2 }}
+        spacing={{ xs: 1, sm: 2 }}
         alignItems={"flex-start"}
-        justifyContent={"flex-end"}
-        sx={{
-          border: `1px solid ${grey[200]}`,
-          padding: 1,
-          marginBottom: 1,
-          borderRadius: 1,
-        }}
+        justifyContent={"flex-start"}
       >
         {[group1, group2].map((item, index) => {
           return (
-            <Box key={`legend_group_${index}`}>
+            <Stack
+              key={`legend_group_${index}`}
+              direction={"column"}
+              spacing={1}
+            >
               {item.map((key) => {
                 return legendItem(key);
               })}
-            </Box>
+            </Stack>
           );
         })}
       </Stack>
@@ -671,7 +699,7 @@ export default class MessagingView extends React.Component<
         ? this.state.activeMessage.date
         : null;
     const userName = getUserName(context.client);
-    const enteredByText =  userName ? `entered by ${userName}`: "staff-entered";
+    const enteredByText = userName ? `entered by ${userName}` : "staff-entered";
     const noteAboutCommunication = `${this.state.activeMessage?.type}, ${enteredByText}`;
     // new communication
     // TODO implement sender, requires Practitioner resource set for the user
@@ -762,18 +790,21 @@ export default class MessagingView extends React.Component<
   ): React.ReactNode {
     let incoming = true;
     const isNonSmsMessage = !!message.category.find((c: ICodeableConcept) =>
-      c.coding.find((coding: ICoding) =>
-        IsaccMessageCategory.isaccNonSMSMessage.equals(coding) ||
-        IsaccMessageCategory.isaccComment.equals(coding)
+      c.coding.find(
+        (coding: ICoding) =>
+          IsaccMessageCategory.isaccNonSMSMessage.equals(coding) ||
+          IsaccMessageCategory.isaccComment.equals(coding)
       )
     );
     const isComment = !!message.category.find((c: ICodeableConcept) =>
-      c.coding.find((coding: ICoding) => IsaccMessageCategory.isaccComment.equals(coding))
+      c.coding.find((coding: ICoding) =>
+        IsaccMessageCategory.isaccComment.equals(coding)
+      )
     );
 
     if (isNonSmsMessage || isComment) {
       incoming = !!message.received;
-      console.log("incoming ", incoming, " message ", message)
+      console.log("incoming ", incoming, " message ", message);
     } else if (
       message.recipient &&
       message.recipient.find((r: IReference) => r.reference.includes("Patient"))
@@ -820,7 +851,9 @@ export default class MessagingView extends React.Component<
           } on ${MessagingView.displayDateTime(
             message.sent ? message.sent : message.received
           )}`,
-        ].join("\n").trim()
+        ]
+          .join("\n")
+          .trim()
       : [
           note,
           `${
@@ -830,7 +863,9 @@ export default class MessagingView extends React.Component<
               ? "response (from author)"
               : ""
           }`,
-        ].join("\n").trim();
+        ]
+          .join("\n")
+          .trim();
 
     return this._alignedRow(
       incoming,
@@ -923,7 +958,7 @@ export default class MessagingView extends React.Component<
               gutterBottom
               sx={{
                 whiteSpace: "pre", // preserve line break character
-                textAlign: incoming ? "left": "right"
+                textAlign: incoming ? "left" : "right",
               }}
             >
               {comment}
@@ -973,7 +1008,7 @@ export default class MessagingView extends React.Component<
     smsByAuthor: lightBlue[700],
     pending: grey[700],
     info: yellow[300],
-    comment: pink[100]
+    comment: pink[100],
   };
 
   private static getBubbleStyle(
@@ -989,7 +1024,7 @@ export default class MessagingView extends React.Component<
         borderRadius: 0,
         color: "#000",
         boxShadow: `1px 1px 2px ${grey[700]}`,
-        borderBottomRightRadius: "72px 4px"
+        borderBottomRightRadius: "72px 4px",
       };
     if (info)
       return {
