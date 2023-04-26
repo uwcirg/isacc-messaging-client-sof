@@ -609,10 +609,11 @@ export default class MessagingView extends React.Component<
     const group2 = keys.filter((item, index) => index > halfwayIndex);
     const labels: any = {
       incoming: "reply from recipient",
-      info: "non-SMS manual message or comment",
+      info: "non-SMS manual message",
       pending: "pending message",
       system: "sent by system",
       smsByAuthor: "sent by user",
+      comment: "comment"
     };
     const legendIconStyle = (key: string) => ({
       backgroundColor:
@@ -770,8 +771,9 @@ export default class MessagingView extends React.Component<
       c.coding.find((coding: ICoding) => IsaccMessageCategory.isaccComment.equals(coding))
     );
 
-    if (isNonSmsMessage) {
+    if (isNonSmsMessage || isComment) {
       incoming = !!message.received;
+      console.log("incoming ", incoming, " message ", message)
     } else if (
       message.recipient &&
       message.recipient.find((r: IReference) => r.reference.includes("Patient"))
@@ -921,6 +923,7 @@ export default class MessagingView extends React.Component<
               gutterBottom
               sx={{
                 whiteSpace: "pre", // preserve line break character
+                textAlign: incoming ? "left": "right"
               }}
             >
               {comment}
@@ -970,6 +973,7 @@ export default class MessagingView extends React.Component<
     smsByAuthor: lightBlue[700],
     pending: grey[700],
     info: yellow[300],
+    comment: pink[100]
   };
 
   private static getBubbleStyle(
@@ -981,7 +985,7 @@ export default class MessagingView extends React.Component<
   ): object {
     if (comment)
       return {
-        backgroundColor: pink[50],
+        backgroundColor: MessagingView.colorsByType["comment"],
         borderRadius: 0,
         color: "#000",
         boxShadow: `1px 1px 2px ${grey[700]}`,
