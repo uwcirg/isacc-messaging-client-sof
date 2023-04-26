@@ -178,7 +178,7 @@ export default class MessagingView extends React.Component<
           this.setState({ error: reason.toString() });
           return null;
         }
-      )
+      );
   }
 
   render(): React.ReactNode {
