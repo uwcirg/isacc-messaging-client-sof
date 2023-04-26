@@ -62,7 +62,7 @@ export default class Communication implements ICommunication {
   static from(communication: any): Communication {
     if (!communication) return null;
     let c: Communication = Object.assign(new Communication(), communication);
-    c.payload = c.payload.map((p: CommunicationPayload) =>
+    c.payload = c.payload?.map((p: CommunicationPayload) =>
       CommunicationPayload.from(p)
     );
     return c;
@@ -103,6 +103,7 @@ export default class Communication implements ICommunication {
   }
   
   displayText() {
+    if (!this.payload) return null;
     return this.payload
       .map((p: CommunicationPayload) => {
         return p.contentStringLocalized();
