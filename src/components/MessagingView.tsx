@@ -860,7 +860,6 @@ export default class MessagingView extends React.Component<
               color="text.secondary"
               gutterBottom
               sx={{
-                textAlign: "right",
                 whiteSpace: "pre" // preserve line break character
               }}
             >
