@@ -526,6 +526,7 @@ export default class MessagingView extends React.Component<
               <DateTimePicker
                 label="Date & time"
                 format="ddd, MM/DD/YYYY hh:mm A"
+                // @ts-ignore
                 value={moment(this.state.activeMessage?.date)}
                 sx={{
                     flexGrow: 1,

@@ -344,11 +344,11 @@ const MessageScheduleList = (props: {
             }>
                 <Grid container direction={"row"} flexDirection={"row"} spacing={2}
                       sx={{paddingTop: 2}}>
-
                     <Grid item>
                         <LocalizationProvider dateAdapter={AdapterMoment}>
                             <DateTimePicker
                                 label={message.status === "completed" ? "Delivered Date & Time" : "Scheduled Date & Time"}
+                                // @ts-ignore
                                 value={moment(message.occurrenceDateTime)}
                                 format="ddd, MM/DD/YYYY hh:mm A" // example output display: Thu, 03/09/2023 09:34 AM
                                 disabled={message.status === "completed"}
