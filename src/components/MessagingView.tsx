@@ -936,7 +936,7 @@ export default class MessagingView extends React.Component<
             incoming
               ? "reply (from recipient)"
               : message.sent
-              ? "response (from author)"
+              ? (autoMessage ? "scheduled Caring Contact message" : "response (from author)")
               : ""
           }`,
         ]
