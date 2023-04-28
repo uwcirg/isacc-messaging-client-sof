@@ -129,7 +129,9 @@ export default class MessagingView extends React.Component<
     let context: FhirClientContextType = this.context;
     this.setState({ messagesLoading: true });
 
-    this.getCommunications(context.client, context.carePlan.id, url)
+    const carePlanIds = context.allCarePlans?.map(item => item.id)
+
+    this.getCommunications(context.client, carePlanIds, url)
       .then(
         (result: Communication[]) => {
             const uniqueResults = (result ?? []).filter((item) => {
@@ -165,13 +167,14 @@ export default class MessagingView extends React.Component<
 
   async getCommunications(
     client: Client,
-    carePlanId: string,
+    carePlanIds: string[],
     url: string
   ): Promise<Communication[]> {
     if (!client) return;
-    // Communication?part-of=CarePlan/${carePlanId}
+    // Communication?part-of=CarePlan/${id1}[,CarePlan/${id2}]
+    // get communications for all care plans for the patient
     let params = new URLSearchParams({
-        "part-of": `CarePlan/${carePlanId}`,
+        "part-of": carePlanIds?.map(item =>`CarePlan/${item}`).join(","),
         _count: "200"
       }).toString();
     const requestURL = url ? url : `/Communication?${params}`
