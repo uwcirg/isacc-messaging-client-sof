@@ -44,7 +44,7 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
               <Typography variant={"h6"}>Recipient notes</Typography>
               {this.state.editable ? (
                 <TextField
-                  InputProps={{ sx: { typography: "body2" } }}
+                  InputProps={{ sx: { typography: "body1" } }}
                   multiline
                   fullWidth
                   value={this.state.updatedPatientNote ?? ""}
@@ -54,7 +54,7 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
                   }}
                 />
               ) : (
-                <Typography variant={"body1"}>
+                <Typography variant={"body1"} sx={{padding: (theme) => theme.spacing(1)}}>
                   {carePlan.description}
                 </Typography>
               )}
@@ -72,6 +72,8 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
                     });
                   }
                 }}
+                size="small"
+                variant="outlined"
               >
                 {this.state.editable ? "Done" : "Update"}
               </Button>
