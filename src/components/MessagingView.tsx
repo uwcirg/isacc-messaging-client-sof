@@ -381,8 +381,16 @@ export default class MessagingView extends React.Component<
 
   private _buildMessageTypeSelector(): React.ReactNode {
     const tabRootStyleProps = {
+      margin: {
+        xs: "8px auto 0",
+        sm: "8px 0 0"
+      },
       marginTop: 1,
       minHeight: "40px",
+      maxWidth: {
+        xs: "280px",
+        sm: "100%",
+      },
       "& .MuiTab-root": {
         borderBottom: `2px solid ${grey[200]}`,
       },
@@ -398,7 +406,9 @@ export default class MessagingView extends React.Component<
     };
     const tabProps = {
       sx: {
-        padding: (theme: any) => theme.spacing(1, 2.5),
+        padding: {
+            sm : (theme: any) => theme.spacing(1, 2.5)
+        },
       },
     };
     return (
