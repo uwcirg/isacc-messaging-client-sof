@@ -64,7 +64,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
             }
             if (bundle.total > 1) {
               console.log(
-                "Multiple ISACC CarePlans found. Using the most recently updated.",
+                "Multiple ISACC CarePlans found.",
                 bundle
               );
             }
