@@ -423,7 +423,7 @@ export default class MessagingView extends React.Component<
           value={this.state.activeMessage?.type}
           onChange={(event: React.SyntheticEvent, value: MessageType) => {
             this.setState({
-              activeMessage: { ...defaultMessage, type: value },
+              activeMessage: { ...defaultMessage, type: value, date: new Date().toISOString()},
             });
           }}
           textColor="primary"
