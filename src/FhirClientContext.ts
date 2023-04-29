@@ -7,12 +7,14 @@ export type FhirClientContextType = {
     client: Client;
     patient: Patient;
     carePlan: CarePlan;
+    allCarePlans: CarePlan[],
     error: string;
 }
 const defaultValue: FhirClientContextType = {
     client: null,
     patient: null,
     carePlan: null,
+    allCarePlans: null,
     error: ''
 }
 export const FhirClientContext = React.createContext(defaultValue);

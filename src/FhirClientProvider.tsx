@@ -22,6 +22,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
     const [error, setError] = React.useState('');
     const [patient, setPatient] = React.useState(null);
     const [carePlan, setCarePlan] = React.useState(null);
+    const [allCarePlans, setAllCarePlans] = React.useState(null);
     const [loaded, setLoaded] = React.useState(false);
 
     async function getPatient(client: Client): Promise<Patient> {
@@ -40,64 +41,90 @@ export default function FhirClientProvider(props: Props): JSX.Element {
         });
     }
 
-    async function getCarePlan(client: Client, patientId: string): Promise<CarePlan> {
-        if (!client) return;
-        let params = new URLSearchParams({
-            "subject": `Patient/${patientId}`,
-            "category": IsaccCarePlanCategory.isaccMessagePlan.code,
-            "status": "active",
-            "_sort": "-_lastUpdated"
-        }).toString();
-        return await client.request(`/CarePlan?${params}`).then((bundle: Bundle) => {
-            if (bundle.type === "searchset") {
-                if (!bundle.entry) {
-                    return null;
-                }
-                if (bundle.total > 1) {
-                    console.log("Multiple ISACC CarePlans found. Using the most recently updated.", bundle);
-                }
-                let firstResult = bundle.entry[0].resource;
-                if (firstResult.resourceType === "CarePlan") {
-                    return CarePlan.from(bundle.entry[0].resource as ICarePlan);
-                } else {
-                    setError("Unexpected resource type returned");
-                    return null;
-                }
-            } else {
-                setError("Unexpected bundle type returned");
-                return null;
+    async function getCarePlans(
+      client: Client,
+      patientId: string,
+      params: object = null
+    ) {
+      if (!client) return;
+      const defaultParams = {
+        category: IsaccCarePlanCategory.isaccMessagePlan.code,
+        subject: `Patient/${patientId}`,
+        _sort: "-_lastUpdated",
+      };
+      const searchParams = new URLSearchParams({
+        ...defaultParams,
+        ...(params ?? {}),
+      }).toString();
+      return client.request(`/CarePlan?${searchParams}`).then(
+        (bundle: Bundle) => {
+          if (bundle.type === "searchset") {
+            if (!bundle.entry || !bundle.entry.length) {
+              return null;
             }
-        }, (reason: any) => {
-            setError(reason.toString());
+            if (bundle.total > 1) {
+              console.log(
+                "Multiple ISACC CarePlans found.",
+                bundle
+              );
+            }
+            return bundle.entry.map((item) =>
+              CarePlan.from(item.resource as ICarePlan)
+            );
+          } else {
+            setError("Unexpected bundle type returned");
             return null;
-        });
+          }
+        },
+        (reason: any) => {
+          setError(reason.toString());
+          return null;
+        }
+      );
     }
-
-
 
     React.useEffect(() => {
         FHIR.oauth2.ready().then(
             (client: Client) => {
                 setClient(client);
-                getPatient(client).then((patientResult: Patient) => {
+                getPatient(client)
+                  .then((patientResult: Patient) => {
                     setPatient(patientResult);
                     console.log(`Loaded ${patientResult.reference}`);
-                    getCarePlan(client, patientResult.id).then((carePlanResult: CarePlan) => {
-                        setCarePlan(carePlanResult);
-                        if (carePlanResult) {
-                            console.log(`Loaded ${carePlanResult.reference}`);
-                        }
-                        setLoaded(true);
-                    }, (reason: any) => setError(reason)).catch(e => {
-                        console.log("Error fetching CarePlan", e)
+                    getCarePlans(client, patientResult.id)
+                      .then(
+                        (carePlanResults: CarePlan[]) => {
+                          const activeCarePlans = carePlanResults?.filter(
+                            (item) => item.status === "active"
+                          );
+                          const currentCarePlan =
+                            activeCarePlans?.length > 0
+                              ? activeCarePlans[0]
+                              : null;
+                          if (currentCarePlan?.resourceType === "CarePlan") {
+                            setCarePlan(activeCarePlans[0]);
+                          } else {
+                            setError("Unexpected resource type returned");
+                          }
+                          setAllCarePlans(carePlanResults);
+                          if (currentCarePlan) {
+                            console.log(`Loaded ${currentCarePlan.reference}`);
+                          }
+                          setLoaded(true);
+                        },
+                        (reason: any) => setError(reason)
+                      )
+                      .catch((e) => {
+                        console.log("Error fetching CarePlan", e);
                         setError(e);
                         setLoaded(true);
-                    });
-                }).catch(e => {
-                    console.log("Error fetching Patient", e)
+                      });
+                  })
+                  .catch((e) => {
+                    console.log("Error fetching Patient", e);
                     setError(e);
                     setLoaded(true);
-                });
+                  });
 
             }, (reason: any) => {
                 setError(reason);
@@ -111,6 +138,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
             client: client,
             patient: patient,
             carePlan: carePlan,
+            allCarePlans: allCarePlans,
             error: error
         }}>
             <FhirClientContext.Consumer>
