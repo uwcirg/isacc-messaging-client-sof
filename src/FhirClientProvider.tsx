@@ -72,7 +72,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
               CarePlan.from(item.resource as ICarePlan)
             );
           } else {
-            //setError("Unexpected bundle type returned");
+            setError("Unexpected bundle type returned");
             return null;
           }
         },
@@ -103,8 +103,6 @@ export default function FhirClientProvider(props: Props): JSX.Element {
                               : null;
                           if (currentCarePlan?.resourceType === "CarePlan") {
                             setCarePlan(activeCarePlans[0]);
-                          } else {
-                            setError("Unexpected resource type returned");
                           }
                           setAllCarePlans(carePlanResults);
                           if (currentCarePlan) {
