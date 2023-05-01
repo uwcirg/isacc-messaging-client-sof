@@ -83,7 +83,6 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
     componentDidMount() {
         //@ts-ignore
         let carePlan: CarePlan = this.context.currentCarePlan;
-        console.log("current careplan ", carePlan)
         this.setState({carePlan: carePlan});
     }
 
@@ -310,7 +309,6 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
                 p = client.create(this.state.carePlan);
             }
             p.then((savedCarePlan: IResource) => {
-                console.log("savedCarePlan ", savedCarePlan)
                 this.onSaved(savedCarePlan);
                 let updatePromises = communicationRequests.map((c: CommunicationRequest) => {
                     c.basedOn = [{reference: `CarePlan/${savedCarePlan.id}`}];
