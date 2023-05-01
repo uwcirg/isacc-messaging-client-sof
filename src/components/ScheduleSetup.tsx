@@ -411,7 +411,6 @@ const MessageScheduleList = (props: {
     const activeCommunicationRequests = props.messagePlan.getActiveCommunicationRequests() ?? [];
     const completedCommunicationRequests = activeCommunicationRequests.filter(item => item.status === "completed");
 
-
     return (
       <>
         <Stack
