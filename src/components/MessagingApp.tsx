@@ -13,7 +13,7 @@ import DiagnosisAndCareTeam from "./DiagnosisAndCareTeam";
 export const MessagingApp = () => {
   const context = useContext(FhirClientContext);
   let content;
-  if (!context.carePlan) {
+  if (!context.currentCarePlan) {
     content = (
       <Alert severity="error">
         {

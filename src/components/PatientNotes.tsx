@@ -34,7 +34,7 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
         if (this.state.error) return <Alert severity={"error"}>{this.state.error}</Alert>;
 
         // @ts-ignore
-        let carePlan: CarePlan = this.context.carePlan;
+        let carePlan: CarePlan = this.context.currentCarePlan;
 
         if (!carePlan) return null;
 
@@ -94,12 +94,12 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
     private updateNote(updatedPatientNote: string) {
         // @ts-ignore
         let context: FhirClientContextType = this.context;
-        let carePlan = context.carePlan;
+        let carePlan = context.currentCarePlan;
         carePlan.description = updatedPatientNote;
         context.client.update(carePlan).then(
             (result: any) => {
-                context.carePlan = CarePlan.from(result as ICarePlan);
-                console.log("Updated CarePlan:", context.carePlan);
+                context.currentCarePlan = CarePlan.from(result as ICarePlan);
+                console.log("Updated CarePlan:", context.currentCarePlan);
                 this.setState({
                     editable: false,
                     updatedPatientNote: null
