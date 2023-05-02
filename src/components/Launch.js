@@ -3,7 +3,7 @@ import FHIR from 'fhirclient';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import ErrorComponent from './ErrorComponent';
-import {queryPatientIdKey, getEnv} from '../util/util.js';
+import {queryPatientIdKey, getEnv, fetchEnvData} from '../util/util.js';
 import '../style/App.scss';
 
 export default function Launch() {
