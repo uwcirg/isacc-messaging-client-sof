@@ -74,7 +74,7 @@ export class CommunicationRequest implements ICommunicationRequest {
         if (this.payload) {
             return this.payload[0].contentString;
         }
-        return null;
+        return "";
     }
 
     setText(text: string) {
