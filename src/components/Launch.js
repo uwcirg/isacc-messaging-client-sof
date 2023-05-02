@@ -9,7 +9,7 @@ import '../style/App.scss';
 export default function Launch() {
 
     const [error, setError] = React.useState('');
-
+    fetchEnvData();
     React.useEffect(() => {
         let authURL = 'launch-context.json';
         if (process.env.REACT_APP_BACKEND_URL) {
