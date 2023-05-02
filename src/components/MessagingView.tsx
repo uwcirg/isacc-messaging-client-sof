@@ -41,7 +41,7 @@ import {CommunicationRequest} from "../model/CommunicationRequest";
 import Client from "fhirclient/lib/Client";
 import {Bundle} from "../model/Bundle";
 import {getEnv} from "../util/util";
-import {getUserName } from "../util/isacc_util";
+import {getFhirData, getUserName } from "../util/isacc_util";
 
 type MessageType = "sms" | "manual message" | "comment";
 type MessageStatus = "sent" | "received";
@@ -178,16 +178,7 @@ export default class MessagingView extends React.Component<
         _count: "200"
       }).toString();
     const requestURL = url ? url : `/Communication?${params}`
-    return await client
-      .request({
-        url: requestURL,
-        // TODO refactor this out for general use
-        headers: {
-          "Cache-Control": "no-cache",
-        },
-        signal
-      })
-      .then(
+    return await getFhirData(client, requestURL, signal).then(
         (bundle: Bundle) => {
           if (bundle.type === "searchset") {
             if (!bundle.entry) return [];
@@ -237,7 +228,7 @@ export default class MessagingView extends React.Component<
       return <Alert severity="error">{context.error}</Alert>;
     }
 
-    if (!context.carePlan || !this.state.communications) {
+    if (!context.currentCarePlan || !this.state.communications) {
       return <CircularProgress />;
     }
 
@@ -335,6 +326,7 @@ export default class MessagingView extends React.Component<
                 <IconButton
                   color="primary"
                   onClick={() => this.loadCommunications()}
+                  title={"refresh"}
                 >
                   <Refresh />
                 </IconButton>
@@ -786,7 +778,7 @@ export default class MessagingView extends React.Component<
     const newCommunication = Communication.create(
       this.state.activeMessage.content,
       context.patient,
-      context.carePlan,
+      context.currentCarePlan,
       sentDate,
       receivedDate,
       this.state.activeMessage?.type === "comment"
@@ -820,7 +812,7 @@ export default class MessagingView extends React.Component<
       CommunicationRequest.createNewManualOutgoingMessage(
         this.state.activeMessage.content,
         context.patient,
-        context.carePlan
+        context.currentCarePlan
       );
     this._save(newMessage, (savedCommunicationRequest: IResource) => {
       console.log("Saved new CommunicationRequest:", savedCommunicationRequest);

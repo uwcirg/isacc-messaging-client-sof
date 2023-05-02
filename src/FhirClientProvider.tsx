@@ -5,6 +5,7 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Client from "fhirclient/lib/Client";
 import {queryPatientIdKey} from "./util/util";
+import { getFhirData } from './util/isacc_util';
 import Patient from "./model/Patient";
 import CarePlan from "./model/CarePlan";
 import {Bundle} from "./model/Bundle";
@@ -21,7 +22,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
     const [client, setClient] = React.useState(null);
     const [error, setError] = React.useState('');
     const [patient, setPatient] = React.useState(null);
-    const [carePlan, setCarePlan] = React.useState(null);
+    const [currentCarePlan, setCurrentCarePlan] = React.useState(null);
     const [allCarePlans, setAllCarePlans] = React.useState(null);
     const [loaded, setLoaded] = React.useState(false);
 
@@ -31,7 +32,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
         let queryPatientId = sessionStorage.getItem(queryPatientIdKey);
         if (queryPatientId) {
             console.log('Using stored patient id ', queryPatientId);
-            return client.request('/Patient/' + queryPatientId).then((value: any) => {
+            return getFhirData(client, '/Patient/' + queryPatientId).then((value: any) => {
                 return Patient.from(value);
             });
         }
@@ -43,20 +44,16 @@ export default function FhirClientProvider(props: Props): JSX.Element {
 
     async function getCarePlans(
       client: Client,
-      patientId: string,
-      params: object = null
+      patientId: string
     ) {
       if (!client) return;
-      const defaultParams = {
+      const searchParams = new URLSearchParams({
         category: IsaccCarePlanCategory.isaccMessagePlan.code,
         subject: `Patient/${patientId}`,
         _sort: "-_lastUpdated",
-      };
-      const searchParams = new URLSearchParams({
-        ...defaultParams,
-        ...(params ?? {}),
+    
       }).toString();
-      return client.request(`/CarePlan?${searchParams}`).then(
+      return getFhirData(client, `/CarePlan?${searchParams}`).then(
         (bundle: Bundle) => {
           if (bundle.type === "searchset") {
             if (!bundle.entry || !bundle.entry.length) {
@@ -101,8 +98,9 @@ export default function FhirClientProvider(props: Props): JSX.Element {
                             activeCarePlans?.length > 0
                               ? activeCarePlans[0]
                               : null;
+                        console.log("currentCarePlan ", currentCarePlan)
                           if (currentCarePlan?.resourceType === "CarePlan") {
-                            setCarePlan(activeCarePlans[0]);
+                            setCurrentCarePlan(activeCarePlans[0]);
                           }
                           setAllCarePlans(carePlanResults);
                           if (currentCarePlan) {
@@ -135,7 +133,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
         <FhirClientContext.Provider value={{
             client: client,
             patient: patient,
-            carePlan: carePlan,
+            currentCarePlan: currentCarePlan,
             allCarePlans: allCarePlans,
             error: error
         }}>

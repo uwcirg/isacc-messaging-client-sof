@@ -35,6 +35,7 @@ import Client from "fhirclient/lib/Client";
 import PatientNotes from "./PatientNotes";
 import CarePlan from "../model/CarePlan";
 import {Bundle} from "../model/Bundle";
+import { getFhirData } from "../util/isacc_util";
 
 
 interface ScheduleSetupProps {
@@ -81,7 +82,7 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
 
     componentDidMount() {
         //@ts-ignore
-        let carePlan: CarePlan = this.context.carePlan;
+        let carePlan: CarePlan = this.context.currentCarePlan;
         this.setState({carePlan: carePlan});
     }
 
@@ -171,8 +172,11 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
                     <DialogActions>
                         <Button
                             onClick={onClose}
-                            href={clearSessionLink} autoFocus>Close schedule planner</Button>
-
+                            href={clearSessionLink}
+                            variant="contained"
+                        >
+                            Close schedule planner
+                        </Button>
                     </DialogActions>
                 </DialogContent>
             </Dialog>;
@@ -207,7 +211,7 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
             // "_id:not: `${patient.id}`"  // this DOES NOT WORK, at least when tried against SMIT, R4 FHIR server 
             // need to figure out the correct search paramter for excluding a patient id
         }).toString();
-        return client.request(`/Patient?${params}`).then((bundle: Bundle): Promise<void> => {
+        return getFhirData(client, `/Patient?${params}`).then((bundle: Bundle): Promise<void> => {
             return new Promise((resolve, reject) => {
                 if (bundle.type === "searchset") {
                     if (bundle.entry) {

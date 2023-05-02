@@ -34,3 +34,12 @@ export function getUserEmail(client: Client) {
     if (token['email']) return token['email'];
     return null;
 }
+
+export function getFhirData(client: Client, url: string, signal: AbortSignal = null) {
+  return client?.request({
+    url: url,
+    headers: {
+      "Cache-Control": "no-cache",
+    },
+  });
+}

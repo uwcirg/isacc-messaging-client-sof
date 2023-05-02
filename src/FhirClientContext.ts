@@ -6,14 +6,14 @@ import CarePlan from "./model/CarePlan";
 export type FhirClientContextType = {
     client: Client;
     patient: Patient;
-    carePlan: CarePlan;
+    currentCarePlan: CarePlan;
     allCarePlans: CarePlan[],
     error: string;
 }
 const defaultValue: FhirClientContextType = {
     client: null,
     patient: null,
-    carePlan: null,
+    currentCarePlan: null,
     allCarePlans: null,
     error: ''
 }
