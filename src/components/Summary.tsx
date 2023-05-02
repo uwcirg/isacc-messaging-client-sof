@@ -7,6 +7,8 @@ import {
     Chip,
     CircularProgress,
     FormControlLabel,
+    IconButton,
+    InputAdornment,
     Stack,
     Table,
     TableBody,
@@ -16,7 +18,7 @@ import {
     TextField,
     Typography
 } from "@mui/material";
-
+import ClearIcon from "@mui/icons-material/Clear";
 import {
     IBundle_Entry,
     ICodeableConcept,
@@ -126,6 +128,26 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             ? new AsYouType("US").input(patient.smsContactPoint)
             : ""
         }
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label="clear phone number"
+                onClick={() => {
+                    patient.smsContactPoint = "";
+                    this.setState({});
+                }}
+                edge="end"
+                size="small"
+                sx={{
+                    display: patient.smsContactPoint ? "block" : "none"
+                }}
+              >
+                <ClearIcon />
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
         error={error}
         placeholder={"Phone number"}
         size="small"
