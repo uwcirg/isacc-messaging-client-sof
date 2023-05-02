@@ -2,6 +2,7 @@ import * as React from "react";
 import {
     Box,
     Button,
+    Chip,
     CircularProgress,
     Grid,
     IconButton,
@@ -409,31 +410,82 @@ const MessageScheduleList = (props: {
         let messagePlan = props.messagePlan;
         messagePlan.removeActiveCommunicationRequest(index);
         props.onMessagePlanChanged(messagePlan);
-    }
+    };
 
-    return <><Typography variant={'h6'} gutterBottom>{"Message schedule"}</Typography>
+    const activeCommunicationRequests = props.messagePlan.getActiveCommunicationRequests() ?? [];
+    const completedCommunicationRequests = activeCommunicationRequests.filter(item => item.status === "completed");
+
+    return (
+      <>
+        <Stack
+          spacing={1}
+          direction={"row"}
+          alignItems={"center"}
+          justifyContent={"space-between"}
+        >
+          <Typography variant={"h6"} gutterBottom>
+            {"Message schedule"}
+          </Typography>
+          <Stack spacing={1} direction={"row"}>
+            <Chip
+              label={`${completedCommunicationRequests.length} sent`}
+              variant="outlined"
+              size="small"
+              color={
+                completedCommunicationRequests.length > 0
+                  ? "success"
+                  : "default"
+              }
+            />
+            <Chip
+              label={`${activeCommunicationRequests.length} scheduled`}
+              variant="outlined"
+              size="small"
+            />
+          </Stack>
+        </Stack>
         <Alert severity={"info"}>
-            {"Use {name} to substitute the client's first name"}
+          {"Use {name} to substitute the client's first name"}
         </Alert>
 
-        <List>{
-            props.messagePlan.getActiveCommunicationRequests().map(
-                (message: CommunicationRequest, index: number) => buildMessageItem(message, index)
-            )
-        }</List>
+        <List>
+          {props.messagePlan
+            .getActiveCommunicationRequests()
+            .map((message: CommunicationRequest, index: number) =>
+              buildMessageItem(message, index)
+            )}
+        </List>
 
-        <Stack direction={'row'} justifyContent={"space-between"} sx={{padding: (theme) => theme.spacing(1, 2)}}>
-            <Button variant="outlined" onClick={() => {
-                let newMessage = CommunicationRequest.createNewScheduledMessage("", props.patient, props.messagePlan, new Date());
-                props.messagePlan.addCommunicationRequest(newMessage);
-                props.onMessagePlanChanged(props.messagePlan);
-            }}>
-                Add message
-            </Button>
-            <Button variant="contained" onClick={() => props.saveSchedule()} size="large" sx={{minWidth: 130}}>
-                Done
-            </Button>
+        <Stack
+          direction={"row"}
+          justifyContent={"space-between"}
+          sx={{ padding: (theme) => theme.spacing(1, 2) }}
+        >
+          <Button
+            variant="outlined"
+            onClick={() => {
+              let newMessage = CommunicationRequest.createNewScheduledMessage(
+                "",
+                props.patient,
+                props.messagePlan,
+                new Date()
+              );
+              props.messagePlan.addCommunicationRequest(newMessage);
+              props.onMessagePlanChanged(props.messagePlan);
+            }}
+          >
+            Add message
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => props.saveSchedule()}
+            size="large"
+            sx={{ minWidth: 130 }}
+          >
+            Done
+          </Button>
         </Stack>
-    </>
+      </>
+    );
 
 }
