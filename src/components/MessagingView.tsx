@@ -34,6 +34,7 @@ import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import moment from "moment";
 import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
+import { DateTimeValidationError} from '@mui/x-date-pickers/models';
 import {grey, lightBlue, pink, yellow} from "@mui/material/colors";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import {Error, Refresh, Warning} from "@mui/icons-material";
@@ -76,6 +77,7 @@ export default class MessagingView extends React.Component<
     showSaveFeedback: boolean;
     infoOpen: boolean;
     nextPageURL: string;
+    dateTimeValidationError: DateTimeValidationError;
     // showAlert: boolean;
     // alertSeverity: "error" | "warning" | "info" | "success";
     // alertText: string;
@@ -97,7 +99,8 @@ export default class MessagingView extends React.Component<
       saveLoading: false,
       showSaveFeedback: false,
       infoOpen: false,
-      nextPageURL: null
+      nextPageURL: null,
+      dateTimeValidationError: null
     };
   }
 
@@ -568,8 +571,22 @@ export default class MessagingView extends React.Component<
                 // @ts-ignore
                 value={moment(this.state.activeMessage?.date)}
                 sx={{
-                    flexGrow: 1,
-                    width: "100%"
+                  flexGrow: 1,
+                  width: "100%",
+                }}
+                onError={(newError) => {
+                  this.setState({
+                    dateTimeValidationError: newError,
+                  });
+                }}
+                slotProps={{
+                  textField: {
+                    helperText: !this.state.dateTimeValidationError
+                      ? ""
+                      : this.state.dateTimeValidationError === "disableFuture"
+                      ? "Entered date/time is in the future"
+                      : "invalid entry",
+                  },
                 }}
                 renderInput={(params: TextFieldProps) => (
                   <TextField
