@@ -41,7 +41,7 @@ import {CommunicationRequest} from "../model/CommunicationRequest";
 import Client from "fhirclient/lib/Client";
 import {Bundle} from "../model/Bundle";
 import {getEnv} from "../util/util";
-import {getUserName } from "../util/isacc_util";
+import {getFhirData, getUserName } from "../util/isacc_util";
 
 type MessageType = "sms" | "manual message" | "comment";
 type MessageStatus = "sent" | "received";
@@ -60,6 +60,9 @@ const defaultMessage: Message = {
     status: "sent"
 };
 
+const abortController = new AbortController();
+const signal = abortController.signal;
+
 export default class MessagingView extends React.Component<
   {},
   {
@@ -72,6 +75,7 @@ export default class MessagingView extends React.Component<
     saveLoading: boolean;
     showSaveFeedback: boolean;
     infoOpen: boolean;
+    nextPageURL: string;
     // showAlert: boolean;
     // alertSeverity: "error" | "warning" | "info" | "success";
     // alertText: string;
@@ -79,6 +83,8 @@ export default class MessagingView extends React.Component<
 > {
   static contextType = FhirClientContext;
   interval: any;
+  getNextPageInterval: any;
+  private messagesPanelRef = React.createRef<HTMLUListElement>();
 
   constructor(props: {}) {
     super(props);
@@ -91,6 +97,7 @@ export default class MessagingView extends React.Component<
       saveLoading: false,
       showSaveFeedback: false,
       infoOpen: false,
+      nextPageURL: null
     };
   }
 
@@ -103,33 +110,51 @@ export default class MessagingView extends React.Component<
       console.log("Timer triggered");
       this.loadCommunications();
     }, 60000);
+
+    window.addEventListener("DOMContentLoaded", () => {
+      // ensure scrollTop property is set to end of scrolled content at startup
+      // to have accurate calculation of scrolled position
+      this.messagesPanelRef.current.scrollTop =
+        this.messagesPanelRef.current.scrollHeight;
+    });
   }
   componentWillUnmount() {
     clearInterval(this.interval);
+    clearTimeout(this.getNextPageInterval);
+    abortController.abort(); // abort any pending HTTP request
   }
 
-  loadCommunications() {
+  loadCommunications(url: string = null) {
     // @ts-ignore
     let context: FhirClientContextType = this.context;
     this.setState({ messagesLoading: true });
 
-    this.getCommunications(context.client, context.carePlan.id)
+    const carePlanIds = context.allCarePlans?.map(item => item.id)
+
+    this.getCommunications(context.client, carePlanIds, url)
       .then(
         (result: Communication[]) => {
-          let temporaryCommunications =
-            this.state.temporaryCommunications.filter((tc: Communication) => {
-              return !result?.find((c: Communication) => {
-                return c.basedOn?.find((b: IReference) => {
-                  return b.reference?.split("/")[1] === tc.id;
+            const uniqueResults = (result ?? []).filter((item) => {
+              const currentSet = this.state.communications ?? [];
+              return !currentSet.find((o) => o.id === item.id);
+            });
+            const allResults = [
+              ...(this.state.communications ?? []),
+              ...uniqueResults,
+            ];
+            let temporaryCommunications =
+              this.state.temporaryCommunications.filter((tc: Communication) => {
+                return !allResults?.find((c: Communication) => {
+                  return c.basedOn?.find((b: IReference) => {
+                    return b.reference?.split("/")[1] === tc.id;
+                  });
                 });
               });
+            this.setState({
+              communications: allResults,
+              messagesLoading: false,
+              temporaryCommunications: temporaryCommunications,
             });
-
-          this.setState({
-            communications: result,
-            messagesLoading: false,
-            temporaryCommunications: temporaryCommunications,
-          });
         },
         (reason: any) =>
           this.setState({ error: reason, messagesLoading: false })
@@ -142,27 +167,28 @@ export default class MessagingView extends React.Component<
 
   async getCommunications(
     client: Client,
-    carePlanId: string
+    carePlanIds: string[],
+    url: string
   ): Promise<Communication[]> {
     if (!client) return;
-    // Communication?part-of=CarePlan/${carePlanId}
+    // Communication?part-of=CarePlan/${id1}[,CarePlan/${id2}]
+    // get communications for all care plans for the patient
     let params = new URLSearchParams({
-      "part-of": `CarePlan/${carePlanId}`,
-      _count: "200",
-    }).toString();
-    return await client
-      .request({
-        url: `/Communication?${params}`,
-        // TODO refactor this out for general use
-        headers: {
-          "Cache-Control": "no-cache",
-        },
-      })
-      .then(
+        "part-of": carePlanIds?.map(item =>`CarePlan/${item}`).join(","),
+        _count: "200"
+      }).toString();
+    const requestURL = url ? url : `/Communication?${params}`
+    return await getFhirData(client, requestURL, signal).then(
         (bundle: Bundle) => {
           if (bundle.type === "searchset") {
             if (!bundle.entry) return [];
-
+            let nextPageURL:string = null;
+            if (bundle.link && bundle.link.length > 0) {
+              const arrNextURL = bundle.link.filter(
+                (item) => item.relation === "next"
+              );
+              nextPageURL = arrNextURL.length > 0 ? arrNextURL[0].url : null;
+            }
             let communications: Communication[] = bundle.entry.map(
               (e: IBundle_Entry) => {
                 if (e.resource.resourceType !== "Communication") {
@@ -174,6 +200,11 @@ export default class MessagingView extends React.Component<
                 }
               }
             );
+            if (nextPageURL !== this.state.nextPageURL) {
+                this.setState({
+                    nextPageURL: nextPageURL
+                });
+            }
             return communications;
           } else {
             this.setState({ error: "Unexpected bundle type returned" });
@@ -197,7 +228,7 @@ export default class MessagingView extends React.Component<
       return <Alert severity="error">{context.error}</Alert>;
     }
 
-    if (!context.carePlan || !this.state.communications) {
+    if (!context.currentCarePlan || !this.state.communications) {
       return <CircularProgress />;
     }
 
@@ -241,7 +272,28 @@ export default class MessagingView extends React.Component<
         return t1 < t2 ? 1 : -1;
       });
       messages = (
-        <List sx={messageBoxProps}>
+        <List
+          sx={messageBoxProps}
+          ref={this.messagesPanelRef}
+          onScroll={(event) => {
+            clearTimeout(this.getNextPageInterval);
+            if (!this.state.nextPageURL) {
+                return;
+            }
+            const { scrollHeight, clientHeight, scrollTop } =
+              event.currentTarget;
+            const adjustedScrollTop = Math.floor(
+              Math.abs(scrollTop) + Math.abs(clientHeight)
+            );
+            // not at the top
+            if (!(adjustedScrollTop >= scrollHeight - 4)) {
+                return;
+            }
+            this.getNextPageInterval = setTimeout(() => {
+                this.loadCommunications(this.state.nextPageURL);
+            }, 250);
+          }}
+        >
           {communications.map((message: Communication, index) =>
             this._buildMessageRow(message, index)
           )}
@@ -274,6 +326,7 @@ export default class MessagingView extends React.Component<
                 <IconButton
                   color="primary"
                   onClick={() => this.loadCommunications()}
+                  title={"refresh"}
                 >
                   <Refresh />
                 </IconButton>
@@ -323,8 +376,16 @@ export default class MessagingView extends React.Component<
 
   private _buildMessageTypeSelector(): React.ReactNode {
     const tabRootStyleProps = {
+      margin: {
+        xs: "8px auto 0",
+        sm: "8px 0 0"
+      },
       marginTop: 1,
       minHeight: "40px",
+      maxWidth: {
+        xs: "280px",
+        sm: "100%",
+      },
       "& .MuiTab-root": {
         borderBottom: `2px solid ${grey[200]}`,
       },
@@ -340,7 +401,9 @@ export default class MessagingView extends React.Component<
     };
     const tabProps = {
       sx: {
-        padding: (theme: any) => theme.spacing(1, 2.5),
+        padding: {
+            sm : (theme: any) => theme.spacing(1, 2.5)
+        },
       },
     };
     return (
@@ -352,7 +415,7 @@ export default class MessagingView extends React.Component<
           value={this.state.activeMessage?.type}
           onChange={(event: React.SyntheticEvent, value: MessageType) => {
             this.setState({
-              activeMessage: { ...defaultMessage, type: value },
+              activeMessage: { ...defaultMessage, type: value, date: new Date().toISOString()},
             });
           }}
           textColor="primary"
@@ -715,7 +778,7 @@ export default class MessagingView extends React.Component<
     const newCommunication = Communication.create(
       this.state.activeMessage.content,
       context.patient,
-      context.carePlan,
+      context.currentCarePlan,
       sentDate,
       receivedDate,
       this.state.activeMessage?.type === "comment"
@@ -749,7 +812,7 @@ export default class MessagingView extends React.Component<
       CommunicationRequest.createNewManualOutgoingMessage(
         this.state.activeMessage.content,
         context.patient,
-        context.carePlan
+        context.currentCarePlan
       );
     this._save(newMessage, (savedCommunicationRequest: IResource) => {
       console.log("Saved new CommunicationRequest:", savedCommunicationRequest);
@@ -798,14 +861,14 @@ export default class MessagingView extends React.Component<
     index: number
   ): React.ReactNode {
     let incoming = true;
-    const isNonSmsMessage = !!message.category.find((c: ICodeableConcept) =>
+    const isNonSmsMessage = !!message.category?.find((c: ICodeableConcept) =>
       c.coding.find(
         (coding: ICoding) =>
           IsaccMessageCategory.isaccNonSMSMessage.equals(coding) ||
           IsaccMessageCategory.isaccComment.equals(coding)
       )
     );
-    const isComment = !!message.category.find((c: ICodeableConcept) =>
+    const isComment = !!message.category?.find((c: ICodeableConcept) =>
       c.coding.find((coding: ICoding) =>
         IsaccMessageCategory.isaccComment.equals(coding)
       )
@@ -813,7 +876,6 @@ export default class MessagingView extends React.Component<
 
     if (isNonSmsMessage || isComment) {
       incoming = !!message.received;
-      console.log("incoming ", incoming, " message ", message);
     } else if (
       message.recipient &&
       message.recipient.find((r: IReference) => r.reference.includes("Patient"))
@@ -834,7 +896,7 @@ export default class MessagingView extends React.Component<
     if (!message.category) {
       console.log("Communication is missing category");
     } else if (
-      message.category.find((c: ICodeableConcept) =>
+      message.category?.find((c: ICodeableConcept) =>
         c.coding.find((coding: ICoding) =>
           IsaccMessageCategory.isaccManuallySentMessage.equals(coding)
         )
@@ -869,7 +931,7 @@ export default class MessagingView extends React.Component<
             incoming
               ? "reply (from recipient)"
               : message.sent
-              ? "response (from author)"
+              ? (autoMessage ? "scheduled Caring Contact message" : "response (from author)")
               : ""
           }`,
         ]

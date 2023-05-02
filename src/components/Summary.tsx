@@ -28,7 +28,8 @@ import {RelationshipCategory} from "../model/CodeSystem";
 import Patient from "../model/Patient";
 import Client from "fhirclient/lib/Client";
 import {Bundle} from "../model/Bundle";
-import { AsYouType, isPossiblePhoneNumber,parsePhoneNumber } from 'libphonenumber-js'
+import { AsYouType, isPossiblePhoneNumber,parsePhoneNumber } from 'libphonenumber-js';
+import { getFhirData } from '../util/isacc_util';
 
 interface SummaryProps {
     editable: boolean
@@ -65,7 +66,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
       _count: "250",
       _sort: "-_lastUpdated",
     }).toString();
-    client.request(`/Practitioner?${params}`).then((bundle: Bundle) => {
+    getFhirData(client, `/Practitioner?${params}`).then((bundle: Bundle) => {
       console.log("Loaded practitioners", bundle);
       const entries = bundle?.entry?.map(
         (e: IBundle_Entry) => e.resource as IPractitioner

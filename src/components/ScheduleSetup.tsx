@@ -1,6 +1,8 @@
 import * as React from "react";
 import {
+    Box,
     Button,
+    Chip,
     CircularProgress,
     Grid,
     IconButton,
@@ -12,6 +14,7 @@ import {
     TextFieldProps,
     Typography
 } from "@mui/material";
+import {styled} from "@mui/material/styles";
 import ClearIcon from '@mui/icons-material/Clear';
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -33,6 +36,7 @@ import Client from "fhirclient/lib/Client";
 import PatientNotes from "./PatientNotes";
 import CarePlan from "../model/CarePlan";
 import {Bundle} from "../model/Bundle";
+import { getFhirData } from "../util/isacc_util";
 
 
 interface ScheduleSetupProps {
@@ -79,7 +83,7 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
 
     componentDidMount() {
         //@ts-ignore
-        let carePlan: CarePlan = this.context.carePlan;
+        let carePlan: CarePlan = this.context.currentCarePlan;
         this.setState({carePlan: carePlan});
     }
 
@@ -99,35 +103,39 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
                 </Alert>
                 : null}
             <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}><Summary editable={true}/></Grid>
-                <Grid item xs={12} sm={6}>
-                    {editing ?
-                        <PatientNotes/> :
-                        <>
-                            <Typography variant={'h6'}>{"Recipient note"}</Typography>
-                            <TextField
-                                sx={{maxHeight: 400, overflow: 'auto', ...styles.patientNotesField}}
-                                fullWidth
-                                multiline
-                                value={this.state.carePlan.description ?? ""}
-                                placeholder={"Recipient note"}
-                                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                                    const cp = this.state.carePlan;
-                                    cp.description = event.target.value;
-                                    this.setState({carePlan: cp});
-                                }}/>
-                        </>
-                    }
+                <Grid item xs={12} sm={6} alignSelf={"stretch"}><Item><Summary editable={true}/></Item></Grid>
+                <Grid item xs={12} sm={6} alignSelf={"stretch"}>
+                    <Item>
+                        {editing ?
+                            <PatientNotes/> :
+                            <>
+                                <Typography variant={'h6'}>{"Recipient note"}</Typography>
+                                <TextField
+                                    sx={{maxHeight: 400, overflow: 'auto', ...styles.patientNotesField}}
+                                    fullWidth
+                                    multiline
+                                    value={this.state.carePlan.description ?? ""}
+                                    placeholder={"Recipient note"}
+                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                        const cp = this.state.carePlan;
+                                        cp.description = event.target.value;
+                                        this.setState({carePlan: cp});
+                                    }}/>
+                            </>
+                        }
+                    </Item>
                 </Grid>
                 <Grid item xs={12}>
-                    <MessageScheduleList
-                        messagePlan={this.state.carePlan}
-                        onMessagePlanChanged={(carePlan: CarePlan) => {
-                            this.setState({carePlan: carePlan});
-                        }}
-                        saveSchedule={() => this.saveSchedule()}
-                        patient={patient}
-                    />
+                    <Item>
+                        <MessageScheduleList
+                            messagePlan={this.state.carePlan}
+                            onMessagePlanChanged={(carePlan: CarePlan) => {
+                                this.setState({carePlan: carePlan});
+                            }}
+                            saveSchedule={() => this.saveSchedule()}
+                            patient={patient}
+                        />
+                    </Item>
                 </Grid>
             </Grid>
 
@@ -165,8 +173,11 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
                     <DialogActions>
                         <Button
                             onClick={onClose}
-                            href={clearSessionLink} autoFocus>Close schedule planner</Button>
-
+                            href={clearSessionLink}
+                            variant="contained"
+                        >
+                            Close schedule planner
+                        </Button>
                     </DialogActions>
                 </DialogContent>
             </Dialog>;
@@ -201,7 +212,7 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
             // "_id:not: `${patient.id}`"  // this DOES NOT WORK, at least when tried against SMIT, R4 FHIR server 
             // need to figure out the correct search paramter for excluding a patient id
         }).toString();
-        return client.request(`/Patient?${params}`).then((bundle: Bundle): Promise<void> => {
+        return getFhirData(client, `/Patient?${params}`).then((bundle: Bundle): Promise<void> => {
             return new Promise((resolve, reject) => {
                 if (bundle.type === "searchset") {
                     if (bundle.entry) {
@@ -325,6 +336,13 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
 
 }
 
+const Item = styled(Box)(({ theme }) => ({
+    backgroundColor: "#fff",
+    ...theme.typography.body1,
+    padding: theme.spacing(2),
+    flexGrow: 1,
+}));
+
 
 const MessageScheduleList = (props: {
     messagePlan: CarePlan,
@@ -392,31 +410,82 @@ const MessageScheduleList = (props: {
         let messagePlan = props.messagePlan;
         messagePlan.removeActiveCommunicationRequest(index);
         props.onMessagePlanChanged(messagePlan);
-    }
+    };
 
-    return <><Typography variant={'h6'}>{"Message schedule"}</Typography>
+    const activeCommunicationRequests = props.messagePlan.getActiveCommunicationRequests() ?? [];
+    const completedCommunicationRequests = activeCommunicationRequests.filter(item => item.status === "completed");
+
+    return (
+      <>
+        <Stack
+          spacing={1}
+          direction={"row"}
+          alignItems={"center"}
+          justifyContent={"space-between"}
+        >
+          <Typography variant={"h6"} gutterBottom>
+            {"Message schedule"}
+          </Typography>
+          <Stack spacing={1} direction={"row"}>
+            <Chip
+              label={`${completedCommunicationRequests.length} sent`}
+              variant="outlined"
+              size="small"
+              color={
+                completedCommunicationRequests.length > 0
+                  ? "success"
+                  : "default"
+              }
+            />
+            <Chip
+              label={`${activeCommunicationRequests.length} scheduled`}
+              variant="outlined"
+              size="small"
+            />
+          </Stack>
+        </Stack>
         <Alert severity={"info"}>
-            {"Use {name} to substitute the client's first name"}
+          {"Use {name} to substitute the client's first name"}
         </Alert>
 
-        <List>{
-            props.messagePlan.getActiveCommunicationRequests().map(
-                (message: CommunicationRequest, index: number) => buildMessageItem(message, index)
-            )
-        }</List>
+        <List>
+          {props.messagePlan
+            .getActiveCommunicationRequests()
+            .map((message: CommunicationRequest, index: number) =>
+              buildMessageItem(message, index)
+            )}
+        </List>
 
-        <Stack direction={'row'} justifyContent={"space-between"}>
-            <Button variant="outlined" onClick={() => {
-                let newMessage = CommunicationRequest.createNewScheduledMessage("", props.patient, props.messagePlan, new Date());
-                props.messagePlan.addCommunicationRequest(newMessage);
-                props.onMessagePlanChanged(props.messagePlan);
-            }}>
-                Add message
-            </Button>
-            <Button variant="contained" onClick={() => props.saveSchedule()}>
-                Done
-            </Button>
+        <Stack
+          direction={"row"}
+          justifyContent={"space-between"}
+          sx={{ padding: (theme) => theme.spacing(1, 2) }}
+        >
+          <Button
+            variant="outlined"
+            onClick={() => {
+              let newMessage = CommunicationRequest.createNewScheduledMessage(
+                "",
+                props.patient,
+                props.messagePlan,
+                new Date()
+              );
+              props.messagePlan.addCommunicationRequest(newMessage);
+              props.onMessagePlanChanged(props.messagePlan);
+            }}
+          >
+            Add message
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => props.saveSchedule()}
+            size="large"
+            sx={{ minWidth: 130 }}
+          >
+            Done
+          </Button>
         </Stack>
-    </>
+      </>
+    );
 
 }

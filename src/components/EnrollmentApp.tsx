@@ -5,7 +5,7 @@ import {FhirClientContext, FhirClientContextType} from "../FhirClientContext";
 import Client from "fhirclient/lib/Client";
 import {CommunicationRequest} from "../model/CommunicationRequest";
 import {makeCarePlan} from "../model/modelUtil";
-import {Alert, Button, CircularProgress} from "@mui/material";
+import {Alert, Button, CircularProgress, Typography} from "@mui/material";
 import CarePlan from "../model/CarePlan";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
@@ -13,7 +13,7 @@ import DialogActions from "@mui/material/DialogActions";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import {IBundle_Entry, ICommunicationRequest} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {getDefaultMessageSchedule} from "../model/PlanDefinition";
-import {getUserName} from "../util/isacc_util";
+import {getFhirData, getUserName} from "../util/isacc_util";
 import Patient from "../model/Patient";
 import {Bundle} from "../model/Bundle";
 
@@ -61,7 +61,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
         // @ts-ignore
         let client: Client = this.context.client;
         //@ts-ignore
-        let existingCarePlan: CarePlan = this.context.carePlan;
+        let existingCarePlan: CarePlan = this.context.currentCarePlan;
         //@ts-ignore
         let patient: Patient = this.context.patient;
 
@@ -74,7 +74,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
             "_count": "1000"
         }).toString();
 
-        client.request(`CommunicationRequest?${params}`).then((bundle: Bundle) => {
+        getFhirData(client, `CommunicationRequest?${params}`).then((bundle: Bundle) => {
             if (bundle.type !== "searchset") {
                 this.setState({error: `Unexpected bundle type returned: ${bundle.type}`});
                 return null;
@@ -119,7 +119,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
         if (!this.state || !this.context) return;
 
         //@ts-ignore
-        let existingCarePlan: CarePlan = this.context.carePlan;
+        let existingCarePlan: CarePlan = this.context.currentCarePlan;
 
         //@ts-ignore
         let context: FhirClientContextType = this.context;
@@ -127,7 +127,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
         if (this.state.activeCarePlan == null) {
             if (existingCarePlan == null) {
                 let cp = this.createNewCarePlan();
-                context.carePlan = cp;
+                context.currentCarePlan = cp;
                 this.setState({activeCarePlan: cp});
             }
         }
@@ -140,7 +140,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
 
         //@ts-ignore
         let context: FhirClientContextType = this.context;
-        context.carePlan = cp;
+        context.currentCarePlan = cp;
         this.setState({activeCarePlan: cp, editMode: false});
     }
 
@@ -150,7 +150,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
 
         let client: Client = context.client;
         let patient: Patient = context.patient;
-        let existingCarePlan: CarePlan = context.carePlan;
+        let existingCarePlan: CarePlan = context.currentCarePlan;
 
         //load associated communication requests
         let params = new URLSearchParams({
@@ -158,7 +158,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
             "based-on": `CarePlan/${existingCarePlan.id}`,
             "category": IsaccMessageCategory.isaccScheduledMessage.code
         }).toString();
-        client.request(`CommunicationRequest?${params}`).then((bundle: Bundle) => {
+        getFhirData(client,`CommunicationRequest?${params}`).then((bundle: Bundle) => {
             if (bundle.type === "searchset") {
                 if (!bundle.entry) return [];
 
@@ -172,7 +172,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
                     }
                 })
                 existingCarePlan.setCommunicationRequests(crs);
-                context.carePlan = existingCarePlan;
+                context.currentCarePlan = existingCarePlan;
                 this.setState({activeCarePlan: existingCarePlan, editMode: true});
             } else {
                 this.setState({error: "Unexpected bundle type returned"});
@@ -201,15 +201,15 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
         let createNew = () => this.handleSetEditModeFalse();
 
         // @ts-ignore
-        let existingCarePlan: CarePlan = this.context.carePlan;
+        let existingCarePlan: CarePlan = this.context.currentCarePlan;
         let creationDate = existingCarePlan?.created
         let alertMessage = `The recipient already has a CarePlan. Would you like to edit this CarePlan or revoke it and create a new one?`;
         if (creationDate) {
-            alertMessage = `The recipient already has a CarePlan (created ${new Date(creationDate)}). Would you like to edit this CarePlan or revoke it and create a new one?`;
+            alertMessage = `The recipient already has a CarePlan (created ${new Date(creationDate)}).\nWould you like to edit this CarePlan or revoke it and create a new one?`;
         }
 
         return <DialogContent>
-            <DialogContentText><Alert severity="warning">{alertMessage}</Alert></DialogContentText>
+            <DialogContentText><Alert severity="warning"><Typography variant="body1" sx={{whiteSpace: "pre-line"}}>{alertMessage}</Typography></Alert></DialogContentText>
             <DialogActions>
                 <Button
                     onClick={edit} variant="contained">Edit</Button>
