@@ -301,7 +301,7 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
                 console.log("resource saved:", v);
             });
             // update CarePlan with the newly created CommunicationRequests
-            this.state.carePlan.setCommunicationRequests(communicationRequests);
+            this.state.carePlan.setCommunicationRequests(communicationRequests.filter(cr => cr.resourceType === "CommunicationRequest"));
             // create resource on server
             let p;
             if (this.state.carePlan.id) {
