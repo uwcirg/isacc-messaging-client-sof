@@ -50,7 +50,7 @@ export class CommunicationRequest implements ICommunicationRequest {
         }
 
         let c = new CommunicationRequest();
-        if (carePlan) {
+        if (carePlan && carePlan.id) {
             c.basedOn = [{reference: carePlan.reference}];
         }
         c.category = [{coding: [messageType]}];
