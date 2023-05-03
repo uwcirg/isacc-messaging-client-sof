@@ -3,13 +3,13 @@ import FHIR from 'fhirclient';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import ErrorComponent from './ErrorComponent';
-import {queryPatientIdKey} from '../util/util.js';
+import {queryPatientIdKey, getEnv, fetchEnvData} from '../util/util.js';
 import '../style/App.scss';
 
 export default function Launch() {
 
     const [error, setError] = React.useState('');
-
+    fetchEnvData();
     React.useEffect(() => {
         let authURL = 'launch-context.json';
         if (process.env.REACT_APP_BACKEND_URL) {
@@ -38,6 +38,10 @@ export default function Launch() {
                 json.patientId = patientId;
                 sessionStorage.setItem(queryPatientIdKey, patientId);
             }
+            // allow client id to be configurable
+            const envClientId = getEnv("REACT_APP_CLIENT_ID");
+            if (envClientId) json.clientId = envClientId;
+            
             console.log("launch context json ", json);
             FHIR.oauth2.authorize(json).catch((e) => {
                 setError(e);
