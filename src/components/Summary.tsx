@@ -142,8 +142,9 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 sx={{
                     display: patient.smsContactPoint ? "block" : "none"
                 }}
+                title={"Clear phone number"}
               >
-                <ClearIcon />
+                <ClearIcon fontSize="small"/>
               </IconButton>
             </InputAdornment>
           ),
@@ -231,7 +232,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                     <TableCell component="th" scope="row">
                       {row.label}
                     </TableCell>
-                    <TableCell align="left">{row.value}</TableCell>
+                    <TableCell align="left"><Typography variant="body1">{row.value}</Typography></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
