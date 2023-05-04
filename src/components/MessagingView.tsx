@@ -1196,6 +1196,7 @@ export default class MessagingView extends React.Component<
             {editable && (
               <IconButton
                 size="small"
+                title="Edit"
                 onClick={() => {
                   this.setState({
                     editEntry: message,
