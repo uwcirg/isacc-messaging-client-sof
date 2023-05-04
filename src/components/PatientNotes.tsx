@@ -3,6 +3,7 @@ import {FhirClientContext, FhirClientContextType} from '../FhirClientContext';
 import {Alert, Button, CardActions, CardContent, CircularProgress, TextField, Typography} from "@mui/material";
 import CarePlan from "../model/CarePlan";
 import {ICarePlan} from "@ahryman40k/ts-fhir-types/lib/R4";
+import EditIcon from "@mui/icons-material/Edit";
 
 interface PatientNotesProps {
 
@@ -74,6 +75,7 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
                 }}
                 size="small"
                 variant="outlined"
+                startIcon={<EditIcon></EditIcon>}
               >
                 {this.state.editable ? "Done" : "Update"}
               </Button>

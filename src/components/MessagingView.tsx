@@ -29,6 +29,7 @@ import {
     Typography,
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
+import EditIcon from "@mui/icons-material/Edit";
 import InfoIcon from "@mui/icons-material/Info";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -78,6 +79,8 @@ export default class MessagingView extends React.Component<
     infoOpen: boolean;
     nextPageURL: string;
     dateTimeValidationError: DateTimeValidationError;
+    editEntry: Communication;
+    isEditing: boolean;
     // showAlert: boolean;
     // alertSeverity: "error" | "warning" | "info" | "success";
     // alertText: string;
@@ -100,7 +103,9 @@ export default class MessagingView extends React.Component<
       showSaveFeedback: false,
       infoOpen: false,
       nextPageURL: null,
-      dateTimeValidationError: null
+      dateTimeValidationError: null,
+      editEntry: null,
+      isEditing: false,
     };
   }
 
@@ -241,7 +246,7 @@ export default class MessagingView extends React.Component<
       overflow: "auto",
       display: "flex",
       flexDirection: "column-reverse",
-      border: "2px solid lightgrey",
+      border: `2px solid ${grey[400]}`,
       borderRadius: 1,
       paddingLeft: 0.5,
       paddingRight: 0.5,
@@ -281,7 +286,7 @@ export default class MessagingView extends React.Component<
           onScroll={(event) => {
             clearTimeout(this.getNextPageInterval);
             if (!this.state.nextPageURL) {
-                return;
+              return;
             }
             const { scrollHeight, clientHeight, scrollTop } =
               event.currentTarget;
@@ -290,10 +295,10 @@ export default class MessagingView extends React.Component<
             );
             // not at the top
             if (!(adjustedScrollTop >= scrollHeight - 4)) {
-                return;
+              return;
             }
             this.getNextPageInterval = setTimeout(() => {
-                this.loadCommunications(this.state.nextPageURL);
+              this.loadCommunications(this.state.nextPageURL);
             }, 250);
           }}
         >
@@ -335,6 +340,7 @@ export default class MessagingView extends React.Component<
                 </IconButton>
               )}
             </Stack>
+            {this._buildEditDialog()}
           </Stack>
 
           {messages}
@@ -405,7 +411,7 @@ export default class MessagingView extends React.Component<
     const tabProps = {
       sx: {
         padding: {
-            sm : (theme: any) => theme.spacing(1, 2.5)
+          sm: (theme: any) => theme.spacing(1, 2.5)
         },
       },
     };
@@ -662,6 +668,128 @@ export default class MessagingView extends React.Component<
     );
   }
 
+  private _buildEditDialog(): React.ReactNode {
+    let targetEntry = Communication.from(this.state.editEntry);
+    const dateFieldName = targetEntry?.sent ? "sent" : "received";
+    const editDate = targetEntry ? targetEntry[dateFieldName] : null;
+    const handleClose = (event:React.ChangeEvent, reason:string=null) => {
+      if (reason && reason === "backdropClick") 
+        return;
+      this.setState({
+        isEditing: false,
+        dateTimeValidationError: null,
+      }, () => this.setState({
+        editEntry: null
+      }));
+    };
+    return (
+      <Dialog
+        open={this.state.isEditing}
+        onClose={handleClose}
+        arial-label="Edit dialog"
+      >
+        <DialogTitle
+          sx={{
+            color: "#FFF",
+            backgroundColor: (theme) => theme.palette.primary.main,
+          }}
+        >{`Edit entry from ${MessagingView.displayDateTime(
+          editDate
+        )}`}</DialogTitle>
+        <DialogContent>
+          <Stack
+            spacing={2}
+            sx={{ padding: (theme) => theme.spacing(4, 1, 0) }}
+          >
+            <LocalizationProvider dateAdapter={AdapterMoment}>
+              <DateTimePicker
+                label="Edit Date & time"
+                format="ddd, MM/DD/YYYY hh:mm A"
+                // @ts-ignore
+                value={editDate ? moment(editDate) : null}
+                onError={(newError) => {
+                  this.setState({
+                    dateTimeValidationError: newError,
+                  });
+                }}
+                slotProps={{
+                  textField: {
+                    helperText: this.state.dateTimeValidationError
+                      ? "invalid entry"
+                      : "",
+                  },
+                }}
+                renderInput={(params: TextFieldProps) => (
+                  <TextField
+                    {...params}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                      if (MessagingView.isValidDate(event.target.value)) {
+                        const newValue = new Date(
+                          event.target.value
+                        ).toISOString();
+                        targetEntry[dateFieldName] = newValue;
+                      }
+                    }}
+                  ></TextField>
+                )}
+                onChange={(newValue: Date | null) => {
+                    targetEntry[dateFieldName] = newValue?.toISOString();
+                }}
+              ></DateTimePicker>
+            </LocalizationProvider>
+            <TextField
+              defaultValue={targetEntry?.displayText()}
+              multiline
+              rows={6}
+              fullWidth
+              label="Edit Content"
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                targetEntry?.setText(event.target.value);
+              }}
+            ></TextField>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            onClick={() => {
+              // @ts-ignore
+              const client = this.context.client;
+              client
+                .update(targetEntry)
+                .then(() => {
+                  const existingEntryIndex =
+                    this.state.communications?.findIndex(
+                      (item) => item.id === targetEntry.id
+                    );
+                  let existingCommunications = this.state.communications;
+                  existingCommunications.splice(existingEntryIndex, 1);
+                  this.setState({
+                    communications: existingCommunications,
+                  });
+                  this.loadCommunications();
+                })
+                .catch((e) => {
+                  this.setState({
+                    error:
+                      "Unable to update communication.  See console for detail.",
+                  });
+                  console.log("Fail to update communication ", e);
+                });
+              setTimeout(handleClose, 0);
+            }}
+          >
+            Save
+          </Button>
+          {/* @ts-ignore */}
+          <Button variant="outlined" onClick={handleClose}>
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
+
   private _buildInfoDialog(): React.ReactNode {
     const handleInfoClose = () =>
       this.setState({
@@ -908,7 +1036,7 @@ export default class MessagingView extends React.Component<
     } else {
       delivered = false;
     }
-    let msg = message.displayText();
+    let messageText = message.displayText();
     let autoMessage = true;
     if (!message.category) {
       console.log("Communication is missing category");
@@ -955,27 +1083,37 @@ export default class MessagingView extends React.Component<
           .join("\n")
           .trim();
 
+    let isEditable = isNonSmsMessage || isComment;
+    // @ts-ignore
+    const userName = getUserName(this.context.client);
+    // username is available, user can only edit a manual message or comment authored by him/herself
+    if (userName) isEditable = isEditable && note.includes(userName);
+
     return this._alignedRow(
       incoming,
-      msg,
+      messageText,
       timestamp,
       bubbleStyle,
       priority,
       index,
       themes,
-      itemLabel
+      itemLabel,
+      isEditable,
+      message
     );
   }
 
   private _alignedRow(
     incoming: boolean,
-    message: string,
+    messageText: string,
     timestamp: string,
     bubbleStyle: object,
     priority: string,
     index: number,
     themes: string[],
-    comment: string
+    comment: string,
+    editable: boolean,
+    message: Communication
   ) {
     let priorityIndicator = null;
     if (getEnv("REACT_APP_SHOW_PRIORITY_INDICATOR")?.toLowerCase() === "true") {
@@ -987,7 +1125,7 @@ export default class MessagingView extends React.Component<
     }
     let align = incoming ? "flex-start" : "flex-end";
 
-    let box = message ? (
+    let box = messageText ? (
       <Box
         sx={{
           borderRadius: "12px",
@@ -995,10 +1133,10 @@ export default class MessagingView extends React.Component<
           ...bubbleStyle,
         }}
       >
-        <Typography variant={"body2"}>{message}</Typography>
+        <Typography variant={"body2"}>{messageText}</Typography>
       </Box>
     ) : (
-        <Alert severity="warning">No message content</Alert>
+      <Alert severity="warning">No message content</Alert>
     );
 
     let bubbleAndPriorityRow;
@@ -1041,19 +1179,35 @@ export default class MessagingView extends React.Component<
           {timestamp && (
             <Typography variant={"caption"}>{timestamp}</Typography>
           )}
-          {comment && (
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              gutterBottom
-              sx={{
-                whiteSpace: "pre", // preserve line break character
-                textAlign: incoming ? "left" : "right",
-              }}
-            >
-              {comment}
-            </Typography>
-          )}
+          <Stack direction="row" alignItems={"center"}>
+            {comment && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                gutterBottom
+                sx={{
+                  whiteSpace: "pre", // preserve line break character
+                  textAlign: incoming ? "left" : "right",
+                }}
+              >
+                {comment}
+              </Typography>
+            )}
+            {editable && (
+              <IconButton
+                size="small"
+                title="Edit"
+                onClick={() => {
+                  this.setState({
+                    editEntry: message,
+                    isEditing: true,
+                  });
+                }}
+              >
+                <EditIcon fontSize="small" arial-label="Edit"></EditIcon>
+              </IconButton>
+            )}
+          </Stack>
         </Stack>
       </Grid>
     );
