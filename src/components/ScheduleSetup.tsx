@@ -48,6 +48,7 @@ type ScheduleSetupState = {
     alertSeverity: "error" | "warning" | "info" | "success";
     alertText: string;
     savingInProgress: boolean;
+    hasUnsavedChanges: boolean;
 }
 
 export type MessageDraft = {
@@ -76,15 +77,29 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
             showCloseSchedulePlannerAlert: false,
             alertText: null,
             alertSeverity: null,
-            savingInProgress: false
+            savingInProgress: false,
+            hasUnsavedChanges: false
         };
         this.planDefinition = getDefaultMessageSchedule();
+        // This binding is necessary to make `this` work in the callback
+        this.alertUser= this.alertUser.bind(this);
     }
 
     componentDidMount() {
         //@ts-ignore
         let carePlan: CarePlan = this.context.currentCarePlan;
         this.setState({carePlan: carePlan});
+        window.addEventListener("beforeunload", this.alertUser);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('beforeunload',  this.alertUser);
+      }
+
+    alertUser(event:BeforeUnloadEvent) {
+        if (!this.state.hasUnsavedChanges) return;
+        event.preventDefault();
+        event.returnValue = "";
     }
 
     render(): React.ReactNode {
@@ -96,51 +111,69 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
         let editing = this.state.carePlan.id != null;
 
 
-        return <>
-            {editing ?
-                <Alert severity={"info"}>
-                    {`You are editing an existing CarePlan (CarePlan/${this.state.carePlan.id}, created ${new Date(this.state.carePlan.created)})`}
-                </Alert>
-                : null}
+        return (
+          <>
+            {editing ? (
+              <Alert severity={"info"}>
+                {`You are editing an existing CarePlan (CarePlan/${
+                  this.state.carePlan.id
+                }, created ${new Date(this.state.carePlan.created)})`}
+              </Alert>
+            ) : null}
             <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} alignSelf={"stretch"}><Item><Summary editable={true}/></Item></Grid>
-                <Grid item xs={12} sm={6} alignSelf={"stretch"}>
-                    <Item>
-                        {editing ?
-                            <PatientNotes/> :
-                            <>
-                                <Typography variant={'h6'}>{"Recipient note"}</Typography>
-                                <TextField
-                                    sx={{maxHeight: 400, overflow: 'auto', ...styles.patientNotesField}}
-                                    fullWidth
-                                    multiline
-                                    value={this.state.carePlan.description ?? ""}
-                                    placeholder={"Recipient note"}
-                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                                        const cp = this.state.carePlan;
-                                        cp.description = event.target.value;
-                                        this.setState({carePlan: cp});
-                                    }}/>
-                            </>
-                        }
-                    </Item>
-                </Grid>
-                <Grid item xs={12}>
-                    <Item>
-                        <MessageScheduleList
-                            messagePlan={this.state.carePlan}
-                            onMessagePlanChanged={(carePlan: CarePlan) => {
-                                this.setState({carePlan: carePlan});
-                            }}
-                            saveSchedule={() => this.saveSchedule()}
-                            patient={patient}
-                        />
-                    </Item>
-                </Grid>
+              <Grid item xs={12} sm={6} alignSelf={"stretch"}>
+                <Item>
+                  <Summary
+                    editable={true}
+                    onChange={() => this.setState({ hasUnsavedChanges: true })}
+                  />
+                </Item>
+              </Grid>
+              <Grid item xs={12} sm={6} alignSelf={"stretch"}>
+                <Item>
+                  {editing ? (
+                    <PatientNotes />
+                  ) : (
+                    <>
+                      <Typography variant={"h6"}>{"Recipient note"}</Typography>
+                      <TextField
+                        sx={{
+                          maxHeight: 400,
+                          overflow: "auto",
+                          ...styles.patientNotesField,
+                        }}
+                        fullWidth
+                        multiline
+                        value={this.state.carePlan.description ?? ""}
+                        placeholder={"Recipient note"}
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>
+                        ) => {
+                          const cp = this.state.carePlan;
+                          cp.description = event.target.value;
+                          this.setState({ carePlan: cp, hasUnsavedChanges: true });
+                        }}
+                      />
+                    </>
+                  )}
+                </Item>
+              </Grid>
+              <Grid item xs={12}>
+                <Item>
+                  <MessageScheduleList
+                    messagePlan={this.state.carePlan}
+                    onMessagePlanChanged={(carePlan: CarePlan) => {
+                      this.setState({ carePlan: carePlan, hasUnsavedChanges: true });
+                    }}
+                    saveSchedule={() => this.saveSchedule()}
+                    patient={patient}
+                  />
+                </Item>
+              </Grid>
             </Grid>
-
             {this.getCloseSchedulePlannerAlert()}
-        </>
+          </>
+        );
     }
 
     private showSnackbar(alertSeverity: "error" | "warning" | "info" | "success", alertText: string) {
@@ -326,7 +359,8 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
 
     private onSaved(value: IResource) {
         console.log("resource saved:", value);
-        this.showSnackbar("success", "Schedule created successfully")
+        this.setState({hasUnsavedChanges: false});
+        this.showSnackbar("success", "Schedule created successfully");
     }
 
     private onRejected(reason: any) {
