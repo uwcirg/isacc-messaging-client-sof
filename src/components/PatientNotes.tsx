@@ -75,7 +75,7 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
                 }}
                 size="small"
                 variant="outlined"
-                startIcon={<EditIcon></EditIcon>}
+                startIcon={<EditIcon sx={{display: this.state.editable ? "none": "block"}}></EditIcon>}
               >
                 {this.state.editable ? "Done" : "Update"}
               </Button>
