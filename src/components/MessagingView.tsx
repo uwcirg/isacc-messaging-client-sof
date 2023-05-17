@@ -448,10 +448,10 @@ export default class MessagingView extends React.Component<
           }}
           sx={tabRootStyleProps}
         >
-          <Tab value="sms" label="ISACC send" {...tabProps} />
+          <Tab value="sms" label="ISACC manual" {...tabProps} />
           <Tab
             value="manual message"
-            label="Enter manual message"
+            label="Outside communication"
             {...tabProps}
           />
           <Tab value="comment" label="Enter comment" {...tabProps} />
@@ -817,7 +817,7 @@ export default class MessagingView extends React.Component<
               ISACC, including text messages (SMS), iMessages, etc.
             </p>
             <p>
-              <b>Manual messages</b> are manually entered records of
+              <b>Outside communications</b> are manually entered records of
               communications that took place outside of ISACC, such as emails,
               phone calls, postal mail, or other non-automated communication.
             </p>
