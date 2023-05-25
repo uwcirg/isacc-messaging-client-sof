@@ -730,6 +730,15 @@ export default class MessagingView extends React.Component<
                         targetEntry[dateFieldName] = newValue;
                       }
                     }}
+                    onKeyUp={(event: React.KeyboardEvent<HTMLInputElement>) => {
+                      const inputValue = (event.target as HTMLInputElement).value;
+                      if (MessagingView.isValidDate(inputValue)) {
+                        const newValue = new Date(
+                          inputValue
+                        ).toISOString();
+                        targetEntry[dateFieldName] = newValue;
+                      }
+                    }}
                   ></TextField>
                 )}
                 onChange={(newValue: Date | null) => {
