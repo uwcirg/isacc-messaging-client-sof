@@ -592,24 +592,28 @@ export default class MessagingView extends React.Component<
                       : this.state.dateTimeValidationError === "disableFuture"
                       ? "Entered date/time is in the future"
                       : "invalid entry",
+                    //@ts-ignore
+                    onChange: (value : moment.Moment) => {
+                      const inputValue = value ? value.toDate() : null;
+                      if (!inputValue) return;
+                      if (MessagingView.isValidDate(inputValue)) {
+                        this.setState({
+                          activeMessage: {
+                            ...this.state.activeMessage,
+                            date: new Date(inputValue).toISOString(),
+                          },
+                        });
+                      } else {
+                        this.setState({
+                          dateTimeValidationError: "invalidDate",
+                        });
+                      }
+                    }
                   },
                 }}
                 renderInput={(params: TextFieldProps) => (
                   <TextField
-                    {...params}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                      if (MessagingView.isValidDate(event.target.value)) {
-                        this.setState({
-                          activeMessage: {
-                            ...this.state.activeMessage,
-                            date: event.target.value
-                              ? new Date(event.target.value).toISOString()
-                              : null,
-                          },
-                        });
-                      }
-                    }}
-                    sx={{ width: "100%", flexGrow: 1 }}
+                    {...params} sx={{ width: "100%", flexGrow: 1 }}
                   />
                 )}
                 onChange={(newValue: Date | null) => {
@@ -717,29 +721,25 @@ export default class MessagingView extends React.Component<
                     helperText: this.state.dateTimeValidationError
                       ? "invalid entry"
                       : "",
-                  },
-                }}
-                renderInput={(params: TextFieldProps) => (
-                  <TextField
-                    {...params}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                      if (MessagingView.isValidDate(event.target.value)) {
-                        const newValue = new Date(
-                          event.target.value
-                        ).toISOString();
-                        targetEntry[dateFieldName] = newValue;
-                      }
-                    }}
-                    onKeyUp={(event: React.KeyboardEvent<HTMLInputElement>) => {
-                      const inputValue = (event.target as HTMLInputElement).value;
+                    // @ts-ignore
+                    onChange: (value : moment.Moment) => {
+                      const inputValue = value ? value.toDate() : null;
+                      if (!inputValue) return;
                       if (MessagingView.isValidDate(inputValue)) {
                         const newValue = new Date(
                           inputValue
                         ).toISOString();
                         targetEntry[dateFieldName] = newValue;
+                      } else {
+                        this.setState({
+                          dateTimeValidationError: "invalidDate",
+                        });
                       }
-                    }}
-                  ></TextField>
+                    }
+                  },
+                }}
+                renderInput={(params: TextFieldProps) => (
+                  <TextField {...params}></TextField>
                 )}
                 onChange={(newValue: Date | null) => {
                     targetEntry[dateFieldName] = newValue?.toISOString();
@@ -1339,9 +1339,9 @@ export default class MessagingView extends React.Component<
     });
     return `${dateDisplay} ${timeDisplay}`;
   }
-  private static isValidDate(dateString: string): boolean {
+  private static isValidDate(dateString: string | Date): boolean {
     if (!dateString) return false;
-    const dateVal = new Date(dateString);
+    const dateVal = dateString instanceof Date ?  dateString : new Date(dateString);
     return dateVal instanceof Date && !isNaN(dateVal.getTime());
   }
 }
