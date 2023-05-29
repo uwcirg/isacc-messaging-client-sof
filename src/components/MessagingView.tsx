@@ -593,19 +593,20 @@ export default class MessagingView extends React.Component<
                       ? "Entered date/time is in the future"
                       : "invalid entry",
                     //@ts-ignore
-                    onChange: (value : moment.Moment) => {
+                    onChange: (value : moment.Moment, validationContext) => {
                       const inputValue = value ? value.toDate() : null;
                       if (!inputValue) return;
-                      if (MessagingView.isValidDate(inputValue)) {
+                      if (!validationContext.validationError) {
                         this.setState({
                           activeMessage: {
                             ...this.state.activeMessage,
                             date: new Date(inputValue).toISOString(),
                           },
+                          dateTimeValidationError: null
                         });
                       } else {
                         this.setState({
-                          dateTimeValidationError: "invalidDate",
+                          dateTimeValidationError: validationContext.validationError
                         });
                       }
                     }
@@ -673,7 +674,7 @@ export default class MessagingView extends React.Component<
   }
 
   private _buildEditDialog(): React.ReactNode {
-    let targetEntry = Communication.from(this.state.editEntry);
+    let targetEntry = this.state.editEntry;
     const dateFieldName = targetEntry?.sent ? "sent" : "received";
     const editDate = targetEntry ? targetEntry[dateFieldName] : null;
     const handleClose = (event:React.ChangeEvent, reason:string=null) => {
@@ -685,6 +686,21 @@ export default class MessagingView extends React.Component<
       }, () => this.setState({
         editEntry: null
       }));
+    };
+    const getErrorMessage = () => {
+      switch (this.state.dateTimeValidationError) {
+        case "maxDate":
+        case "minDate": {
+          return "Please select a date in the correct range.";
+        }
+        case "invalidDate": {
+          return "Your date is not valid.";
+        }
+
+        default: {
+          return "";
+        }
+      }
     };
     return (
       <Dialog
@@ -716,33 +732,37 @@ export default class MessagingView extends React.Component<
                     dateTimeValidationError: newError,
                   });
                 }}
+                minDate={moment("1950-01-01")}
+                maxDate={moment("2500-01-01")}
                 slotProps={{
                   textField: {
-                    helperText: this.state.dateTimeValidationError
-                      ? "invalid entry"
-                      : "",
-                    // @ts-ignore
-                    onChange: (value : moment.Moment) => {
-                      const inputValue = value ? value.toDate() : null;
-                      if (!inputValue) return;
-                      if (MessagingView.isValidDate(inputValue)) {
-                        const newValue = new Date(
-                          inputValue
-                        ).toISOString();
-                        targetEntry[dateFieldName] = newValue;
-                      } else {
-                        this.setState({
-                          dateTimeValidationError: "invalidDate",
-                        });
+                    error: !!this.state.dateTimeValidationError,
+                    helperText: getErrorMessage(),
+                    //@ts-ignore
+                    onChange: (newValue: Moment.moment | null, validationContext) => {
+                      const inputValue = newValue?.toDate().toISOString();
+                      const validationError = validationContext?.validationError;
+                      if (!validationError) {
+                        targetEntry[dateFieldName] = inputValue;
                       }
+                      this.setState({
+                        editEntry: targetEntry,
+                        dateTimeValidationError: validationError
+                      })
                     }
                   },
                 }}
-                renderInput={(params: TextFieldProps) => (
-                  <TextField {...params}></TextField>
-                )}
-                onChange={(newValue: Date | null) => {
-                    targetEntry[dateFieldName] = newValue?.toISOString();
+                //@ts-ignore
+                onChange={(newValue: Moment.moment | null, validationContext) => {
+                  const inputValue = newValue?.toDate().toISOString();
+                  const validationError = validationContext?.validationError;
+                  if (!validationError) {
+                    targetEntry[dateFieldName] = inputValue;
+                  }
+                  this.setState({
+                    editEntry: targetEntry,
+                    dateTimeValidationError: validationError
+                  });
                 }}
               ></DateTimePicker>
             </LocalizationProvider>
@@ -754,6 +774,9 @@ export default class MessagingView extends React.Component<
               label="Edit Content"
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                 targetEntry?.setText(event.target.value);
+                this.setState({
+                  editEntry: targetEntry
+                });
               }}
             ></TextField>
           </Stack>
@@ -761,6 +784,7 @@ export default class MessagingView extends React.Component<
         <DialogActions>
           <Button
             variant="contained"
+            disabled={!!this.state.dateTimeValidationError}
             onClick={() => {
               // @ts-ignore
               const client = this.context.client;
@@ -1208,7 +1232,7 @@ export default class MessagingView extends React.Component<
                 title="Edit"
                 onClick={() => {
                   this.setState({
-                    editEntry: message,
+                    editEntry: Communication.from(message),
                     isEditing: true,
                   });
                 }}
