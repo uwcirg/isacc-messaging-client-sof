@@ -596,7 +596,8 @@ export default class MessagingView extends React.Component<
                     onChange: (value : moment.Moment, validationContext) => {
                       const inputValue = value ? value.toDate() : null;
                       if (!inputValue) return;
-                      if (!validationContext.validationError) {
+                      const validationError = validationContext?.validationError;
+                      if (!validationError) {
                         this.setState({
                           activeMessage: {
                             ...this.state.activeMessage,
@@ -606,7 +607,7 @@ export default class MessagingView extends React.Component<
                         });
                       } else {
                         this.setState({
-                          dateTimeValidationError: validationContext.validationError
+                          dateTimeValidationError: validationError,
                         });
                       }
                     }
@@ -677,6 +678,8 @@ export default class MessagingView extends React.Component<
     let targetEntry = this.state.editEntry;
     const dateFieldName = targetEntry?.sent ? "sent" : "received";
     const editDate = targetEntry ? targetEntry[dateFieldName] : null;
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 360*100);
     const handleClose = (event:React.ChangeEvent, reason:string=null) => {
       if (reason && reason === "backdropClick") 
         return;
@@ -732,8 +735,7 @@ export default class MessagingView extends React.Component<
                     dateTimeValidationError: newError,
                   });
                 }}
-                minDate={moment("1950-01-01")}
-                maxDate={moment("2500-01-01")}
+                maxDate={moment(maxDate.toISOString())}
                 slotProps={{
                   textField: {
                     error: !!this.state.dateTimeValidationError,
@@ -1342,6 +1344,7 @@ export default class MessagingView extends React.Component<
   }
 
   private _hasMessageDate(): boolean {
+    if (this.state.dateTimeValidationError) return false;
     return (
       this.state.activeMessage &&
       MessagingView.isValidDate(this.state.activeMessage.date)
