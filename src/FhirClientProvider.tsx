@@ -5,8 +5,9 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Client from "fhirclient/lib/Client";
 import {queryPatientIdKey} from "./util/util";
-import { getFhirData } from './util/isacc_util';
+import { getFhirData, getUserEmail } from './util/isacc_util';
 import Patient from "./model/Patient";
+import Practitioner from './model/Practitioner';
 import CarePlan from "./model/CarePlan";
 import {Bundle} from "./model/Bundle";
 import {ICarePlan} from "@ahryman40k/ts-fhir-types/lib/R4";
@@ -22,6 +23,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
     const [client, setClient] = React.useState(null);
     const [error, setError] = React.useState('');
     const [patient, setPatient] = React.useState(null);
+    const [practitioner, setPractitioner] = React.useState(null);
     const [currentCarePlan, setCurrentCarePlan] = React.useState(null);
     const [allCarePlans, setAllCarePlans] = React.useState(null);
     const [loaded, setLoaded] = React.useState(false);
@@ -39,6 +41,28 @@ export default function FhirClientProvider(props: Props): JSX.Element {
         // Get the Patient resource
         return await client.patient.read().then((value: any) => {
             return Patient.from(value);
+        });
+    }
+
+    async function getPractitioner(
+      client: Client,
+      email: string
+    ): Promise<Practitioner> {
+      email = "achen2401+test@gmail.com";
+      if (!client || !email) return;
+      return getFhirData(
+        client,
+        `/Practitioner?telecom=${encodeURIComponent(email)}`
+      )
+        .then((bundle: Bundle) => {
+          if (!bundle.entry || !bundle.entry.length) {
+            return null;
+          }
+          return Practitioner.from(bundle.entry[0].resource as Practitioner);
+        })
+        .catch((e) => {
+          setError(e);
+          return null;
         });
     }
 
@@ -84,55 +108,71 @@ export default function FhirClientProvider(props: Props): JSX.Element {
         FHIR.oauth2.ready().then(
             (client: Client) => {
                 setClient(client);
-                getPatient(client)
-                  .then((patientResult: Patient) => {
-                    setPatient(patientResult);
-                    console.log(`Loaded ${patientResult.reference}`);
-                    getCarePlans(client, patientResult.id)
-                      .then(
-                        (carePlanResults: CarePlan[]) => {
-                          const activeCarePlans = carePlanResults?.filter(
-                            (item) => item.status === "active"
-                          );
-                          const currentCarePlan =
-                            activeCarePlans?.length > 0
-                              ? activeCarePlans[0]
-                              : null;
-                        console.log("currentCarePlan ", currentCarePlan)
-                          if (currentCarePlan?.resourceType === "CarePlan") {
-                            setCurrentCarePlan(activeCarePlans[0]);
-                          }
-                          setAllCarePlans(carePlanResults);
-                          if (currentCarePlan) {
-                            console.log(`Loaded ${currentCarePlan.reference}`);
-                          }
-                          setLoaded(true);
-                        },
-                        (reason: any) => setError(reason)
-                      )
-                      .catch((e) => {
-                        console.log("Error fetching CarePlan", e);
-                        setError(e);
-                        setLoaded(true);
-                      });
-                  })
-                  .catch((e) => {
-                    console.log("Error fetching Patient", e);
-                    setError(e);
+                Promise.allSettled([
+                  getPractitioner(client, getUserEmail(client)), 
+                  getPatient(client)
+                ]).then((results: any[]) => {
+                  const hasResults = results.find(result => result.value);
+                  if (!hasResults) {
+                    setError("no result returned.");
                     setLoaded(true);
-                  });
+                  }
+                  results.forEach(result => {
+                    if (result.status === "rejected") {
+                      console.log("Promise error ", result.reason);
+                      return true;
+                    }
+                    const resourceResult = result.value;
+                    const resourceType = resourceResult?.resourceType;
+                    if (resourceType === "Practitioner") {
+                      setPractitioner(resourceResult);
+                    }
+                    else if (resourceType === "Patient") {
+                      setPatient(resourceResult);
+                      console.log(`Loaded ${resourceResult.reference}`);
+                      getCarePlans(client, resourceResult.id)
+                        .then(
+                          (carePlanResults: CarePlan[]) => {
+                            const activeCarePlans = carePlanResults?.filter(
+                              (item) => item.status === "active"
+                            );
+                            const currentCarePlan =
+                              activeCarePlans?.length > 0
+                                ? activeCarePlans[0]
+                                : null;
+                            if (currentCarePlan?.resourceType === "CarePlan") {
+                              setCurrentCarePlan(activeCarePlans[0]);
+                            }
+                            setAllCarePlans(carePlanResults);
+                            if (currentCarePlan) {
+                              console.log(`Loaded ${currentCarePlan.reference}`);
+                            }
+                            setLoaded(true);
+                          },
+                          (reason: any) => setError(reason)
+                        )
+                        .catch((e) => {
+                          console.log("Error fetching CarePlan", e);
+                          setError(e);
+                          setLoaded(true);
+                        });
+                    } // end if Patient
 
-            }, (reason: any) => {
-                setError(reason);
-                setLoaded(true);
-            }
-        );
+                  })
+              })
+            },
+              (reason: any) => {
+                        setError(reason);
+                        setLoaded(true);
+                    }
+              )
     }, []);
 
     return (
         <FhirClientContext.Provider value={{
             client: client,
             patient: patient,
+            practitioner: practitioner,
             currentCarePlan: currentCarePlan,
             allCarePlans: allCarePlans,
             error: error
