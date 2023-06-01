@@ -15,6 +15,7 @@ import {
 import { Coding, ExtensionUrl, IsaccMessageCategory } from "./CodeSystem";
 import Patient from "./Patient";
 import CarePlan from "./CarePlan";
+import Practitioner from "./Practitioner";
 
 
 export default class Communication implements ICommunication {
@@ -82,7 +83,7 @@ export default class Communication implements ICommunication {
     receivedDateTimeString: string,
     messageType: Coding,
     note: string,
-    senderId: string = null
+    sender: Practitioner | Patient = null
   ): Communication {
     if (!messageType) {
       messageType = IsaccMessageCategory.isaccManuallySentMessage;
@@ -98,7 +99,7 @@ export default class Communication implements ICommunication {
     if (note) c.setNote(note);
     c.subject = { reference: patient.reference };
     c.setText(messageContent);
-    if (senderId) c.sender = {reference: senderId};
+    if (sender) c.sender = {reference: sender.reference};
     return c;
   }
   

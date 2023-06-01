@@ -959,6 +959,7 @@ export default class MessagingView extends React.Component<
     const userName = getUserName(context.client);
     const enteredByText = userName ? `entered by ${userName}` : "staff-entered";
     const noteAboutCommunication = `${this.state.activeMessage?.type}, ${enteredByText}`;
+    const currentPractitioner = context.practitioner;
     // new communication
     // TODO implement sender, requires Practitioner resource set for the user
     const newCommunication = Communication.create(
@@ -970,7 +971,8 @@ export default class MessagingView extends React.Component<
       this.state.activeMessage?.type === "comment"
         ? IsaccMessageCategory.isaccComment
         : IsaccMessageCategory.isaccNonSMSMessage,
-      noteAboutCommunication
+      noteAboutCommunication,
+      currentPractitioner
     );
     this._save(newCommunication, (savedResult: IResource) => {
       console.log("Saved new communication:", savedResult);
@@ -994,11 +996,20 @@ export default class MessagingView extends React.Component<
   private saveSMSMessage() {
     // @ts-ignore
     let context: FhirClientContextType = this.context;
+    const currentPractitioner = context.practitioner;
     let newMessage: CommunicationRequest =
       CommunicationRequest.createNewManualOutgoingMessage(
         this.state.activeMessage.content,
         context.patient,
-        context.currentCarePlan
+        context.currentCarePlan,
+        context.practitioner,
+        currentPractitioner
+          ? [
+              "response from",
+              currentPractitioner.firstName,
+              currentPractitioner.lastName?.charAt(0) || "",
+            ].join(" ")
+          : ""
       );
     this._save(newMessage, (savedCommunicationRequest: IResource) => {
       console.log("Saved new CommunicationRequest:", savedCommunicationRequest);
@@ -1112,12 +1123,11 @@ export default class MessagingView extends React.Component<
           .join("\n")
           .trim()
       : [
-          note,
           `${
             incoming
               ? "reply (from recipient)"
               : message.sent
-              ? (autoMessage ? "scheduled Caring Contact message" : "response (from author)")
+              ? (autoMessage ? "scheduled Caring Contact message" : note ? note : "response (from author)")
               : ""
           }`,
         ]
