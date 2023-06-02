@@ -766,6 +766,7 @@ export default class MessagingView extends React.Component<
                     editDateTimeValidationError: validationError,
                   });
                 }}
+                disableFuture
               ></DateTimePicker>
             </LocalizationProvider>
             <TextField
