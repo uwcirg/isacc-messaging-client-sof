@@ -957,10 +957,20 @@ export default class MessagingView extends React.Component<
       this.state.activeMessage?.status === "received"
         ? this.state.activeMessage.date
         : null;
-    const userName = getUserName(context.client);
-    const enteredByText = userName ? `entered by ${userName}` : "staff-entered";
-    const noteAboutCommunication = `${this.state.activeMessage?.type}, ${enteredByText}`;
     const currentPractitioner = context.practitioner;
+    const userName = getUserName(context.client);
+    const practitionerName = currentPractitioner
+      ? [
+          currentPractitioner.firstName,
+          currentPractitioner.lastName?.charAt(0) || "",
+        ].join(" ")
+      : "";
+    const enteredByText = practitionerName
+      ? `entered by ${practitionerName}`
+      : userName
+      ? `entered by ${userName}`
+      : "staff-entered";
+    const noteAboutCommunication = `${this.state.activeMessage?.type}, ${enteredByText}`;
     // new communication
     // TODO implement sender, requires Practitioner resource set for the user
     const newCommunication = Communication.create(
@@ -1138,8 +1148,22 @@ export default class MessagingView extends React.Component<
     let isEditable = isNonSmsMessage || isComment;
     // @ts-ignore
     const userName = getUserName(this.context.client);
+
+    // @ts-ignore
+    const currentPractitioner = this.context.practitioner;
+    const referenceId = message?.sender?.reference.split("/")[1];
+    // practitioner info is available, user can only edit a manual message or comment authored by him/herself
+    if (
+      currentPractitioner &&
+      message.sender &&
+      message.sender.reference &&
+      message.sender.reference.toLowerCase().includes("practitioner") &&
+      referenceId
+    ) {
+      isEditable = isEditable && referenceId === currentPractitioner.id;
+    }
     // username is available, user can only edit a manual message or comment authored by him/herself
-    if (userName) isEditable = isEditable && note.includes(userName);
+    else if (userName) isEditable = isEditable && note.includes(userName);
 
     return this._alignedRow(
       incoming,

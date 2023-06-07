@@ -121,6 +121,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
             const resourceResult = result.value;
             const resourceType = resourceResult?.resourceType;
             if (resourceType === "Practitioner") {
+              console.log("Loaded practitioner ", resourceResult);
               setPractitioner(resourceResult);
             } else if (resourceType === "Patient") {
               setPatient(resourceResult);
