@@ -114,6 +114,7 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
                                     sx={{maxHeight: 400, overflow: 'auto', ...styles.patientNotesField}}
                                     fullWidth
                                     multiline
+                                    minRows={4}
                                     value={this.state.carePlan.description ?? ""}
                                     placeholder={"Recipient note"}
                                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
