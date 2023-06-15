@@ -32,6 +32,8 @@ import Client from "fhirclient/lib/Client";
 import {Bundle} from "../model/Bundle";
 import { AsYouType, isPossiblePhoneNumber,parsePhoneNumber } from 'libphonenumber-js';
 import { getFhirData } from '../util/isacc_util';
+import Practitioner from '../model/Practitioner';
+import CarePlan from '../model/CarePlan';
 
 interface SummaryProps {
     editable: boolean
@@ -42,6 +44,7 @@ type SummaryState = {
     practitioners: IPractitioner[];
     selectedPractitioners: (string | IPractitioner)[];
     selectAllPractitioners: boolean;
+    primaryAuthor: string | Practitioner;
 }
 
 export default class Summary extends React.Component<SummaryProps, SummaryState> {
@@ -54,6 +57,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
       practitioners: null,
       selectedPractitioners: null,
       selectAllPractitioners: false,
+      primaryAuthor: null,
     };
   }
 
@@ -62,8 +66,10 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
 
     // @ts-ignore
     let client: Client = this.context.client;
+    // // @ts-ignore
+    // const patient = this.context.patient;
     // @ts-ignore
-    const patient = this.context.patient;
+    const carePlan = this.context.currentCarePlan;
     let params = new URLSearchParams({
       _count: "250",
       _sort: "-_lastUpdated",
@@ -76,7 +82,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
       this.setState({
         practitioners: entries,
         selectedPractitioners: entries?.filter((p: IPractitioner) => {
-          return patient.generalPractitioner?.find((gpRef: IReference) => {
+          return carePlan.careTeam?.find((gpRef: IReference) => {
             return (
               gpRef.type === "Practitioner" && gpRef.reference.includes(p.id)
             );
@@ -134,17 +140,17 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
               <IconButton
                 aria-label="clear phone number"
                 onClick={() => {
-                    patient.smsContactPoint = "";
-                    this.setState({});
+                  patient.smsContactPoint = "";
+                  this.setState({});
                 }}
                 edge="end"
                 size="small"
                 sx={{
-                    display: patient.smsContactPoint ? "block" : "none"
+                  display: patient.smsContactPoint ? "block" : "none",
                 }}
                 title={"Clear phone number"}
               >
-                <ClearIcon fontSize="small"/>
+                <ClearIcon fontSize="small" />
               </IconButton>
             </InputAdornment>
           ),
@@ -171,6 +177,9 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         : patient.smsContactPoint ?? "None on file",
     };
 
+    let primaryAuthorSelector = this.props.editable
+      ? this._buildPrimaryAuthorSelector()
+      : this.getPractitionerLabel(this.state.primaryAuthor);
     let notifyPractitionersSelector = null;
     if (this.state.practitioners) {
       const selectedPractitionersDisplay =
@@ -211,9 +220,12 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         value: "SMS", // hard coded because only SMS is supported for now
       },
       {
+        label: "Primary author",
+        value: primaryAuthorSelector ?? "No primary author selected",
+      },
+      {
         label: "Notify on incoming message",
-        value:
-          notifyPractitionersSelector ?? "No user records available",
+        value: notifyPractitionersSelector ?? "No user records available",
       },
     ];
 
@@ -232,7 +244,9 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                     <TableCell component="th" scope="row">
                       {row.label}
                     </TableCell>
-                    <TableCell align="left"><Typography variant="body1">{row.value}</Typography></TableCell>
+                    <TableCell align="left">
+                      <Typography variant="body1">{row.value}</Typography>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -243,9 +257,65 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     );
   }
 
-  private _buildPractitionerSelector() {
+  private _buildPrimaryAuthorSelector() {
     // @ts-ignore
     const patient: Patient = this.context.patient;
+    // @ts-ignore
+    const carePlan: CarePlan = this.context.currentCarePlan;
+    const toReferences = (practitioners: (string | IPractitioner)[]) =>
+      practitioners?.map((v) => ({
+        type: "Practitioner",
+        reference: `Practitioner/${(v as IPractitioner).id}`,
+      }));
+    return (
+      <Autocomplete
+        size="small"
+        value={this.state.primaryAuthor}
+        options={this.state.practitioners}
+        getOptionLabel={(option) =>
+          this.getPractitionerLabel(option as IPractitioner)
+        }
+        renderInput={(params) => (
+          <TextField {...params} placeholder={"Primary Author"} />
+        )}
+        onChange={(event: any, value: string | IPractitioner) => {
+          patient.generalPractitioner = value ? toReferences([value]) : null;
+          const currentCareTeam = carePlan.careTeam
+            ? carePlan.careTeam.filter(
+                (p) =>
+                  p.type === "Practitioner" &&
+                  !p.reference.includes((value as Practitioner)?.id)
+              )
+            : [];
+          if (value) {
+            carePlan.careTeam = [...currentCareTeam, ...toReferences([value])];
+          } else {
+            if (carePlan.careTeam) {
+              carePlan.careTeam = currentCareTeam.filter(p => p.type === "Practitioner" &&
+              !p.reference.includes((this.state.primaryAuthor as Practitioner)?.id));
+            }
+          }
+          this.setState({
+            primaryAuthor: value ? (value as Practitioner) : null,
+            selectedPractitioners: [
+              ...(this.state.selectedPractitioners
+                ? this.state.selectedPractitioners.filter(
+                    (p) => (p as Practitioner)?.id !== (value as Practitioner)?.id
+                  )
+                : []),
+              ...value ? [value] : [],
+            ],
+          });
+        }}
+      />
+    );
+  }
+
+  private _buildPractitionerSelector() {
+    // @ts-ignore
+    //const patient: Patient = this.context.patient;
+    //@ts-ignore
+    const carePlan: CarePlan = this.context.currentCarePlan;
     const toReferences = (practitioners: (string | IPractitioner)[]) =>
       practitioners?.map((v) => ({
         type: "Practitioner",
@@ -264,6 +334,15 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           renderInput={(params) => (
             <TextField {...params} placeholder={"Users"} />
           )}
+          renderTags={(tagValue, getTagProps) =>
+            tagValue.map((option, index) => (
+              <Chip
+                label={this.getPractitionerLabel(option as IPractitioner)}
+                {...getTagProps({ index })}
+                disabled={(option as Practitioner)?.id === (this.state.primaryAuthor as Practitioner)?.id}
+              />
+            ))
+          }
           onChange={(event: any, value: (string | IPractitioner)[]) => {
             this.setState({
               selectedPractitioners: value,
@@ -272,18 +351,18 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
               this.setState({
                 selectAllPractitioners: false,
               });
-              patient.generalPractitioner = null;
+              carePlan.careTeam = null;
               return;
             }
-            patient.generalPractitioner = toReferences(value);
+            carePlan.careTeam = toReferences(value);
           }}
         />
         <FormControlLabel
           label="Select all"
           componentsProps={{
             typography: {
-                variant: "body2"
-            }
+              variant: "body2",
+            },
           }}
           control={
             <Checkbox
@@ -296,9 +375,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                     ? this.state.practitioners
                     : null,
                 });
-                patient.generalPractitioner = toReferences(
-                  this.state.practitioners
-                );
+                carePlan.careTeam = toReferences(this.state.practitioners);
               }}
             />
           }
@@ -308,6 +385,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
   }
 
   private getPractitionerLabel(option: IPractitioner | string) {
+    if (!option) return null;
     if (typeof option === "string") return option;
     if (!option.name || !option.name[0])
       return `${option.resourceType}/${option.id}`;
