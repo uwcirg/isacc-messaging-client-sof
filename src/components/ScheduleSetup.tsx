@@ -25,6 +25,7 @@ import {IBundle_Entry, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {CommunicationRequest} from "../model/CommunicationRequest";
 import Alert from "@mui/material/Alert";
 import Patient from "../model/Patient";
+import PatientPROs from "./PatientPROs";
 import Summary from "./Summary";
 import PlanDefinition, {getDefaultMessageSchedule} from "../model/PlanDefinition";
 import {getEnv} from "../util/util";
@@ -58,7 +59,10 @@ export type MessageDraft = {
 
 const styles = {
     patientNotesField: {
-        margin: 2
+        marginTop: 1,
+        marginLeft: 0,
+        marginRight: 0,
+        marginBottom: 0
     }
 };
 
@@ -124,6 +128,9 @@ export default class ScheduleSetup extends React.Component<ScheduleSetupProps, S
                                     }}/>
                             </>
                         }
+                    </Item>
+                    <Item>
+                        <PatientPROs editable={true}></PatientPROs>
                     </Item>
                 </Grid>
                 <Grid item xs={12}>

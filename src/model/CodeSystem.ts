@@ -16,10 +16,11 @@ export class Coding implements ICoding {
     version?: string;
 
 
-    static make(system: string, code: string) {
+    static make(system: string, code: string, display: string =  null) {
         let coding = new Coding();
         coding.system = system;
         coding.code = code;
+        if (display) coding.display = display;
         return coding;
     }
 
@@ -96,5 +97,12 @@ export const CSSAnswerCategories = {
 }
 
 export const ExtensionUrl = {
-    messageThemeUrl: "isacc.app/message-theme"
+    messageThemeUrl: "isacc.app/message-theme",
+    studyStartDateUrl: "isacc.app/study-start-date",
+    studyStatusUrl: "isacc.app/study-status",
+    pronounsUrl: "http://hl7.org/fhir/StructureDefinition/individual-genderIdentity"
+}
+
+export const SystemURL = {
+  userIdUrl : "http://isacc.app/user-id"
 }

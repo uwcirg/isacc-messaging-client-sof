@@ -7,6 +7,7 @@ export class Observation implements IObservation {
     subject: IReference;
     valueCodeableConcept: ICodeableConcept;
     valueQuantity: IQuantity;
+    effectiveDateTime?: string;
 
     get reference(): string {
         return `${this.resourceType}/${this.id}`;
@@ -16,6 +17,30 @@ export class Observation implements IObservation {
         if (!raw) return null;
         let a = Object.assign(new Observation(), raw);
         return a;
+    }
+
+    static create(code: string, system: string, display: string, value: string, patientId: string) : Observation {
+        const o = new Observation();
+        if (code) {
+            o.code = {
+                coding: [
+                    {
+                        system : system,
+                        code: code,
+                        display: display
+                    }
+                ]
+            }
+        }
+        // allow only quantity for now
+        o.valueQuantity = {
+            value : parseFloat(value)
+        };
+        o.subject = {
+            reference : "Patient/"+patientId
+        };
+        o.effectiveDateTime = (new Date()).toISOString();
+        return o;
     }
 
     constructor() {

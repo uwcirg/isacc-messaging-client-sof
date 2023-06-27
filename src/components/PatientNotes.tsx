@@ -1,6 +1,15 @@
 import React from 'react';
 import {FhirClientContext, FhirClientContextType} from '../FhirClientContext';
-import {Alert, Button, CardActions, CardContent, CircularProgress, TextField, Typography} from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  CardActions,
+  CardContent,
+  CircularProgress,
+  TextField,
+  Typography,
+} from "@mui/material";
 import CarePlan from "../model/CarePlan";
 import {ICarePlan} from "@ahryman40k/ts-fhir-types/lib/R4";
 import EditIcon from "@mui/icons-material/Edit";
@@ -56,13 +65,15 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
                   }}
                 />
               ) : (
-                <Typography variant={"body1"} sx={{padding: (theme) => theme.spacing(1), whiteSpace: "pre-wrap"}}>
+                <Box sx={{padding: 1}}>
+                  <Typography variant={"body1"} sx={{whiteSpace: "pre-wrap"}}>
                   {carePlan.description}
-                </Typography>
+                  </Typography>
+                </Box>
               )}
               {this._updateError()}
             </CardContent>
-            <CardActions>
+            <CardActions disableSpacing>
               <Button
                 onClick={() => {
                   if (this.state.editable) {
