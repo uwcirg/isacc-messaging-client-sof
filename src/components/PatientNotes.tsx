@@ -3,6 +3,7 @@ import {FhirClientContext, FhirClientContextType} from '../FhirClientContext';
 import {Alert, Button, CardActions, CardContent, CircularProgress, TextField, Typography} from "@mui/material";
 import CarePlan from "../model/CarePlan";
 import {ICarePlan} from "@ahryman40k/ts-fhir-types/lib/R4";
+import EditIcon from "@mui/icons-material/Edit";
 
 interface PatientNotesProps {
 
@@ -46,6 +47,7 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
                   InputProps={{ sx: { typography: "body1" } }}
                   multiline
                   fullWidth
+                  minRows={4}
                   value={this.state.updatedPatientNote ?? ""}
                   placeholder={"Enter recipient note"}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,7 +55,7 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
                   }}
                 />
               ) : (
-                <Typography variant={"body1"} sx={{padding: (theme) => theme.spacing(1)}}>
+                <Typography variant={"body1"} sx={{padding: (theme) => theme.spacing(1), whiteSpace: "pre-wrap"}}>
                   {carePlan.description}
                 </Typography>
               )}
@@ -73,6 +75,7 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
                 }}
                 size="small"
                 variant="outlined"
+                startIcon={<EditIcon sx={{display: this.state.editable ? "none": "block"}}></EditIcon>}
               >
                 {this.state.editable ? "Save notes" : "Update"}
               </Button>

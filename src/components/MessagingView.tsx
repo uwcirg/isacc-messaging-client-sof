@@ -29,10 +29,11 @@ import {
     Typography,
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
+import EditIcon from "@mui/icons-material/Edit";
 import InfoIcon from "@mui/icons-material/Info";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import moment from "moment";
+import * as moment from "moment";
 import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
 import { DateTimeValidationError} from '@mui/x-date-pickers/models';
 import {grey, lightBlue, pink, yellow} from "@mui/material/colors";
@@ -77,7 +78,10 @@ export default class MessagingView extends React.Component<
     showSaveFeedback: boolean;
     infoOpen: boolean;
     nextPageURL: string;
-    dateTimeValidationError: DateTimeValidationError;
+    createDateTimeValidationError: DateTimeValidationError;
+    editDateTimeValidationError: DateTimeValidationError;
+    editEntry: Communication;
+    isEditing: boolean;
     // showAlert: boolean;
     // alertSeverity: "error" | "warning" | "info" | "success";
     // alertText: string;
@@ -100,7 +104,10 @@ export default class MessagingView extends React.Component<
       showSaveFeedback: false,
       infoOpen: false,
       nextPageURL: null,
-      dateTimeValidationError: null
+      createDateTimeValidationError: null,
+      editDateTimeValidationError: null,
+      editEntry: null,
+      isEditing: false,
     };
   }
 
@@ -241,7 +248,7 @@ export default class MessagingView extends React.Component<
       overflow: "auto",
       display: "flex",
       flexDirection: "column-reverse",
-      border: "2px solid lightgrey",
+      border: `2px solid ${grey[400]}`,
       borderRadius: 1,
       paddingLeft: 0.5,
       paddingRight: 0.5,
@@ -281,7 +288,7 @@ export default class MessagingView extends React.Component<
           onScroll={(event) => {
             clearTimeout(this.getNextPageInterval);
             if (!this.state.nextPageURL) {
-                return;
+              return;
             }
             const { scrollHeight, clientHeight, scrollTop } =
               event.currentTarget;
@@ -290,10 +297,10 @@ export default class MessagingView extends React.Component<
             );
             // not at the top
             if (!(adjustedScrollTop >= scrollHeight - 4)) {
-                return;
+              return;
             }
             this.getNextPageInterval = setTimeout(() => {
-                this.loadCommunications(this.state.nextPageURL);
+              this.loadCommunications(this.state.nextPageURL);
             }, 250);
           }}
         >
@@ -335,6 +342,7 @@ export default class MessagingView extends React.Component<
                 </IconButton>
               )}
             </Stack>
+            {this._buildEditDialog()}
           </Stack>
 
           {messages}
@@ -405,7 +413,7 @@ export default class MessagingView extends React.Component<
     const tabProps = {
       sx: {
         padding: {
-            sm : (theme: any) => theme.spacing(1, 2.5)
+          sm: (theme: any) => theme.spacing(1, 2.5)
         },
       },
     };
@@ -442,10 +450,10 @@ export default class MessagingView extends React.Component<
           }}
           sx={tabRootStyleProps}
         >
-          <Tab value="sms" label="ISACC send" {...tabProps} />
+          <Tab value="sms" label="ISACC manual" {...tabProps} />
           <Tab
             value="manual message"
-            label="Enter manual message"
+            label="Outside communication"
             {...tabProps}
           />
           <Tab value="comment" label="Enter comment" {...tabProps} />
@@ -479,7 +487,7 @@ export default class MessagingView extends React.Component<
           <Button
             variant="contained"
             onClick={() => this.saveSMSMessage()}
-            disabled={!this._hasMessageContent()}
+            disabled={!this._hasMessageContent(this.state.activeMessage?.content)}
           >
             Send
           </Button>
@@ -576,35 +584,38 @@ export default class MessagingView extends React.Component<
                 }}
                 onError={(newError) => {
                   this.setState({
-                    dateTimeValidationError: newError,
+                    createDateTimeValidationError: newError,
                   });
                 }}
                 slotProps={{
                   textField: {
-                    helperText: !this.state.dateTimeValidationError
-                      ? ""
-                      : this.state.dateTimeValidationError === "disableFuture"
-                      ? "Entered date/time is in the future"
-                      : "invalid entry",
-                  },
-                }}
-                renderInput={(params: TextFieldProps) => (
-                  <TextField
-                    {...params}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                      if (MessagingView.isValidDate(event.target.value)) {
+                    helperText: this._getDateTiemValidationErrorMessage(
+                      this.state.createDateTimeValidationError
+                    ),
+                    //@ts-ignore
+                    onChange: (value: moment.Moment, validationContext) => {
+                      const inputValue = value ? value.toDate() : null;
+                      if (!inputValue) return;
+                      const validationError =
+                        validationContext?.validationError;
+                      if (!validationError) {
                         this.setState({
                           activeMessage: {
                             ...this.state.activeMessage,
-                            date: event.target.value
-                              ? new Date(event.target.value).toISOString()
-                              : null,
+                            date: new Date(inputValue).toISOString(),
                           },
+                          createDateTimeValidationError: null,
+                        });
+                      } else {
+                        this.setState({
+                          createDateTimeValidationError: validationError,
                         });
                       }
-                    }}
-                    sx={{ width: "100%", flexGrow: 1 }}
-                  />
+                    },
+                  },
+                }}
+                renderInput={(params: TextFieldProps) => (
+                  <TextField {...params} sx={{ width: "100%", flexGrow: 1 }} />
                 )}
                 onChange={(newValue: Date | null) => {
                   this.setState({
@@ -653,12 +664,171 @@ export default class MessagingView extends React.Component<
               this.saveNonSMSMessage();
             }}
             loading={this.state.saveLoading}
-            disabled={!this._hasMessageContent() || !this._hasMessageDate()}
+            disabled={
+              !this._hasMessageContent(this.state.activeMessage?.content) ||
+              !this._hasMessageDate(
+                this.state.activeMessage?.date,
+                !!this.state.createDateTimeValidationError
+              )
+            }
           >
             Save
           </LoadingButton>
         </Box>
       </>
+    );
+  }
+
+  private _buildEditDialog(): React.ReactNode {
+    let targetEntry = this.state.editEntry;
+    const dateFieldName = targetEntry?.sent ? "sent" : "received";
+    const editDate = targetEntry ? targetEntry[dateFieldName] : null;
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 360*100);
+    const handleClose = (event:React.ChangeEvent, reason:string=null) => {
+      if (reason && reason === "backdropClick") 
+        return;
+      this.setState({
+        isEditing: false,
+        editDateTimeValidationError: null,
+      }, () => this.setState({
+        editEntry: null
+      }));
+    };
+    return (
+      <Dialog
+        open={this.state.isEditing}
+        onClose={handleClose}
+        arial-label="Edit dialog"
+      >
+        <DialogTitle
+          sx={{
+            color: "#FFF",
+            backgroundColor: (theme) => theme.palette.primary.main,
+          }}
+        >{`Edit entry from ${MessagingView.displayDateTime(
+          editDate
+        )}`}</DialogTitle>
+        <DialogContent>
+          <Stack
+            spacing={2}
+            sx={{ padding: (theme) => theme.spacing(4, 1, 0) }}
+          >
+            <LocalizationProvider dateAdapter={AdapterMoment}>
+              <DateTimePicker
+                label="Edit Date & time"
+                format="ddd, MM/DD/YYYY hh:mm A"
+                // @ts-ignore
+                value={editDate ? moment(editDate) : null}
+                onError={(newError) => {
+                  this.setState({
+                    editDateTimeValidationError: newError,
+                  });
+                }}
+                // @ts-ignore
+                maxDate={moment(maxDate.toISOString())}
+                slotProps={{
+                  textField: {
+                    error: !!this.state.editDateTimeValidationError,
+                    helperText: this._getDateTiemValidationErrorMessage(
+                      this.state.editDateTimeValidationError
+                    ),
+                    //@ts-ignore
+                    onChange: (
+                      newValue: moment.Moment | null,
+                      validationContext: any
+                    ) => {
+                      const validationError =
+                        validationContext?.validationError;
+                      if (!validationError) {
+                        const inputValue = newValue?.toDate().toISOString();
+                        targetEntry[dateFieldName] = inputValue;
+                      }
+                      this.setState({
+                        editEntry: targetEntry,
+                        editDateTimeValidationError: validationError,
+                      });
+                    },
+                  },
+                }}
+                //@ts-ignore
+                onChange={(
+                  newValue: moment.Moment | null,
+                  validationContext
+                ) => {
+                  const validationError = validationContext?.validationError;
+                  if (!validationError) {
+                    const inputValue = newValue?.toDate().toISOString();
+                    targetEntry[dateFieldName] = inputValue;
+                  }
+                  this.setState({
+                    editEntry: targetEntry,
+                    editDateTimeValidationError: validationError,
+                  });
+                }}
+                disableFuture
+              ></DateTimePicker>
+            </LocalizationProvider>
+            <TextField
+              defaultValue={targetEntry?.displayText()}
+              multiline
+              rows={6}
+              fullWidth
+              label="Edit Content"
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                targetEntry?.setText(event.target.value);
+                this.setState({
+                  editEntry: targetEntry,
+                });
+              }}
+            ></TextField>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            disabled={
+              !this._hasMessageContent(targetEntry?.displayText()) ||
+              !this._hasMessageDate(
+                targetEntry[dateFieldName],
+                !!this.state.editDateTimeValidationError
+              )
+            }
+            onClick={() => {
+              // @ts-ignore
+              const client = this.context.client;
+              client
+                .update(targetEntry)
+                .then(() => {
+                  const existingEntryIndex =
+                    this.state.communications?.findIndex(
+                      (item) => item.id === targetEntry.id
+                    );
+                  let existingCommunications = this.state.communications;
+                  existingCommunications.splice(existingEntryIndex, 1);
+                  this.setState({
+                    communications: existingCommunications,
+                  });
+                  this.loadCommunications();
+                })
+                .catch((e: any) => {
+                  this.setState({
+                    error:
+                      "Unable to update communication.  See console for detail.",
+                  });
+                  console.log("Fail to update communication ", e);
+                });
+              setTimeout(handleClose, 0);
+            }}
+          >
+            Save
+          </Button>
+          {/* @ts-ignore */}
+          <Button variant="outlined" onClick={handleClose}>
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
     );
   }
 
@@ -689,7 +859,7 @@ export default class MessagingView extends React.Component<
               ISACC, including text messages (SMS), iMessages, etc.
             </p>
             <p>
-              <b>Manual messages</b> are manually entered records of
+              <b>Outside communications</b> are manually entered records of
               communications that took place outside of ISACC, such as emails,
               phone calls, postal mail, or other non-automated communication.
             </p>
@@ -787,8 +957,19 @@ export default class MessagingView extends React.Component<
       this.state.activeMessage?.status === "received"
         ? this.state.activeMessage.date
         : null;
+    const currentPractitioner = context.practitioner;
     const userName = getUserName(context.client);
-    const enteredByText = userName ? `entered by ${userName}` : "staff-entered";
+    const practitionerName = currentPractitioner
+      ? [
+          currentPractitioner.firstName,
+          currentPractitioner.lastName?.charAt(0) || "",
+        ].join(" ")
+      : "";
+    const enteredByText = practitionerName
+      ? `entered by ${practitionerName}`
+      : userName
+      ? `entered by ${userName}`
+      : "staff-entered";
     const noteAboutCommunication = `${this.state.activeMessage?.type}, ${enteredByText}`;
     // new communication
     // TODO implement sender, requires Practitioner resource set for the user
@@ -801,7 +982,8 @@ export default class MessagingView extends React.Component<
       this.state.activeMessage?.type === "comment"
         ? IsaccMessageCategory.isaccComment
         : IsaccMessageCategory.isaccNonSMSMessage,
-      noteAboutCommunication
+      noteAboutCommunication,
+      currentPractitioner
     );
     this._save(newCommunication, (savedResult: IResource) => {
       console.log("Saved new communication:", savedResult);
@@ -825,11 +1007,20 @@ export default class MessagingView extends React.Component<
   private saveSMSMessage() {
     // @ts-ignore
     let context: FhirClientContextType = this.context;
+    const currentPractitioner = context.practitioner;
     let newMessage: CommunicationRequest =
       CommunicationRequest.createNewManualOutgoingMessage(
         this.state.activeMessage.content,
         context.patient,
-        context.currentCarePlan
+        context.currentCarePlan,
+        context.practitioner,
+        currentPractitioner
+          ? [
+              "response from",
+              currentPractitioner.firstName,
+              currentPractitioner.lastName?.charAt(0) || "",
+            ].join(" ")
+          : ""
       );
     this._save(newMessage, (savedCommunicationRequest: IResource) => {
       console.log("Saved new CommunicationRequest:", savedCommunicationRequest);
@@ -908,7 +1099,7 @@ export default class MessagingView extends React.Component<
     } else {
       delivered = false;
     }
-    let msg = message.displayText();
+    let messageText = message?.displayText();
     let autoMessage = true;
     if (!message.category) {
       console.log("Communication is missing category");
@@ -943,39 +1134,62 @@ export default class MessagingView extends React.Component<
           .join("\n")
           .trim()
       : [
-          note,
           `${
             incoming
               ? "reply (from recipient)"
               : message.sent
-              ? (autoMessage ? "scheduled Caring Contact message" : "response (from author)")
+              ? (autoMessage ? "scheduled Caring Contact message" : note ? note : "response (from author)")
               : ""
           }`,
         ]
           .join("\n")
           .trim();
 
+    let isEditable = isNonSmsMessage || isComment;
+    // @ts-ignore
+    const userName = getUserName(this.context.client);
+
+    // @ts-ignore
+    const currentPractitioner = this.context.practitioner;
+    const referenceId = message?.sender?.reference.split("/")[1];
+    // practitioner info is available, user can only edit a manual message or comment authored by him/herself
+    if (
+      currentPractitioner &&
+      message.sender &&
+      message.sender.reference &&
+      message.sender.reference.toLowerCase().includes("practitioner") &&
+      referenceId
+    ) {
+      isEditable = isEditable && referenceId === currentPractitioner.id;
+    }
+    // username is available, user can only edit a manual message or comment authored by him/herself
+    else if (userName) isEditable = isEditable && note.includes(userName);
+
     return this._alignedRow(
       incoming,
-      msg,
+      messageText,
       timestamp,
       bubbleStyle,
       priority,
       index,
       themes,
-      itemLabel
+      itemLabel,
+      isEditable,
+      message
     );
   }
 
   private _alignedRow(
     incoming: boolean,
-    message: string,
+    messageText: string,
     timestamp: string,
     bubbleStyle: object,
     priority: string,
     index: number,
     themes: string[],
-    comment: string
+    comment: string,
+    editable: boolean,
+    message: Communication
   ) {
     let priorityIndicator = null;
     if (getEnv("REACT_APP_SHOW_PRIORITY_INDICATOR")?.toLowerCase() === "true") {
@@ -987,7 +1201,7 @@ export default class MessagingView extends React.Component<
     }
     let align = incoming ? "flex-start" : "flex-end";
 
-    let box = message ? (
+    let box = messageText ? (
       <Box
         sx={{
           borderRadius: "12px",
@@ -995,10 +1209,10 @@ export default class MessagingView extends React.Component<
           ...bubbleStyle,
         }}
       >
-        <Typography variant={"body2"}>{message}</Typography>
+        <Typography variant={"body2"}>{messageText}</Typography>
       </Box>
     ) : (
-        <Alert severity="warning">No message content</Alert>
+      <Alert severity="warning">No message content</Alert>
     );
 
     let bubbleAndPriorityRow;
@@ -1041,19 +1255,35 @@ export default class MessagingView extends React.Component<
           {timestamp && (
             <Typography variant={"caption"}>{timestamp}</Typography>
           )}
-          {comment && (
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              gutterBottom
-              sx={{
-                whiteSpace: "pre", // preserve line break character
-                textAlign: incoming ? "left" : "right",
-              }}
-            >
-              {comment}
-            </Typography>
-          )}
+          <Stack direction="row" alignItems={"center"}>
+            {comment && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                gutterBottom
+                sx={{
+                  whiteSpace: "pre", // preserve line break character
+                  textAlign: incoming ? "left" : "right",
+                }}
+              >
+                {comment}
+              </Typography>
+            )}
+            {editable && (
+              <IconButton
+                size="small"
+                title="Edit"
+                onClick={() => {
+                  this.setState({
+                    editEntry: Communication.from(message),
+                    isEditing: true,
+                  });
+                }}
+              >
+                <EditIcon fontSize="small" arial-label="Edit"></EditIcon>
+              </IconButton>
+            )}
+          </Stack>
         </Stack>
       </Grid>
     );
@@ -1146,19 +1376,34 @@ export default class MessagingView extends React.Component<
       color: "#fff",
     };
   }
-  private _hasMessageContent(): boolean {
-    return !(
-      !this.state.activeMessage ||
-      !this.state.activeMessage.content ||
-      !String(this.state.activeMessage.content).trim()
-    );
+  private _hasMessageContent(content : string): boolean {
+    if (!content) return false;
+    return !! String(content).trim();
   }
 
-  private _hasMessageDate(): boolean {
-    return (
-      this.state.activeMessage &&
-      MessagingView.isValidDate(this.state.activeMessage.date)
-    );
+  private _hasMessageDate(date : Date | string, error : boolean): boolean {
+    if (error) return false;
+    return MessagingView.isValidDate(date);
+  }
+
+  private _getDateTiemValidationErrorMessage(error: string) : string {
+    if (!error) return "";
+    switch (error) {
+      case "disableFuture": {
+        return "Date/time is in the future.";
+      }
+      case "maxDate":
+      case "minDate": {
+        return "Please select a date in the correct range.";
+      }
+      case "invalidDate": {
+        return "Date/time is not valid.";
+      }
+
+      default: {
+        return "";
+      }
+    }
   }
 
   private static displayDateTime(dateString: string): string {
@@ -1176,9 +1421,9 @@ export default class MessagingView extends React.Component<
     });
     return `${dateDisplay} ${timeDisplay}`;
   }
-  private static isValidDate(dateString: string): boolean {
+  private static isValidDate(dateString: string | Date): boolean {
     if (!dateString) return false;
-    const dateVal = new Date(dateString);
+    const dateVal = dateString instanceof Date ?  dateString : new Date(dateString);
     return dateVal instanceof Date && !isNaN(dateVal.getTime());
   }
 }

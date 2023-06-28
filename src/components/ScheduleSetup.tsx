@@ -105,10 +105,8 @@ export default class ScheduleSetup extends React.Component<
   alertUser(event: BeforeUnloadEvent) {
     if (!this.state.hasUnsavedChanges) return;
     event.preventDefault();
-    const confirmMessage =
-      "You have unsaved changes.  Are you sure you want to leave the page?";
-    event.returnValue = confirmMessage;
-    return confirmMessage;
+    event.returnValue = "";
+    return;
   }
 
   render(): React.ReactNode {
