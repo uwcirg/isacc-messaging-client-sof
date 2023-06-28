@@ -8,7 +8,6 @@ import EditIcon from "@mui/icons-material/Edit";
 interface PatientNotesProps {
 
 }
-
 type PatientNotesState = {
     error: string;
     editable: boolean;
@@ -78,7 +77,7 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
                 variant="outlined"
                 startIcon={<EditIcon sx={{display: this.state.editable ? "none": "block"}}></EditIcon>}
               >
-                {this.state.editable ? "Done" : "Update"}
+                {this.state.editable ? "Save notes" : "Update"}
               </Button>
             </CardActions>
           </>

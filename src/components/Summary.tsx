@@ -34,7 +34,8 @@ import { AsYouType, isPossiblePhoneNumber,parsePhoneNumber } from 'libphonenumbe
 import { getFhirData } from '../util/isacc_util';
 
 interface SummaryProps {
-    editable: boolean
+    editable: boolean,
+    onChange: Function
 }
 
 type SummaryState = {
@@ -135,6 +136,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 aria-label="clear phone number"
                 onClick={() => {
                     patient.smsContactPoint = "";
+                    if (this.props.onChange) this.props.onChange();
                     this.setState({});
                 }}
                 edge="end"
@@ -159,6 +161,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           } catch (e) {
             patient.smsContactPoint = event.target.value;
           }
+          if (this.props.onChange) this.props.onChange();
           this.setState({});
         }}
       />
@@ -268,6 +271,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             this.setState({
               selectedPractitioners: value,
             });
+            if (this.props.onChange) this.props.onChange();
             if (!value || !value.length) {
               this.setState({
                 selectAllPractitioners: false,
@@ -299,6 +303,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 patient.generalPractitioner = toReferences(
                   this.state.practitioners
                 );
+                if (this.props.onChange) this.props.onChange();
               }}
             />
           }
