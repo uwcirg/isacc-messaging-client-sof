@@ -354,6 +354,7 @@ export default class ScheduleSetup extends React.Component<
                 // exclude current patient, workaround for above FIXME
                 reject(
                   `Phone number is already associated with: ${patients
+                    .filter((p: Patient) => p.id !== patient.id)
                     .map(
                       (p: Patient) => `${p.fullNameDisplay} (${p.reference})`
                     )
