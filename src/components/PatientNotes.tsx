@@ -5,7 +5,7 @@ import CarePlan from "../model/CarePlan";
 import {ICarePlan} from "@ahryman40k/ts-fhir-types/lib/R4";
 
 interface PatientNotesProps {
-  onChange: Function
+
 }
 type PatientNotesState = {
     error: string;
@@ -49,7 +49,6 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
                   value={this.state.updatedPatientNote ?? ""}
                   placeholder={"Enter recipient note"}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    if (this.props.onChange) this.props.onChange();
                     this.setState({ updatedPatientNote: event.target.value });
                   }}
                 />
@@ -75,7 +74,7 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
                 size="small"
                 variant="outlined"
               >
-                {this.state.editable ? "Done" : "Update"}
+                {this.state.editable ? "Save notes" : "Update"}
               </Button>
             </CardActions>
           </>

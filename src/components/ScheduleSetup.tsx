@@ -141,7 +141,7 @@ export default class ScheduleSetup extends React.Component<
           <Grid item xs={12} sm={6} alignSelf={"stretch"}>
             <Item>
               {editing ? (
-                <PatientNotes onChange={() => this.setState({ hasUnsavedChanges: true })}/>
+                <PatientNotes />
               ) : (
                 <>
                   <Typography variant={"h6"}>{"Recipient note"}</Typography>
