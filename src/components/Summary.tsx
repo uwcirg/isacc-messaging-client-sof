@@ -32,6 +32,7 @@ import Client from "fhirclient/lib/Client";
 import {Bundle} from "../model/Bundle";
 import { AsYouType, isPossiblePhoneNumber,parsePhoneNumber } from 'libphonenumber-js';
 import { getFhirData } from '../util/isacc_util';
+import Practitioner from '../model/Practitioner';
 
 interface SummaryProps {
     editable: boolean,
@@ -65,6 +66,25 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     let client: Client = this.context.client;
     // @ts-ignore
     const patient = this.context.patient;
+
+    // @ts-ignore
+    const practitioner = this.context.practitioner;
+    if (practitioner) {
+      if (!patient.generalPractitioner) patient.generalPractitioner = [];
+      if (
+        !patient.generalPractitioner.find(
+          (p:Practitioner) => p.reference && p.reference.split("/")[1] === practitioner.id
+        )
+      ) {
+        // add current user to be one of the patient's general practitioners (list of followers)
+        const practitionerReference = {
+          type: "Practitioner",
+          reference: `Practitioner/${practitioner.id}`,
+        };
+        patient.generalPractitioner.push(practitionerReference);
+      }
+    }
+
     let params = new URLSearchParams({
       _count: "250",
       _sort: "-_lastUpdated",
