@@ -136,6 +136,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 aria-label="clear phone number"
                 onClick={() => {
                     patient.smsContactPoint = "";
+                    if (this.props.onChange) this.props.onChange();
                     this.setState({});
                 }}
                 edge="end"
