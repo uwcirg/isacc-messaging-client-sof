@@ -8,14 +8,17 @@ import {
     IconButton,
     List,
     ListItem,
+    Paper,
     Snackbar,
     Stack,
     TextField,
     TextFieldProps,
+    Tooltip,
     Typography
 } from "@mui/material";
 import {styled} from "@mui/material/styles";
-import ClearIcon from '@mui/icons-material/Clear';
+import ClearIcon from "@mui/icons-material/Clear";
+import WarningIcon from "@mui/icons-material/WarningAmberOutlined";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import moment from "moment";
@@ -49,6 +52,7 @@ type ScheduleSetupState = {
     alertSeverity: "error" | "warning" | "info" | "success";
     alertText: string;
     savingInProgress: boolean;
+    hasUnsavedChanges: boolean;
 }
 
 export type MessageDraft = {
@@ -67,281 +71,427 @@ const styles = {
 };
 
 
-export default class ScheduleSetup extends React.Component<ScheduleSetupProps, ScheduleSetupState> {
-    static contextType = FhirClientContext
-    planDefinition: PlanDefinition;
+export default class ScheduleSetup extends React.Component<
+  ScheduleSetupProps,
+  ScheduleSetupState
+> {
+  static contextType = FhirClientContext;
+  planDefinition: PlanDefinition;
 
-    // declare context: React.ContextType<typeof FhirClientContext>
+  // declare context: React.ContextType<typeof FhirClientContext>
 
-    constructor(props: ScheduleSetupProps) {
-        super(props);
-        this.state = {
-            carePlan: null,
-            showCloseSchedulePlannerAlert: false,
-            alertText: null,
-            alertSeverity: null,
-            savingInProgress: false
-        };
-        this.planDefinition = getDefaultMessageSchedule();
-    }
+  constructor(props: ScheduleSetupProps) {
+    super(props);
+    this.state = {
+      carePlan: null,
+      showCloseSchedulePlannerAlert: false,
+      alertText: null,
+      alertSeverity: null,
+      savingInProgress: false,
+      hasUnsavedChanges: false,
+    };
+    this.planDefinition = getDefaultMessageSchedule();
+    // This binding is necessary to make `this` work in the callback
+    this.alertUser = this.alertUser.bind(this);
+  }
 
-    componentDidMount() {
-        //@ts-ignore
-        let carePlan: CarePlan = this.context.currentCarePlan;
-        this.setState({carePlan: carePlan});
-    }
+  componentDidMount() {
+    //@ts-ignore
+    let carePlan: CarePlan = this.context.currentCarePlan;
+    this.setState({ carePlan: carePlan });
+    window.addEventListener("beforeunload", this.alertUser);
+  }
 
-    render(): React.ReactNode {
-        if (!this.state || !this.state.carePlan || !this.context) return <CircularProgress/>;
+  componentWillUnmount() {
+    window.removeEventListener("beforeunload", this.alertUser);
+  }
 
-        //@ts-ignore
-        let patient: Patient = this.context.patient;
+  alertUser(event: BeforeUnloadEvent) {
+    if (!this.state.hasUnsavedChanges) return;
+    event.preventDefault();
+    event.returnValue = "";
+    return;
+  }
 
-        let editing = this.state.carePlan.id != null;
+  render(): React.ReactNode {
+    if (!this.state || !this.state.carePlan || !this.context)
+      return <CircularProgress />;
 
+    //@ts-ignore
+    let patient: Patient = this.context.patient;
 
-        return <>
-            {editing ?
-                <Alert severity={"info"}>
-                    {`You are editing an existing CarePlan (CarePlan/${this.state.carePlan.id}, created ${new Date(this.state.carePlan.created)})`}
-                </Alert>
-                : null}
-            <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} alignSelf={"stretch"}><Item><Summary editable={true}/></Item></Grid>
-                <Grid item xs={12} sm={6} alignSelf={"stretch"}>
-                    <Item>
-                        {editing ?
-                            <PatientNotes/> :
-                            <>
-                                <Typography variant={'h6'}>{"Recipient note"}</Typography>
-                                <TextField
-                                    sx={{maxHeight: 400, overflow: 'auto', ...styles.patientNotesField}}
-                                    fullWidth
-                                    multiline
-                                    minRows={4}
-                                    value={this.state.carePlan.description ?? ""}
-                                    placeholder={"Recipient note"}
-                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                                        const cp = this.state.carePlan;
-                                        cp.description = event.target.value;
-                                        this.setState({carePlan: cp});
-                                    }}/>
-                            </>
-                        }
-                    </Item>
-                    <Item>
-                        <PatientPROs editable={true}></PatientPROs>
-                    </Item>
-                </Grid>
-                <Grid item xs={12}>
-                    <Item>
-                        <MessageScheduleList
-                            messagePlan={this.state.carePlan}
-                            onMessagePlanChanged={(carePlan: CarePlan) => {
-                                this.setState({carePlan: carePlan});
-                            }}
-                            saveSchedule={() => this.saveSchedule()}
-                            patient={patient}
-                        />
-                    </Item>
-                </Grid>
-            </Grid>
+    let editing = this.state.carePlan.id != null;
 
-            {this.getCloseSchedulePlannerAlert()}
-        </>
-    }
+    return (
+      <>
+        {editing ? (
+          <Alert severity={"info"}>
+            {`You are editing an existing CarePlan (CarePlan/${
+              this.state.carePlan.id
+            }, created ${new Date(this.state.carePlan.created)})`}
+          </Alert>
+        ) : null}
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6} alignSelf={"stretch"}>
+            <Item>
+              <Summary
+                editable={true}
+                onChange={() => this.setState({ hasUnsavedChanges: true })}
+              />
+            </Item>
+          </Grid>
+          <Grid item xs={12} sm={6} alignSelf={"stretch"}>
+            <Item>
+              {editing ? (
+                <PatientNotes />
+              ) : (
+                <>
+                  <Typography variant={"h6"}>{"Recipient note"}</Typography>
+                  <TextField
+                    sx={{
+                      maxHeight: 400,
+                      overflow: "auto",
+                      ...styles.patientNotesField,
+                    }}
+                    fullWidth
+                    multiline
+                    value={this.state.carePlan.description ?? ""}
+                    placeholder={"Recipient note"}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                      const cp = this.state.carePlan;
+                      cp.description = event.target.value;
+                      this.setState({ carePlan: cp, hasUnsavedChanges: true });
+                    }}
+                  />
+                </>
+              )}
+            </Item>
+            <Item>
+                <PatientPROs editable={true}></PatientPROs>
+            </Item>
+          </Grid>
+          <Grid item xs={12}>
+            <Item>
+              <MessageScheduleList
+                messagePlan={this.state.carePlan}
+                onMessagePlanChanged={(carePlan: CarePlan) => {
+                  this.setState({
+                    carePlan: carePlan,
+                    hasUnsavedChanges: true,
+                  });
+                }}
+                saveSchedule={() => this.saveSchedule()}
+                patient={patient}
+              />
+            </Item>
+          </Grid>
+        </Grid>
+        {this.getCloseSchedulePlannerAlert()}
+        {this.renderSaveFooter()}
+      </>
+    );
+  }
 
-    private showSnackbar(alertSeverity: "error" | "warning" | "info" | "success", alertText: string) {
-        this.setState({
-            showCloseSchedulePlannerAlert: true,
-            alertSeverity: alertSeverity,
-            alertText: alertText,
-            savingInProgress: false
-        });
-    }
-
-    private getCloseSchedulePlannerAlert() {
-        let clearSessionLink = getEnv("REACT_APP_DASHBOARD_URL") + "/clear_session";
-        let onClose = () => this.setState({showCloseSchedulePlannerAlert: false});
-
-        if (this.state.savingInProgress) {
-            return <Dialog open={this.state.savingInProgress}>
-                <DialogContent>
-                    <CircularProgress/>
-                    <DialogContentText>{"Saving..."}</DialogContentText>
-                </DialogContent>
-            </Dialog>;
-        }
-
-        if (this.state.alertSeverity === 'success') {
-            return <Dialog open={this.state.showCloseSchedulePlannerAlert}
-                           onClose={onClose}>
-                <DialogContent>
-                    <DialogContentText>{this.state.alertText}</DialogContentText>
-                    <DialogActions>
-                        <Button
-                            onClick={onClose}
-                            href={clearSessionLink}
-                            variant="contained"
-                        >
-                            Close schedule planner
-                        </Button>
-                    </DialogActions>
-                </DialogContent>
-            </Dialog>;
-        }
-        return <Snackbar open={this.state.showCloseSchedulePlannerAlert}
-                         autoHideDuration={6000}
-                         onClose={onClose}>
-            <Alert
-                onClose={onClose}
-                action={<Button href={clearSessionLink}>Close schedule planner</Button>}
-                severity={this.state.alertSeverity}
-                sx={{width: '100%'}}>
-                {this.state.alertText}
-            </Alert>
-        </Snackbar>;
-    }
-
-
-    private checkPhoneNumber(): Promise<any> {
-        // @ts-ignore
-        let patient: Patient = this.context.patient;
-        // @ts-ignore
-        let client: Client = this.context.client;
-
-        if (!patient.smsContactPoint) {
-            return new Promise((resolve,reject) => reject("No contact information entered."));
-        }
-
-        let params = new URLSearchParams({
-            "telecom": `${patient.smsContactPoint}`
-            // FIXME
-            // "_id:not: `${patient.id}`"  // this DOES NOT WORK, at least when tried against SMIT, R4 FHIR server 
-            // need to figure out the correct search paramter for excluding a patient id
-        }).toString();
-        return getFhirData(client, `/Patient?${params}`).then((bundle: Bundle): Promise<void> => {
-            return new Promise((resolve, reject) => {
-                if (bundle.type === "searchset") {
-                    if (bundle.entry) {
-                        let patients: Patient[] = bundle.entry.map((entry: IBundle_Entry) => {
-                            if (entry.resource.resourceType !== "Patient") {
-                                this.showSnackbar("error", "Unexpected resource type returned");
-                                return null;
-                            } else {
-                                console.log("Patient loaded:", entry);
-                                return Patient.from(entry.resource);
-                            }
-                        })
-                        if (patients.find(o => o.id !== patient.id)) { // exclude current patient, workaround for above FIXME
-                            reject(`Phone number is already associated with: ${patients.map(
-                                (p: Patient) => `${p.fullNameDisplay} (${p.reference})`
-                            ).join("; ")}.`);
-                        } else {
-                            resolve();
-                        }
-                    } else {
-                        resolve();
+  renderSaveFooter() {
+    return (
+      <Paper
+        sx={{
+          position: "fixed",
+          bottom: 0,
+          right: 0,
+          left: 0,
+          overflow: "hidden",
+          backgroundColor: "#FFF",
+          zIndex: 10,
+          width: "100%",
+          padding: (theme) => theme.spacing(2, 0),
+          textAlign: "center",
+        }}
+        elevation={4}
+      >
+        <Stack
+          spacing={2}
+          direction="row"
+          alignItems={"center"}
+          justifyContent={"center"}
+        >
+          {this.state.hasUnsavedChanges && (
+            <Tooltip
+              arrow
+              color="warning"
+              title="You have unsaved changes. Please click the DONE button to save them."
+              slotProps={{
+                tooltip: {
+                    sx: {
+                        backgroundColor: (theme) => theme.palette.warning.dark,
+                        fontSize: "0.95rem",
+                        padding: (theme) => theme.spacing(1)
                     }
-                } else {
-                    reject("Unexpected bundle type returned");
+                },
+                arrow: {
+                    sx: {
+                        color: (theme) => theme.palette.warning.dark
+                    }
                 }
-            });
+              }}
+            >
+              <WarningIcon fontSize="large" color="warning"></WarningIcon>
+            </Tooltip>
+          )}
 
-        })
+          <Button
+            variant="contained"
+            onClick={() => this.saveSchedule()}
+            size="large"
+            sx={{ minWidth: 240 }}
+          >
+            Done
+          </Button>
+        </Stack>
+      </Paper>
+    );
+  }
+
+  private showSnackbar(
+    alertSeverity: "error" | "warning" | "info" | "success",
+    alertText: string
+  ) {
+    this.setState({
+      showCloseSchedulePlannerAlert: true,
+      alertSeverity: alertSeverity,
+      alertText: alertText,
+      savingInProgress: false,
+    });
+  }
+
+  private getCloseSchedulePlannerAlert() {
+    let clearSessionLink = getEnv("REACT_APP_DASHBOARD_URL") + "/clear_session";
+    let onClose = () => this.setState({ showCloseSchedulePlannerAlert: false });
+
+    if (this.state.savingInProgress) {
+      return (
+        <Dialog open={this.state.savingInProgress}>
+          <DialogContent>
+            <CircularProgress />
+            <DialogContentText>{"Saving..."}</DialogContentText>
+          </DialogContent>
+        </Dialog>
+      );
     }
 
-    private saveSchedule() {
-        // @ts-ignore
-        let client: Client = this.context.client;
-        // @ts-ignore
-        let patient: Patient = this.context.patient;
+    if (this.state.alertSeverity === "success") {
+      return (
+        <Dialog
+          open={this.state.showCloseSchedulePlannerAlert}
+          onClose={onClose}
+        >
+          <DialogContent>
+            <DialogContentText>{this.state.alertText}</DialogContentText>
+            <DialogActions>
+              <Button
+                onClick={onClose}
+                href={clearSessionLink}
+                variant="contained"
+              >
+                Close schedule planner
+              </Button>
+            </DialogActions>
+          </DialogContent>
+        </Dialog>
+      );
+    }
+    return (
+      <Snackbar
+        open={this.state.showCloseSchedulePlannerAlert}
+        autoHideDuration={6000}
+        onClose={onClose}
+      >
+        <Alert
+          onClose={onClose}
+          action={
+            <Button href={clearSessionLink}>Close schedule planner</Button>
+          }
+          severity={this.state.alertSeverity}
+          sx={{ width: "100%" }}
+        >
+          {this.state.alertText}
+        </Alert>
+      </Snackbar>
+    );
+  }
 
-        if (!client) {
-            console.log("No client");
-            return;
-        }
+  private checkPhoneNumber(): Promise<any> {
+    // @ts-ignore
+    let patient: Patient = this.context.patient;
+    // @ts-ignore
+    let client: Client = this.context.client;
 
-        if (!patient) {
-            console.log("no patient");
-            return;
-        }
-        this.setState({savingInProgress: true});
-
-        if (this.state.carePlan.communicationRequests.find((m: CommunicationRequest) => m.getText().length === 0)) {
-            this.showSnackbar("error", "Messages cannot be empty");
-            return;
-        }
-
-        this.checkPhoneNumber().then(
-            (value: any) => {
-                return client.update(patient).then(
-                    (value: any) => {
-                        console.log(`Patient ${patient.id} updated`);
-                        this.saveCommunicationRequests();
-                    });
-            }, (reason: any) => {
-                this.showSnackbar("error", reason);
-            }
-        )
+    if (!patient.smsContactPoint) {
+      return new Promise((resolve, reject) =>
+        reject("No contact information entered.")
+      );
     }
 
-    private saveCommunicationRequests() {
-        // @ts-ignore
-        let client: Client = this.context.client;
-
-        let promises = this.state.carePlan.communicationRequests.map(
-            (c: CommunicationRequest) => {
-                let p;
-                if (c.id) {
-                    p = client.update(c);
-                } else {
-                    p = client.create(c);
+    let params = new URLSearchParams({
+      telecom: `${patient.smsContactPoint}`,
+      // FIXME
+      // "_id:not: `${patient.id}`"  // this DOES NOT WORK, at least when tried against SMIT, R4 FHIR server
+      // need to figure out the correct search paramter for excluding a patient id
+    }).toString();
+    return getFhirData(client, `/Patient?${params}`).then(
+      (bundle: Bundle): Promise<void> => {
+        return new Promise((resolve, reject) => {
+          if (bundle.type === "searchset") {
+            if (bundle.entry) {
+              let patients: Patient[] = bundle.entry.map(
+                (entry: IBundle_Entry) => {
+                  if (entry.resource.resourceType !== "Patient") {
+                    this.showSnackbar(
+                      "error",
+                      "Unexpected resource type returned"
+                    );
+                    return null;
+                  } else {
+                    console.log("Patient loaded:", entry);
+                    return Patient.from(entry.resource);
+                  }
                 }
-                return p.then(
-                    (value: any) => CommunicationRequest.from(value)
+              );
+              if (patients.find((o) => o.id !== patient.id)) {
+                // exclude current patient, workaround for above FIXME
+                reject(
+                  `Phone number is already associated with: ${patients
+                    .filter((p: Patient) => p.id !== patient.id)
+                    .map(
+                      (p: Patient) => `${p.fullNameDisplay} (${p.reference})`
+                    )
+                    .join("; ")}.`
                 );
-            }
-        );
-
-        Promise.all(promises).then((communicationRequests: CommunicationRequest[]) => {
-            communicationRequests.forEach((v: CommunicationRequest) => {
-                console.log("resource saved:", v);
-            });
-            // update CarePlan with the newly created CommunicationRequests
-            this.state.carePlan.setCommunicationRequests(communicationRequests.filter(cr => cr.resourceType === "CommunicationRequest"));
-            // create resource on server
-            let p;
-            if (this.state.carePlan.id) {
-                p = client.update(this.state.carePlan);
+              } else {
+                resolve();
+              }
             } else {
-                p = client.create(this.state.carePlan);
+              resolve();
             }
-            p.then((savedCarePlan: IResource) => {
-                this.onSaved(savedCarePlan);
-                let updatePromises = communicationRequests.map((c: CommunicationRequest) => {
-                    c.basedOn = [{reference: `CarePlan/${savedCarePlan.id}`}];
-                    return client.update(c).then((value: any) => CommunicationRequest.from(value));
-                });
-                Promise.all(updatePromises).then((updatedCommunicationRequests: CommunicationRequest[]) => {
-                    updatedCommunicationRequests.forEach((v: CommunicationRequest) => {
-                        console.log("CommunicationRequest updated:", v);
-                    });
-                })
-            }, (reason: any) => this.onRejected(reason));
-        }, this.onRejected);
+          } else {
+            reject("Unexpected bundle type returned");
+          }
+        });
+      }
+    );
+  }
+
+  private saveSchedule() {
+    // @ts-ignore
+    let client: Client = this.context.client;
+    // @ts-ignore
+    let patient: Patient = this.context.patient;
+
+    if (!client) {
+      console.log("No client");
+      return;
     }
 
-    private onSaved(value: IResource) {
-        console.log("resource saved:", value);
-        this.showSnackbar("success", "Schedule created successfully")
+    if (!patient) {
+      console.log("no patient");
+      return;
+    }
+    this.setState({ savingInProgress: true });
+
+    if (
+      this.state.carePlan.communicationRequests.find(
+        (m: CommunicationRequest) => m.getText().length === 0
+      )
+    ) {
+      this.showSnackbar("error", "Messages cannot be empty");
+      return;
     }
 
-    private onRejected(reason: any) {
-        console.log("resource rejected:", reason);
-        this.showSnackbar("error", "Schedule could not be created")
-    }
+    this.checkPhoneNumber().then(
+      (value: any) => {
+        return client.update(patient).then((value: any) => {
+          console.log(`Patient ${patient.id} updated`);
+          this.saveCommunicationRequests();
+        });
+      },
+      (reason: any) => {
+        this.showSnackbar("error", reason);
+      }
+    );
+  }
 
+  private saveCommunicationRequests() {
+    // @ts-ignore
+    let client: Client = this.context.client;
+
+    let promises = this.state.carePlan.communicationRequests.map(
+      (c: CommunicationRequest) => {
+        let p;
+        if (c.id) {
+          p = client.update(c);
+        } else {
+          p = client.create(c);
+        }
+        return p.then((value: any) => CommunicationRequest.from(value));
+      }
+    );
+
+    Promise.all(promises).then(
+      (communicationRequests: CommunicationRequest[]) => {
+        communicationRequests.forEach((v: CommunicationRequest) => {
+          console.log("resource saved:", v);
+        });
+        // update CarePlan with the newly created CommunicationRequests
+        this.state.carePlan.setCommunicationRequests(
+          communicationRequests.filter(
+            (cr) => cr.resourceType === "CommunicationRequest"
+          )
+        );
+        // create resource on server
+        let p;
+        if (this.state.carePlan.id) {
+          p = client.update(this.state.carePlan);
+        } else {
+          p = client.create(this.state.carePlan);
+        }
+        p.then(
+          (savedCarePlan: IResource) => {
+            this.onSaved(savedCarePlan);
+            let updatePromises = communicationRequests.map(
+              (c: CommunicationRequest) => {
+                c.basedOn = [{ reference: `CarePlan/${savedCarePlan.id}` }];
+                return client
+                  .update(c)
+                  .then((value: any) => CommunicationRequest.from(value));
+              }
+            );
+            Promise.all(updatePromises).then(
+              (updatedCommunicationRequests: CommunicationRequest[]) => {
+                updatedCommunicationRequests.forEach(
+                  (v: CommunicationRequest) => {
+                    console.log("CommunicationRequest updated:", v);
+                  }
+                );
+              }
+            );
+          },
+          (reason: any) => this.onRejected(reason)
+        );
+      },
+      this.onRejected
+    );
+  }
+
+  private onSaved(value: IResource) {
+    console.log("resource saved:", value);
+    this.setState({ hasUnsavedChanges: false });
+    this.showSnackbar("success", "Schedule created successfully");
+  }
+
+  private onRejected(reason: any) {
+    console.log("resource rejected:", reason);
+    this.showSnackbar("error", "Schedule could not be created");
+  }
 }
 
 const Item = styled(Box)(({ theme }) => ({
@@ -362,7 +512,10 @@ const MessageScheduleList = (props: {
     const buildMessageItem = (message: CommunicationRequest, index: number) => {
         return (
             <ListItem key={index} sx={{
-                width: '100%'
+                width: '100%',
+                "& .MuiListItemSecondaryAction-root": {
+                    right: 0.5
+                }
             }} secondaryAction={
                 message.status === "completed" ? <></> :
                     <IconButton hidden={message.status === "completed"} onClick={() => {
@@ -471,6 +624,7 @@ const MessageScheduleList = (props: {
         >
           <Button
             variant="outlined"
+            size="large"
             onClick={() => {
               let newMessage = CommunicationRequest.createNewScheduledMessage(
                 "",
@@ -483,14 +637,6 @@ const MessageScheduleList = (props: {
             }}
           >
             Add message
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => props.saveSchedule()}
-            size="large"
-            sx={{ minWidth: 130 }}
-          >
-            Done
           </Button>
         </Stack>
       </>

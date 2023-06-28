@@ -43,9 +43,11 @@ import Client from "fhirclient/lib/Client";
 import {Bundle} from "../model/Bundle";
 import { AsYouType, isPossiblePhoneNumber,parsePhoneNumber } from 'libphonenumber-js';
 import { getFhirData } from '../util/isacc_util';
+import Practitioner from '../model/Practitioner';
 
 interface SummaryProps {
-    editable: boolean
+    editable: boolean,
+    onChange: Function
 }
 
 type ContactToAdd = {
@@ -89,6 +91,25 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     let client: Client = this.context.client;
     // @ts-ignore
     const patient = this.context.patient;
+
+    // @ts-ignore
+    const practitioner = this.context.practitioner;
+    if (practitioner) {
+      if (!patient.generalPractitioner) patient.generalPractitioner = [];
+      if (
+        !patient.generalPractitioner.find(
+          (p:Practitioner) => p.reference && p.reference.split("/")[1] === practitioner.id
+        )
+      ) {
+        // add current user to be one of the patient's general practitioners (list of followers)
+        const practitionerReference = {
+          type: "Practitioner",
+          reference: `Practitioner/${practitioner.id}`,
+        };
+        patient.generalPractitioner.push(practitionerReference);
+      }
+    }
+
     let params = new URLSearchParams({
       _count: "250",
       _sort: "-_lastUpdated",
@@ -200,6 +221,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 aria-label="clear phone number"
                 onClick={() => {
                   patient.smsContactPoint = "";
+                  if (this.props.onChange) this.props.onChange();
                   this.setState({});
                 }}
                 edge="end"
@@ -224,6 +246,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           } catch (e) {
             patient.smsContactPoint = event.target.value;
           }
+          if (this.props.onChange) this.props.onChange();
           this.setState({});
         }}
         fullWidth
@@ -244,6 +267,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         size="small"
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
           patient.preferredName = event.target.value;
+          if (this.props.onChange) this.props.onChange();
           this.setState({});
         }}
         fullWidth
@@ -263,6 +287,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         size="small"
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
           patient.pronouns = event.target.value;
+          if (this.props.onChange) this.props.onChange();
           this.setState({});
         }}
         fullWidth
@@ -284,6 +309,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         size="small"
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
           patient.addressText = event.target.value;
+          if (this.props.onChange) this.props.onChange();
           this.setState({});
         }}
         fullWidth
@@ -317,6 +343,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                   edge="end"
                   onClick={() => {
                     patient.removeContact(index);
+                    if (this.props.onChange) this.props.onChange();
                     this.setState({});
                   }}
                 >
@@ -358,6 +385,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                   variant="standard"
                   size="small"
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    if (this.props.onChange) this.props.onChange();
                     this.setState({
                       contactToAdd: {
                         ...this.state.contactToAdd,
@@ -380,6 +408,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                     variant="standard"
                     size="small"
                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                      if (this.props.onChange) this.props.onChange();
                       this.setState({
                         contactToAdd: {
                           ...this.state.contactToAdd,
@@ -399,6 +428,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                     size="small"
                     margin="dense"
                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                      if (this.props.onChange) this.props.onChange();
                       this.setState({
                         contactToAdd: {
                           ...this.state.contactToAdd,
@@ -414,6 +444,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                     variant="outlined"
                     sx={{ textAlign: "left", marginTop: 1 }}
                     onClick={() => {
+                      if (this.props.onChange) this.props.onChange();
                       patient.addContact(
                         this.state.contactToAdd.name,
                         this.state.contactToAdd.phoneNumber,
@@ -445,6 +476,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         size="small"
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
           patient.userID = event.target.value;
+          if (this.props.onChange) this.props.onChange();
           this.setState({});
         }}
         fullWidth
@@ -483,8 +515,8 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 const inputValue = value
                   ? value.toDate().toISOString().slice(0, 10)
                   : null;
-                if (!inputValue) return;
                 const validationError = validationContext?.validationError;
+                if (this.props.onChange) this.props.onChange();
                 if (!validationError) {
                   patient.studyStartDate = inputValue;
                   this.setState({});
@@ -498,6 +530,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           }}
           onChange={(newValue: Date | null) => {
             patient.studyStartDate = newValue?.toISOString()?.slice(0, 10);
+            if (this.props.onChange) this.props.onChange();
             this.setState({});
           }}
           disableFuture
@@ -530,6 +563,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         )}
         onChange={(event: any, value: string) => {
           patient.studyStatus = value;
+          if (this.props.onChange) this.props.onChange();
           this.setState({});
         }}
       />
@@ -585,6 +619,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             this.setState({
               selectedPractitioners: value,
             });
+            if (this.props.onChange) this.props.onChange();
             if (!value || !value.length) {
               this.setState({
                 selectAllPractitioners: false,
@@ -616,6 +651,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 patient.generalPractitioner = toReferences(
                   this.state.practitioners
                 );
+                if (this.props.onChange) this.props.onChange();
               }}
             />
           }
