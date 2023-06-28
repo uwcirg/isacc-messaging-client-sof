@@ -45,7 +45,7 @@ import {Bundle} from "../model/Bundle";
 import {getEnv} from "../util/util";
 import {getFhirData, getUserName } from "../util/isacc_util";
 
-type MessageType = "sms" | "outside communication" | "comment";
+type MessageType = "sms" | "manual message" | "comment";
 type MessageStatus = "sent" | "received";
 
 interface Message {
@@ -452,7 +452,7 @@ export default class MessagingView extends React.Component<
         >
           <Tab value="sms" label="ISACC manual" {...tabProps} />
           <Tab
-            value="outside communication"
+            value="manual message"
             label="Outside communication"
             {...tabProps}
           />
@@ -898,7 +898,7 @@ export default class MessagingView extends React.Component<
     const group2 = keys.filter((item, index) => index > halfwayIndex);
     const labels: any = {
       incoming: "reply from recipient",
-      info: "non-SMS outside communication",
+      info: "non-SMS manual message",
       pending: "pending message",
       system: "sent by system",
       smsByAuthor: "sent by user",
@@ -1152,7 +1152,7 @@ export default class MessagingView extends React.Component<
     // @ts-ignore
     const currentPractitioner = this.context.practitioner;
     const referenceId = message?.sender?.reference.split("/")[1];
-    // practitioner info is available, user can only edit a outside communication or comment authored by him/herself
+    // practitioner info is available, user can only edit a manual message or comment authored by him/herself
     if (
       currentPractitioner &&
       message.sender &&
@@ -1162,7 +1162,7 @@ export default class MessagingView extends React.Component<
     ) {
       isEditable = isEditable && referenceId === currentPractitioner.id;
     }
-    // username is available, user can only edit a outside communication or comment authored by him/herself
+    // username is available, user can only edit a manual message or comment authored by him/herself
     else if (userName) isEditable = isEditable && note.includes(userName);
 
     return this._alignedRow(
