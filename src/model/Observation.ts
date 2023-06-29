@@ -19,6 +19,29 @@ export class Observation implements IObservation {
         return a;
     }
 
+    static PHQ9_OBS_CODE = "44261-6";
+    static CSS_OBS_CODE = "93373-9";
+
+    static createPHQ9Observation(value: string, patientId: string) {
+        return Observation.create(
+            this.PHQ9_OBS_CODE,
+            "http://loinc.org",
+            "PHQ9 score",
+            value,
+            patientId
+        );
+    }
+
+    static createCSSObservation(value: string, patientId: string) {
+        return Observation.create(
+            this.CSS_OBS_CODE,
+            "http://loinc.org",
+            "C-SSRS score",
+            value,
+            patientId
+        );
+    }
+
     static create(code: string, system: string, display: string, value: string, patientId: string) : Observation {
         const o = new Observation();
         if (code) {

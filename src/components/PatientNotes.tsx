@@ -16,7 +16,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
 
 interface PatientNotesProps {
-
+  onChange?: Function,
+  onSave?: Function
 }
 type PatientNotesState = {
     error: string;
@@ -53,17 +54,20 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
             <CardContent sx={{ padding: 0 }}>
               <Typography variant={"h6"}>Recipient notes</Typography>
               {this.state.editable ? (
-                <TextField
-                  InputProps={{ sx: { typography: "body1" } }}
-                  multiline
-                  fullWidth
-                  minRows={4}
-                  value={this.state.updatedPatientNote ?? ""}
-                  placeholder={"Enter recipient note"}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    this.setState({ updatedPatientNote: event.target.value });
-                  }}
-                />
+                <Box sx={{margin: (theme) => theme.spacing(1)}}>
+                  <TextField
+                    InputProps={{ sx: { typography: "body1" } }}
+                    multiline
+                    fullWidth
+                    minRows={4}
+                    value={this.state.updatedPatientNote ?? ""}
+                    placeholder={"Enter recipient note"}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                      if (this.props.onChange) this.props.onChange();
+                      this.setState({ updatedPatientNote: event.target.value });
+                    }}
+                  />
+                </Box>
               ) : (
                 <Box sx={{padding: 1}}>
                   <Typography variant={"body1"} sx={{whiteSpace: "pre-wrap"}}>
@@ -114,6 +118,7 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
             (result: any) => {
                 context.currentCarePlan = CarePlan.from(result as ICarePlan);
                 console.log("Updated CarePlan:", context.currentCarePlan);
+                if (this.props.onSave) this.props.onSave();
                 this.setState({
                     editable: false,
                     updatedPatientNote: null

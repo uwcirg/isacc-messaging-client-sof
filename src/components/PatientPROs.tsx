@@ -11,10 +11,7 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
-import Client from "fhirclient/lib/Client";
-import { Bundle } from "../model/Bundle";
-import Patient from "../model/Patient";
-import { ICoding, IObservation } from "@ahryman40k/ts-fhir-types/lib/R4";
+import { ICoding } from "@ahryman40k/ts-fhir-types/lib/R4";
 import {
   amber,
   deepOrange,
@@ -27,7 +24,10 @@ import { CSSAnswerCategories } from "../model/CodeSystem";
 import { Observation } from "../model/Observation";
 
 interface PatientPROsProps {
-  editable: boolean;
+  editable?: boolean;
+  fieldsOnly?: boolean;
+  onChange?: Function;
+  onSave?: Function;
 }
 
 type PatientPROsState = {
@@ -70,10 +70,7 @@ function colorForCssObs(value: Observation) {
   return red[100];
 }
 
-export default class PatientPROs extends React.Component<
-  PatientPROsProps,
-  PatientPROsState
-> {
+export default class PatientPROs extends React.Component<PatientPROsProps, PatientPROsState> {
   static contextType = FhirClientContext;
 
   constructor(props: Readonly<PatientPROsProps> | PatientPROsProps) {
@@ -82,7 +79,7 @@ export default class PatientPROs extends React.Component<
       error: "",
       mostRecentPhq9: null,
       mostRecentCss: null,
-      loaded: false,
+      loaded: true,
       editable: false,
       saveLoading: false,
       saveError: false,
@@ -97,82 +94,18 @@ export default class PatientPROs extends React.Component<
       console.log("Context not available in componentDidMount!");
       return;
     }
-
-    this.getPROs(context.client, context.patient);
   }
-
-  private PHQ_OBS_CODE = "44261-6";
-  private CSS_OBS_CODE = "93373-9";
-
-  private async getPROs(client: Client, patient: Patient) {
-    let phqRequest = this.getObs(client, patient, this.PHQ_OBS_CODE);
-    let cssRequest = this.getObs(client, patient, this.CSS_OBS_CODE);
-    await Promise.all([phqRequest, cssRequest])
-      .then(
-        (results) => {
-          console.log("Loaded Observations:", results);
-          this.setState({
-            mostRecentPhq9: Observation.from(results[0]),
-            mostRecentCss: Observation.from(results[1]),
-            loaded: true,
-          });
-        },
-        (reason: any) => {
-          console.log("Error", reason);
-          this.setState({ error: reason });
-        }
-      )
-      .catch((e) => {
-        console.log("Error", e);
-        this.setState({ error: e });
-      });
-  }
-
-  private getObs(
-    client: Client,
-    patient: Patient,
-    code: string
-  ): Promise<IObservation> {
-    let params = new URLSearchParams({
-      subject: `${patient.reference}`,
-      code: code,
-      _sort: "-date",
-      _count: "1",
-    }).toString();
-    return client.request(`/Observation?${params}`).then(
-      (bundle: Bundle) => {
-        if (bundle.type === "searchset") {
-          if (!bundle.entry) return null;
-
-          let obs: IObservation[] = bundle.entry.map((entry) => {
-            if (entry.resource.resourceType !== "Observation") {
-              throw new Error("Unexpected resource type returned");
-            } else {
-              console.log("IObservation loaded:", entry.resource);
-              let obs: IObservation = entry.resource as IObservation;
-              return obs;
-            }
-          });
-          if (obs.length > 1)
-            throw new Error("More than 1 Observation.ts returned");
-          return obs[0];
-        } else {
-          throw new Error("Unexpected bundle type returned");
-        }
-      },
-      (reason: any) => {
-        throw new Error(reason.toString());
-      }
-    );
-  }
-
-  renderEditView() {
+  renderFields() {
+    // @ts-ignore
+    let mostRecentPhq9 = this.context.mostRecentPhq9;
+    // @ts-ignore
+    let mostRecentCss = this.context.mostRecentCss;
     return (
       <Stack
         direction={"column"}
+        spacing={2}
         alignItems={"flex-start"}
-        spacing={4}
-        sx={{ padding: (theme) => theme.spacing(1), marginTop: 1 }}
+        sx={{ marginTop: (theme) => theme.spacing(1) }}
       >
         <TextField
           label="PHQ-9 score"
@@ -182,30 +115,27 @@ export default class PatientPROs extends React.Component<
             shrink: true,
           }}
           margin="dense"
-          defaultValue={this.state.mostRecentPhq9?.valueDisplay ?? ""}
+          defaultValue={mostRecentPhq9?.valueDisplay ?? ""}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            if (this.props.onChange) this.props.onChange();
             // @ts-ignore
             const patient = this.context.patient;
-            if (this.state.mostRecentPhq9) {
-              this.setState({
-                mostRecentPhq9: {
-                  ...this.state.mostRecentPhq9,
-                  valueQuantity: {
-                    value: parseFloat(event.target.value),
-                  },
-                } as Observation,
-              });
+            if (mostRecentPhq9) {
+              // @ts-ignore
+              this.context.mostRecentPhq9 = {
+                ...mostRecentPhq9,
+                valueQuantity: {
+                  value: parseFloat(event.target.value),
+                },
+              };
               return;
             }
-            this.setState({
-              mostRecentPhq9: Observation.create(
-                this.PHQ_OBS_CODE,
-                "http://loinc.org",
-                "PHQ9 score",
-                event.target.value,
-                patient?.id
-              ),
-            });
+            if (!event.target.value) return;
+            // @ts-ignore
+            this.context.mostRecentPhq9 = Observation.createPHQ9Observation(
+              event.target.value,
+              patient?.id
+            );
           }}
         ></TextField>
         <TextField
@@ -215,32 +145,41 @@ export default class PatientPROs extends React.Component<
           InputLabelProps={{
             shrink: true,
           }}
-          defaultValue={this.state.mostRecentCss?.valueDisplay ?? ""}
+          defaultValue={mostRecentCss?.valueDisplay ?? ""}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
             // @ts-ignore
             const patient = this.context.patient;
-            if (this.state.mostRecentCss) {
-              this.setState({
-                mostRecentCss: {
-                  ...this.state.mostRecentCss,
-                  valueQuantity: {
-                    value: parseFloat(event.target.value),
-                  },
-                } as Observation,
-              });
+            if (mostRecentCss) {
+              // @ts-ignore
+              this.context.mostRecentCss = {
+                ...mostRecentCss,
+                valueQuantity: {
+                  value: parseFloat(event.target.value),
+                },
+              };
               return;
             }
-            this.setState({
-              mostRecentCss: Observation.create(
-                this.CSS_OBS_CODE,
-                "http://loinc.org",
-                "C-SSRS score",
-                event.target.value,
-                patient?.id
-              ),
-            });
+            if (!event.target.value) return;
+            // @ts-ignore
+            this.context.mostRecentCss = Observation.createCSSObservation(
+              event.target.value,
+              patient?.id
+            );
           }}
         ></TextField>
+      </Stack>
+    );
+  }
+
+  renderEditView() {
+    return (
+      <Stack
+        direction={"column"}
+        alignItems={"flex-start"}
+        spacing={2}
+        sx={{ padding: (theme) => theme.spacing(1), marginTop: 1 }}
+      >
+        {this.renderFields()}
         <Box sx={{ m: 1, position: "relative" }}>
           <Button
             variant="outlined"
@@ -249,37 +188,35 @@ export default class PatientPROs extends React.Component<
             size="small"
             fullWidth
             onClick={() => {
-              if (!this.state.mostRecentPhq9 && !this.state.mostRecentCss) {
-                this.setState({
-                  editable: false
-                });
-                return;
-              }
+              // @ts-ignore
+              const mostRecentPhq9 = this.context.mostRecentPhq9;
+              // @ts-ignore
+              const mostRecentCss = this.context.mostRecentCss;
               // @ts-ignore
               const client = this.context.client;
               const requests = [];
-              if (this.state.mostRecentPhq9) {
+              if (mostRecentPhq9) {
                 let phq9Request;
-                if (this.state.mostRecentPhq9.id) {
-                  phq9Request = client.update(this.state.mostRecentPhq9);
+                if (mostRecentPhq9.id) {
+                  phq9Request = client.update(mostRecentPhq9);
                 } else {
-                  phq9Request = client.create(this.state.mostRecentPhq9);
+                  phq9Request = client.create(mostRecentPhq9);
                 }
                 requests.push(phq9Request);
               }
-              if (this.state.mostRecentCss) {
+              if (mostRecentCss) {
                 let cssRequest;
-                if (this.state.mostRecentCss.id) {
-                  cssRequest = client.update(this.state.mostRecentCss);
+                if (mostRecentCss.id) {
+                  cssRequest = client.update(mostRecentCss);
                 } else {
-                  cssRequest = client.create(this.state.mostRecentCss);
+                  cssRequest = client.create(mostRecentCss);
                 }
                 requests.push(cssRequest);
               }
 
               if (!requests.length) {
                 this.setState({
-                  editable: false
+                  editable: false,
                 });
                 return;
               }
@@ -290,12 +227,15 @@ export default class PatientPROs extends React.Component<
 
               Promise.all(requests)
                 .then((results) => {
+                  if (this.props.onSave) this.props.onSave();
                   this.setState({
                     saveLoading: false,
-                    mostRecentPhq9: Observation.from(results[0]),
-                    mostRecentCss: Observation.from(results[1]),
-                    editable: false
+                    editable: false,
                   });
+                  // @ts-ignore
+                  this.context.mostRecentPhq9 = Observation.from(results[0]);
+                  // @ts-ignore
+                  this.context.mostRecentCss = Observation.from(results[1]);
                 })
                 .catch((e) => {
                   console.log("Error saving observations ", e);
@@ -331,6 +271,10 @@ export default class PatientPROs extends React.Component<
   }
 
   renderDisplayView() {
+    // @ts-ignore
+    const mostRecentPhq9 = this.context.mostRecentPhq9;
+    // @ts-ignore
+    const mostRecentCss = this.context.mostRecentCss;
     return (
       <Stack
         direction={"column"}
@@ -342,13 +286,13 @@ export default class PatientPROs extends React.Component<
           <>
             <LabeledValueBubble
               title={"PHQ-9"}
-              value={this.state.mostRecentPhq9?.valueDisplay ?? "-"}
-              backgroundColor={colorForPhq9Obs(this.state.mostRecentPhq9)}
+              value={mostRecentPhq9?.valueDisplay ?? "-"}
+              backgroundColor={colorForPhq9Obs(mostRecentPhq9)}
             />
             <LabeledValueBubble
               title={"C-SSRS"}
-              value={this.state.mostRecentCss?.valueDisplay ?? "-"}
-              backgroundColor={colorForCssObs(this.state.mostRecentCss)}
+              value={mostRecentCss?.valueDisplay ?? "-"}
+              backgroundColor={colorForCssObs(mostRecentCss)}
             />
             <Button
               startIcon={<EditIcon></EditIcon>}
@@ -375,6 +319,15 @@ export default class PatientPROs extends React.Component<
       return <Alert severity={"error"}>{this.state.error}</Alert>;
 
     if (!this.state.loaded) return <CircularProgress />;
+
+    if (this.props.fieldsOnly) {
+      return (
+        <>
+          {this.renderTitle()}
+          {this.renderFields()}
+        </>
+      );
+    }
 
     return (
       <>

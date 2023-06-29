@@ -51,8 +51,8 @@ import { getFhirData } from '../util/isacc_util';
 import Practitioner from '../model/Practitioner';
 
 interface SummaryProps {
-    editable: boolean,
-    onChange: Function
+    editable?: boolean,
+    onChange?: Function
 }
 
 type ContactToAdd = {

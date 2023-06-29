@@ -1,8 +1,8 @@
 import * as React from "react";
 import {
     AlertTitle,
-    Box,
     Button,
+    Container,
     Chip,
     CircularProgress,
     Grid,
@@ -47,13 +47,20 @@ import { getFhirData } from "../util/isacc_util";
 interface ScheduleSetupProps {
 }
 
+type UnsavedStates = {
+  patient: boolean,
+  careplan: boolean,
+  communications: boolean,
+  pro: boolean
+}
+
 type ScheduleSetupState = {
     carePlan: CarePlan;
     showCloseSchedulePlannerAlert: boolean;
     alertSeverity: "error" | "warning" | "info" | "success";
     alertText: string;
     savingInProgress: boolean;
-    hasUnsavedChanges: boolean;
+    unsavedStates: UnsavedStates;
 }
 
 export type MessageDraft = {
@@ -61,6 +68,12 @@ export type MessageDraft = {
     scheduledDateTime: Date
 }
 
+const defaultUnsavedStates = {
+  patient: false,
+  careplan: false,
+  communications: false,
+  pro: false
+}
 
 const styles = {
     patientNotesField: {
@@ -89,7 +102,7 @@ export default class ScheduleSetup extends React.Component<
       alertText: null,
       alertSeverity: null,
       savingInProgress: false,
-      hasUnsavedChanges: false,
+      unsavedStates: defaultUnsavedStates,
     };
     this.planDefinition = getDefaultMessageSchedule();
     // This binding is necessary to make `this` work in the callback
@@ -107,8 +120,12 @@ export default class ScheduleSetup extends React.Component<
     window.removeEventListener("beforeunload", this.alertUser);
   }
 
+  hasUnsavedChanges() {
+    return Object.entries(this.state.unsavedStates).find(item => item[1]);
+  }
+
   alertUser(event: BeforeUnloadEvent) {
-    if (!this.state.hasUnsavedChanges) return;
+    if (!this.hasUnsavedChanges()) return;
     event.preventDefault();
     event.returnValue = "";
     return;
@@ -124,13 +141,13 @@ export default class ScheduleSetup extends React.Component<
     let editing = this.state.carePlan.id != null;
 
     return (
-      <>
+      <Container maxWidth={"lg"}>
         {editing ? (
           <Alert severity={"info"}>
             <AlertTitle>You are editing an existing CarePlan</AlertTitle>
-            {`CarePlan/${
-              this.state.carePlan.id
-            }, created ${new Date(this.state.carePlan.created)}`}
+            {`CarePlan/${this.state.carePlan.id}, created ${new Date(
+              this.state.carePlan.created
+            )}`}
           </Alert>
         ) : null}
         <Grid container spacing={2}>
@@ -138,14 +155,45 @@ export default class ScheduleSetup extends React.Component<
             <Item>
               <Summary
                 editable={true}
-                onChange={() => this.setState({ hasUnsavedChanges: true })}
+                onChange={() =>
+                  this.setState({
+                    unsavedStates: {
+                      ...this.state.unsavedStates,
+                      patient: true,
+                    },
+                  })
+                }
               />
             </Item>
           </Grid>
-          <Grid item xs={12} sm={12} md={6} alignSelf={"stretch"} sx={{display: "flex", flexDirection: "column"}}>
+          <Grid
+            item
+            xs={12}
+            sm={12}
+            md={6}
+            alignSelf={"stretch"}
+            sx={{ display: "flex", flexDirection: "column" }}
+          >
             <Item>
               {editing ? (
-                <PatientNotes />
+                <PatientNotes
+                  onChange={() => {
+                    this.setState({
+                      unsavedStates: {
+                        ...this.state.unsavedStates,
+                        careplan: true,
+                      },
+                    });
+                  }}
+                  onSave={() => {
+                    this.setState({
+                      unsavedStates: {
+                        ...this.state.unsavedStates,
+                        careplan: false,
+                      },
+                    });
+                  }}
+                />
               ) : (
                 <>
                   <Typography variant={"h6"}>{"Recipient note"}</Typography>
@@ -157,19 +205,45 @@ export default class ScheduleSetup extends React.Component<
                     }}
                     fullWidth
                     multiline
+                    minRows={5}
                     value={this.state.carePlan.description ?? ""}
                     placeholder={"Recipient note"}
                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                       const cp = this.state.carePlan;
                       cp.description = event.target.value;
-                      this.setState({ carePlan: cp, hasUnsavedChanges: true });
+                      this.setState({
+                        carePlan: cp,
+                        unsavedStates: {
+                          ...this.state.unsavedStates,
+                          careplan: true,
+                        },
+                      });
                     }}
                   />
                 </>
               )}
             </Item>
             <Item>
-                <PatientPROs editable={true}></PatientPROs>
+              <PatientPROs
+                fieldsOnly={!editing}
+                editable={editing}
+                onChange={() => {
+                  this.setState({
+                    unsavedStates: {
+                      ...this.state.unsavedStates,
+                      pro: true,
+                    },
+                  });
+                }}
+                onSave={() => {
+                  this.setState({
+                    unsavedStates: {
+                      ...this.state.unsavedStates,
+                      pro: false,
+                    },
+                  });
+                }}
+              ></PatientPROs>
             </Item>
           </Grid>
           <Grid item xs={12}>
@@ -179,7 +253,10 @@ export default class ScheduleSetup extends React.Component<
                 onMessagePlanChanged={(carePlan: CarePlan) => {
                   this.setState({
                     carePlan: carePlan,
-                    hasUnsavedChanges: true,
+                    unsavedStates: {
+                      ...this.state.unsavedStates,
+                      communications: true,
+                    },
                   });
                 }}
                 saveSchedule={() => this.saveSchedule()}
@@ -190,7 +267,7 @@ export default class ScheduleSetup extends React.Component<
         </Grid>
         {this.getCloseSchedulePlannerAlert()}
         {this.renderSaveFooter()}
-      </>
+      </Container>
     );
   }
 
@@ -217,11 +294,12 @@ export default class ScheduleSetup extends React.Component<
           alignItems={"center"}
           justifyContent={"center"}
         >
-          {this.state.hasUnsavedChanges && (
+          {this.hasUnsavedChanges() && (
             <Tooltip
               arrow
               color="warning"
               title="You have unsaved changes. Please click the DONE button to save them."
+              enterTouchDelay={0}
               slotProps={{
                 tooltip: {
                     sx: {
@@ -414,6 +492,8 @@ export default class ScheduleSetup extends React.Component<
         return client.update(patient).then((value: any) => {
           console.log(`Patient ${patient.id} updated`);
           this.saveCommunicationRequests();
+          // update PRO scores
+          this.savePROs();
         });
       },
       (reason: any) => {
@@ -484,9 +564,56 @@ export default class ScheduleSetup extends React.Component<
     );
   }
 
+  private savePROs() {
+    // @ts-ignore
+    const mostRecentPhq9 = this.context.mostRecentPhq9;
+    // @ts-ignore
+    const mostRecentCss = this.context.mostRecentCss;
+    // if (!mostRecentPhq9 && !mostRecentCss) {
+    //   return;
+    // }
+    // @ts-ignore
+    const client = this.context.client;
+    const requests = [];
+    if (mostRecentPhq9) {
+      let phq9Request;
+      if (mostRecentPhq9.id) {
+        phq9Request = client.update(mostRecentPhq9);
+      } else {
+        phq9Request = client.create(mostRecentPhq9);
+      }
+      requests.push(phq9Request);
+    }
+    if (mostRecentCss) {
+      let cssRequest;
+      if (mostRecentCss.id) {
+        cssRequest = client.update(mostRecentCss);
+      } else {
+        cssRequest = client.create(mostRecentCss);
+      }
+      requests.push(cssRequest);
+    }
+
+    if (!requests.length) {
+      return;
+    }
+
+    Promise.all(requests)
+      .then((results) => {
+        console.log("Save observations ", results)
+        // @ts-ignore
+        this.context.mostRecentPhq9 = Observation.from(results[0]);
+        // @ts-ignore
+        this.context.mostRecentCss = Observation.from(results[1]);
+      })
+      .catch((e) => {
+        console.log("Error saving observations ", e);
+      });
+  }
+
   private onSaved(value: IResource) {
     console.log("resource saved:", value);
-    this.setState({ hasUnsavedChanges: false });
+    this.setState({ unsavedStates: defaultUnsavedStates});
     this.showSnackbar("success", "Schedule created successfully");
   }
 
@@ -500,11 +627,9 @@ const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: "#fff",
     ...theme.typography.body1,
     padding: theme.spacing(2, 3),
-    // [theme.breakpoints.up("sm")]: {
-    //     padding: theme.spacing(2, 4, 2, 2)
-    // },
     margin: theme.spacing(1, 0),
     flexGrow: 1,
+    minHeight: 200
 }));
 
 
@@ -626,7 +751,7 @@ const MessageScheduleList = (props: {
         <Stack
           direction={"row"}
           justifyContent={"space-between"}
-          sx={{ padding: (theme) => theme.spacing(1, 2) }}
+          sx={{ padding: (theme) => theme.spacing(2) }}
         >
           <Button
             variant="outlined"
