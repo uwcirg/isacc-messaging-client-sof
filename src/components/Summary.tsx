@@ -1,32 +1,48 @@
-import React, {ReactNode} from 'react';
-import {FhirClientContext} from '../FhirClientContext';
 import {
-    Alert,
-    Autocomplete,
-    Checkbox,
-    Chip,
-    CircularProgress,
-    FormControlLabel,
-    IconButton,
-    InputAdornment,
-    Stack,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableRow,
-    TextField,
-    Typography
+  Alert,
+  Avatar,
+  Button,
+  Autocomplete,
+  Checkbox,
+  Chip,
+  CircularProgress,
+  Divider,
+  FormControl,
+  FormControlLabel,
+  IconButton,
+  InputAdornment,
+  InputLabel,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  MenuItem,
+  Select,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
+  TextField,
+  Typography
 } from "@mui/material";
+import { SelectChangeEvent } from '@mui/material/Select';
 import ClearIcon from "@mui/icons-material/Clear";
+import AddIcon from "@mui/icons-material/Add";
 import {
-    IBundle_Entry,
-    ICodeableConcept,
-    ICoding,
-    IContactPoint,
-    IPatient_Contact, IPractitioner, IReference
+  IBundle_Entry,
+  IContactPoint,
+  IPractitioner,
+  IReference
 } from "@ahryman40k/ts-fhir-types/lib/R4";
-import {RelationshipCategory} from "../model/CodeSystem";
+import React from 'react';
+import {FhirClientContext} from '../FhirClientContext';
+import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import * as moment from "moment";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { DateValidationError } from "@mui/x-date-pickers/models";
 import Patient from "../model/Patient";
 import Client from "fhirclient/lib/Client";
 import {Bundle} from "../model/Bundle";
@@ -39,11 +55,20 @@ interface SummaryProps {
     onChange?: Function
 }
 
+type ContactToAdd = {
+  name: string,
+  phoneNumber: string,
+  email: string
+}
+
 type SummaryState = {
     error: string;
+    studyStartDateValidationError: DateValidationError | null;
+    DOBDateValidationError: DateValidationError | null;
     practitioners: IPractitioner[];
     selectedPractitioners: (string | IPractitioner)[];
     selectAllPractitioners: boolean;
+    contactToAdd: ContactToAdd;
 }
 
 export default class Summary extends React.Component<SummaryProps, SummaryState> {
@@ -53,9 +78,16 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     super(props);
     this.state = {
       error: "",
+      studyStartDateValidationError: null,
+      DOBDateValidationError: null,
       practitioners: null,
       selectedPractitioners: null,
       selectAllPractitioners: false,
+      contactToAdd: {
+        name: "",
+        phoneNumber: "",
+        email: "",
+      },
     };
   }
 
@@ -73,7 +105,8 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
       if (!patient.generalPractitioner) patient.generalPractitioner = [];
       if (
         !patient.generalPractitioner.find(
-          (p:Practitioner) => p.reference && p.reference.split("/")[1] === practitioner.id
+          (p: Practitioner) =>
+            p.reference && p.reference.split("/")[1] === practitioner.id
         )
       ) {
         // add current user to be one of the patient's general practitioners (list of followers)
@@ -118,31 +151,204 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
 
     if (!patient) return <Alert severity={"error"}>{"No recipient"}</Alert>;
 
-    let emergencyContactString = "None on file";
-    if (patient.contact) {
-      // if (this.props.editable) {
+    let rows = [
+      { label: "First name", value: this._buildFirstNameEntry() },
+      { label: "Last name", value: this._buildLastNameEntry() },
+      { label: "DOB", value: this._buildDOBEntry() },
+      { label: "Gender", value: this._buildGenderEntry() },
+      { label: "Preferred name", value: this._buildPreferredNameEntry() },
+      { label: "Pronouns", value: this._buildPronounsEntry() },
+      { label: "Address", value: this._buildAddressEntry() },
+      {
+        label: "Contact information",
+        value: this._buildContactInformationEntry(),
+      },
+      {
+        label: "Emergency contact",
+        value: this._buildEmergencyContactsEntry(),
+      },
+      {
+        label: "Send Caring Contacts via:",
+        value: "SMS", // hard coded because only SMS is supported for now
+      },
+      {
+        label: "ISACC user ID",
+        value: this._buildUserIdEntry(),
+      },
+      { label: "Study start date", value: this._buildStudyStartDateEntry() },
+      { label: "ISACC status", value: this._buildStudyStatusEntry() },
+      {
+        label: "Notify on incoming message",
+        value: this._buildNotifyPractitionersEntry(),
+      },
+    ];
 
-      let emergencyContact: IPatient_Contact = patient.contact.find(
-        (contact: IPatient_Contact) =>
-          contact.relationship.find((relationship: ICodeableConcept) =>
-            relationship.coding.find(
-              (coding: ICoding) =>
-                coding === RelationshipCategory.emergencyContact
-            )
-          )
-      );
-      let contactDetails = emergencyContact.telecom
-        .map((t: IContactPoint) => t.value)
-        .join(" / ");
-      emergencyContactString = `${emergencyContact.name.given} ${emergencyContact.name.family} (${contactDetails})`;
-    }
+    return (
+      <React.Fragment>
+        <Typography variant={"h6"}>Recipient info</Typography>
+        {patient && (
+          <TableContainer>
+            <Table sx={{ minWidth: 50 }} size={"small"}>
+              <TableBody>
+                {rows.map((row, index) => (
+                  <TableRow
+                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                    key={`patient_info_row_${index}`}
+                  >
+                    <TableCell component="th" scope="row">
+                      {row.label}
+                    </TableCell>
+                    <TableCell align="left">
+                      <Typography variant="body1" component={"div"}>{row.value}</Typography>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </React.Fragment>
+    );
+  }
 
+  private _buildFirstNameEntry() {
+    // @ts-ignore
+    const patient = this.context.patient;
+    return this.props.editable ? (
+      <TextField
+        value={patient.firstName ? patient.firstName : ""}
+        placeholder={"First name"}
+        size="small"
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          patient.firstName = event.target.value;
+          if (this.props.onChange) this.props.onChange();
+          this.setState({});
+        }}
+        fullWidth
+      ></TextField>
+    ) : (
+      <Typography variant={"body1"} component={"div"}>{patient.firstName}</Typography>
+    );
+  }
+
+  private _buildLastNameEntry() {
+    // @ts-ignore
+    const patient = this.context.patient;
+    return this.props.editable ? (
+      <TextField
+        value={patient.lastName ? patient.lastName : ""}
+        placeholder={"Last name"}
+        size="small"
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          patient.lastName = event.target.value;
+          if (this.props.onChange) this.props.onChange();
+          this.setState({});
+        }}
+        fullWidth
+      ></TextField>
+    ) : (
+      <Typography variant={"body1"} component={"div"}>{patient.lastName}</Typography>
+    );
+  }
+
+
+  private _buildDOBEntry() {
+    // @ts-ignore
+    const patient = this.context.patient;
+    return this.props.editable ? (
+      <LocalizationProvider dateAdapter={AdapterMoment}>
+        <DatePicker
+          format="YYYY-MM-DD"
+          // @ts-ignore
+          value={patient.birthDate ? moment(patient.birthDate) : null}
+          onError={(newError) => {
+            this.setState({
+              DOBDateValidationError: newError,
+            });
+          }}
+          slotProps={{
+            textField: {
+              size: "small",
+              fullWidth : true,
+              helperText: this.state.DOBDateValidationError
+                ? "invalid entry"
+                : null,
+              //@ts-ignore
+              onChange: (value: moment.Moment, validationContext) => {
+                const inputValue = value
+                  ? value.toDate().toISOString().slice(0, 10)
+                  : null;
+                const validationError = validationContext?.validationError;
+                if (this.props.onChange) this.props.onChange();
+                if (!validationError) {
+                  patient.birthDate = inputValue;
+                  this.setState({});
+                } else {
+                  this.setState({
+                    DOBDateValidationError: validationError,
+                  });
+                }
+              },
+            },
+          }}
+          onChange={(newValue: Date | null) => {
+            patient.birthDate = newValue?.toISOString()?.slice(0, 10);
+            if (this.props.onChange) this.props.onChange();
+            this.setState({});
+          }}
+          disableFuture
+        ></DatePicker>
+      </LocalizationProvider>
+    ) : (
+      patient.birthDate
+    );
+  }
+
+  private _buildGenderEntry() {
+    // @ts-ignore
+    const patient = this.context.patient;
+    // see https://www.hl7.org/fhir/valueset-administrative-gender.html
+    const choices = ["male", "female", "other", "unknown"];
+    return (
+      <FormControl fullWidth>
+        <InputLabel></InputLabel>
+        <Select
+          labelId="input-gender-label"
+          id="gender-select"
+          label=""
+          placeholder="Gender"
+          value={patient.gender}
+          onChange={(event: SelectChangeEvent) => {
+            patient.gender = event.target.value;
+            if (this.props.onChange) this.props.onChange();
+            this.setState({});
+          }}
+          inputProps={{
+            size: "small",
+          }}
+          size="small"
+        >
+          {" "}
+          {choices.map((item, index) => {
+            return (
+              <MenuItem value={item} key={`gender_item_${index}`}>
+                {item}
+              </MenuItem>
+            );
+          })}
+        </Select>
+      </FormControl>
+    );
+  }
+
+  private _buildContactInformationEntry() {
+    // @ts-ignore
+    const patient = this.context.patient;
     let error = true;
     if (patient.smsContactPoint) {
       error = !isPossiblePhoneNumber(patient.smsContactPoint, "US");
     }
-
-    let contactInformationEntry = (
+    const contactInformationEntry = (
       <TextField
         value={
           patient.smsContactPoint
@@ -155,18 +361,18 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
               <IconButton
                 aria-label="clear phone number"
                 onClick={() => {
-                    patient.smsContactPoint = "";
-                    if (this.props.onChange) this.props.onChange();
-                    this.setState({});
+                  patient.smsContactPoint = "";
+                  if (this.props.onChange) this.props.onChange();
+                  this.setState({});
                 }}
                 edge="end"
                 size="small"
                 sx={{
-                    display: patient.smsContactPoint ? "block" : "none"
+                  display: patient.smsContactPoint ? "block" : "none",
                 }}
                 title={"Clear phone number"}
               >
-                <ClearIcon fontSize="small"/>
+                <ClearIcon fontSize="small" />
               </IconButton>
             </InputAdornment>
           ),
@@ -184,89 +390,361 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           if (this.props.onChange) this.props.onChange();
           this.setState({});
         }}
+        fullWidth
       />
     );
+    return this.props.editable
+      ? contactInformationEntry
+      : patient.smsContactPoint ?? "None on file";
+  }
 
-    let contactInformation: { label: string; value: ReactNode } = {
-      label: "Contact information",
-      value: this.props.editable
-        ? contactInformationEntry
-        : patient.smsContactPoint ?? "None on file",
-    };
-
-    let notifyPractitionersSelector = null;
-    if (this.state.practitioners) {
-      const selectedPractitionersDisplay =
-        this.state.selectedPractitioners &&
-        this.state.selectedPractitioners.length ? (
-          <Stack spacing={0.5} alignItems={"flex-start"}>
-            {this.state.selectedPractitioners.map(
-              (p: string | IPractitioner, index) => {
-                return (
-                  <Chip
-                    key={`notify_p_display_${index}`}
-                    label={this.getPractitionerLabel(p)}
-                    variant="outlined"
-                    size="small"
-                  ></Chip>
-                );
-              }
-            )}
-          </Stack>
-        ) : (
-          "None on file"
-        );
-
-      notifyPractitionersSelector = this.props.editable
-        ? this._buildPractitionerSelector()
-        : selectedPractitionersDisplay;
-    }
-
-    let rows = [
-      { label: "First name", value: patient.name[0].given },
-      { label: "Last name", value: patient.name[0].family },
-      { label: "Gender", value: patient.gender },
-      { label: "DOB", value: patient.birthDate },
-      contactInformation,
-      { label: "Emergency contact", value: emergencyContactString },
-      {
-        label: "Send Caring Contacts via:",
-        value: "SMS", // hard coded because only SMS is supported for now
-      },
-      {
-        label: "Notify on incoming message",
-        value:
-          notifyPractitionersSelector ?? "No user records available",
-      },
-    ];
-
-    return (
-      <React.Fragment>
-        <Typography variant={"h6"}>Recipient info</Typography>
-        {patient && (
-          <TableContainer>
-            <Table sx={{ minWidth: 50 }} size={"small"}>
-              <TableBody>
-                {rows.map((row) => (
-                  <TableRow
-                    key={row.label}
-                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                  >
-                    <TableCell component="th" scope="row">
-                      {row.label}
-                    </TableCell>
-                    <TableCell align="left"><Typography variant="body1">{row.value}</Typography></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </React.Fragment>
+  private _buildPreferredNameEntry() {
+    // @ts-ignore
+    const patient = this.context.patient;
+    return this.props.editable ? (
+      <TextField
+        value={patient.preferredName ? patient.preferredName : ""}
+        placeholder={"Preferred name"}
+        size="small"
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          patient.preferredName = event.target.value;
+          if (this.props.onChange) this.props.onChange();
+          this.setState({});
+        }}
+        fullWidth
+      ></TextField>
+    ) : (
+      <Typography variant={"body1"} component={"div"}>{patient.preferredName}</Typography>
     );
   }
 
-  private _buildPractitionerSelector() {
+  private _buildPronounsEntry() {
+    // @ts-ignore
+    const patient = this.context.patient;
+    return this.props.editable ? (
+      <TextField
+        value={patient.pronouns ? patient.pronouns : ""}
+        placeholder={"Pronouns"}
+        size="small"
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          patient.pronouns = event.target.value;
+          if (this.props.onChange) this.props.onChange();
+          this.setState({});
+        }}
+        fullWidth
+      ></TextField>
+    ) : (
+      <Typography variant={"body1"} component={"div"}>{patient.pronouns}</Typography>
+    );
+  }
+
+  private _buildAddressEntry() {
+    // @ts-ignore
+    const patient = this.context.patient;
+    return this.props.editable ? (
+      <TextField
+        value={patient.addressText ? patient.addressText : ""}
+        placeholder={"Address"}
+        multiline
+        minRows={5}
+        size="small"
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          patient.addressText = event.target.value;
+          if (this.props.onChange) this.props.onChange();
+          this.setState({});
+        }}
+        fullWidth
+      ></TextField>
+    ) : (
+      <Typography variant={"body1"} component={"div"} sx={{ whiteSpace: "pre-wrap" }}>
+        {patient.addressText}
+      </Typography>
+    );
+  }
+
+  private _buildEmergencyContactsEntry() {
+    // @ts-ignore
+    const patient = this.context.patient;
+    const emergencyContacts = patient.getEmergencyContacts();
+    const Contacts = emergencyContacts?.map((o: any, index: number) => {
+      const name = o.name?.text ? (
+        <Typography variant="subtitle2" component={"div"}>
+          {o.name.text}
+        </Typography>
+      ) : (
+        ""
+      );
+      const detail = o.telecom?.map((t: IContactPoint) => t.value).join(" / ");
+      return (
+        <>
+          <ListItem
+            key={`contact_item_${index}`}
+            secondaryAction={
+              this.props.editable ? (
+                <IconButton
+                  edge="end"
+                  onClick={() => {
+                    patient.removeEmergencyContact(index);
+                    if (this.props.onChange) this.props.onChange();
+                    this.setState({});
+                  }}
+                >
+                  <ClearIcon />
+                </IconButton>
+              ) : null
+            }
+          >
+            {this.props.editable && (
+              <ListItemAvatar>
+                <Avatar></Avatar>
+              </ListItemAvatar>
+            )}
+            <ListItemText primary={name} secondary={detail}></ListItemText>
+          </ListItem>
+          {patient.contact && index !== patient.contact.length - 1 && (
+            <Divider key={`contact_list_divider_${index}`}/>
+          )}
+        </>
+      );
+    });
+    if (!this.props.editable) {
+      if (!patient.contact) return "None on file";
+      return <>{Contacts}</>;
+    }
+    return (
+      <>
+        <List>
+          {Contacts}
+          {patient.contact?.length > 0 && <Divider></Divider>}
+          <ListItem
+            alignItems="flex-start"
+            sx={{ marginTop: patient.contact ? 1 : 0 }}
+          >
+            <ListItemText
+              primary={
+                <TextField
+                  value={this.state.contactToAdd?.name}
+                  label={"Name"}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  margin="dense"
+                  size="small"
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    if (this.props.onChange) this.props.onChange();
+                    this.setState({
+                      contactToAdd: {
+                        ...this.state.contactToAdd,
+                        name: event.target.value,
+                      },
+                    });
+                  }}
+                  fullWidth
+                ></TextField>
+              }
+              secondary={
+                <>
+                  <TextField
+                    value={this.state.contactToAdd?.phoneNumber}
+                    label={"Phone number"}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    sx={{
+                      marginTop: 2,
+                    }}
+                    margin="dense"
+                    size="small"
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                      if (this.props.onChange) this.props.onChange();
+                      this.setState({
+                        contactToAdd: {
+                          ...this.state.contactToAdd,
+                          phoneNumber: event.target.value,
+                        },
+                      });
+                    }}
+                    fullWidth
+                  ></TextField>
+                  <TextField
+                    value={this.state.contactToAdd?.email}
+                    label={"Email"}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    sx={{
+                      marginTop: 2,
+                    }}
+                    size="small"
+                    margin="dense"
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                      if (this.props.onChange) this.props.onChange();
+                      this.setState({
+                        contactToAdd: {
+                          ...this.state.contactToAdd,
+                          email: event.target.value,
+                        },
+                      });
+                    }}
+                    fullWidth
+                  ></TextField>
+                  <Button
+                    startIcon={<AddIcon></AddIcon>}
+                    size="small"
+                    variant="outlined"
+                    sx={{ textAlign: "left", marginTop: 1 }}
+                    onClick={() => {
+                      patient.addEmergencyContact(
+                        this.state.contactToAdd.name,
+                        this.state.contactToAdd.phoneNumber,
+                        this.state.contactToAdd.email
+                      );
+                      // if (this.props.onChange) this.props.onChange();
+                      this.setState({
+                        contactToAdd: { name: "", phoneNumber: "", email: "" },
+                      });
+                    }}
+                  >
+                    Add
+                  </Button>
+                </>
+              }
+            ></ListItemText>
+          </ListItem>
+        </List>
+      </>
+    );
+  }
+
+  private _buildUserIdEntry() {
+    // @ts-ignore
+    const patient = this.context.patient;
+    return this.props.editable ? (
+      <TextField
+        value={patient.userID ? patient.userID : ""}
+        placeholder={"ISACC user ID"}
+        size="small"
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          patient.userID = event.target.value;
+          if (this.props.onChange) this.props.onChange();
+          this.setState({});
+        }}
+        fullWidth
+      ></TextField>
+    ) : (
+      patient.userID
+    );
+  }
+
+  private _buildStudyStartDateEntry() {
+    // @ts-ignore
+    const patient = this.context.patient;
+    return this.props.editable ? (
+      <LocalizationProvider dateAdapter={AdapterMoment}>
+        <DatePicker
+          format="YYYY-MM-DD"
+          // @ts-ignore
+          value={patient.studyStartDate ? moment(patient.studyStartDate) : null}
+          sx={{
+            flexGrow: 1,
+            width: "100%",
+          }}
+          onError={(newError) => {
+            this.setState({
+              studyStartDateValidationError: newError,
+            });
+          }}
+          slotProps={{
+            textField: {
+              size: "small",
+              helperText: this.state.studyStartDateValidationError
+                ? "invalid entry"
+                : null,
+              //@ts-ignore
+              onChange: (value: moment.Moment, validationContext) => {
+                const inputValue = value
+                  ? value.toDate().toISOString().slice(0, 10)
+                  : null;
+                const validationError = validationContext?.validationError;
+                if (this.props.onChange) this.props.onChange();
+                if (!validationError) {
+                  patient.studyStartDate = inputValue;
+                  this.setState({});
+                } else {
+                  this.setState({
+                    studyStartDateValidationError: validationError,
+                  });
+                }
+              },
+            },
+          }}
+          onChange={(newValue: Date | null) => {
+            patient.studyStartDate = newValue?.toISOString()?.slice(0, 10);
+            if (this.props.onChange) this.props.onChange();
+            this.setState({});
+          }}
+          disableFuture
+        ></DatePicker>
+      </LocalizationProvider>
+    ) : (
+      patient.studyStartDate
+    );
+  }
+
+  private _buildStudyStatusEntry() {
+    // @ts-ignore
+    const patient = this.context.patient;
+    const statuses = [
+      "active",
+      "completed",
+      "on hold",
+      "lost",
+      "refused further CC",
+      "withdrawn by PI",
+      "deceased",
+    ];
+    return this.props.editable ? (
+      <Autocomplete
+        size="small"
+        value={patient.studyStatus}
+        options={statuses}
+        renderInput={(params) => (
+          <TextField {...params} placeholder={"ISACC status"} />
+        )}
+        onChange={(event: any, value: string) => {
+          patient.studyStatus = value;
+          if (this.props.onChange) this.props.onChange();
+          this.setState({});
+        }}
+      />
+    ) : (
+      patient.studyStatus
+    );
+  }
+
+  private _buildNotifyPractitionersEntry() {
+    if (!this.state.practitioners) return "No practitioner entry available.";
+    const selectedPractitionersDisplay =
+      this.state.selectedPractitioners &&
+      this.state.selectedPractitioners.length ? (
+        <Stack spacing={0.5} alignItems={"flex-start"}>
+          {this.state.selectedPractitioners.map(
+            (p: string | IPractitioner, index) => {
+              return (
+                <Chip
+                  key={`notify_p_display_${index}`}
+                  label={this.getPractitionerLabel(p)}
+                  variant="outlined"
+                  size="small"
+                ></Chip>
+              );
+            }
+          )}
+        </Stack>
+      ) : (
+        "None on file"
+      );
+    if (!this.props.editable) return selectedPractitionersDisplay;
     // @ts-ignore
     const patient: Patient = this.context.patient;
     const toReferences = (practitioners: (string | IPractitioner)[]) =>
@@ -306,8 +784,8 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           label="Select all"
           componentsProps={{
             typography: {
-                variant: "body2"
-            }
+              variant: "body2",
+            },
           }}
           control={
             <Checkbox

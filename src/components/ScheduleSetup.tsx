@@ -1,7 +1,8 @@
 import * as React from "react";
 import {
-    Box,
+    AlertTitle,
     Button,
+    Container,
     Chip,
     CircularProgress,
     Grid,
@@ -28,6 +29,7 @@ import {IBundle_Entry, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {CommunicationRequest} from "../model/CommunicationRequest";
 import Alert from "@mui/material/Alert";
 import Patient from "../model/Patient";
+import PatientPROs from "./PatientPROs";
 import Summary from "./Summary";
 import PlanDefinition, {getDefaultMessageSchedule} from "../model/PlanDefinition";
 import {getEnv} from "../util/util";
@@ -48,7 +50,8 @@ interface ScheduleSetupProps {
 type UnsavedStates = {
   patient: boolean,
   careplan: boolean,
-  communications: boolean
+  communications: boolean,
+  pro: boolean
 }
 
 type ScheduleSetupState = {
@@ -68,12 +71,16 @@ export type MessageDraft = {
 const defaultUnsavedStates = {
   patient: false,
   careplan: false,
-  communications: false
+  communications: false,
+  pro: false
 }
 
 const styles = {
     patientNotesField: {
-        margin: 2
+        marginTop: 1,
+        marginLeft: 0,
+        marginRight: 0,
+        marginBottom: 0
     }
 };
 
@@ -114,7 +121,6 @@ export default class ScheduleSetup extends React.Component<
   }
 
   hasUnsavedChanges() {
-    console.log("keys ", Object.entries(this.state.unsavedStates))
     return Object.entries(this.state.unsavedStates).find(item => item[1]);
   }
 
@@ -135,16 +141,17 @@ export default class ScheduleSetup extends React.Component<
     let editing = this.state.carePlan.id != null;
 
     return (
-      <>
+      <Container maxWidth={"lg"}>
         {editing ? (
           <Alert severity={"info"}>
-            {`You are editing an existing CarePlan (CarePlan/${
-              this.state.carePlan.id
-            }, created ${new Date(this.state.carePlan.created)})`}
+            <AlertTitle>You are editing an existing CarePlan</AlertTitle>
+            {`CarePlan/${this.state.carePlan.id}, created ${new Date(
+              this.state.carePlan.created
+            )}`}
           </Alert>
         ) : null}
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} alignSelf={"stretch"}>
+          <Grid item xs={12} sm={12} md={6} alignSelf={"stretch"}>
             <Item>
               <Summary
                 editable={true}
@@ -159,7 +166,14 @@ export default class ScheduleSetup extends React.Component<
               />
             </Item>
           </Grid>
-          <Grid item xs={12} sm={6} alignSelf={"stretch"}>
+          <Grid
+            item
+            xs={12}
+            sm={12}
+            md={6}
+            alignSelf={"stretch"}
+            sx={{ display: "flex", flexDirection: "column" }}
+          >
             <Item>
               {editing ? (
                 <PatientNotes
@@ -175,9 +189,9 @@ export default class ScheduleSetup extends React.Component<
                     this.setState({
                       unsavedStates: {
                         ...this.state.unsavedStates,
-                        careplan: false
-                      }
-                    })
+                        careplan: false,
+                      },
+                    });
                   }}
                 />
               ) : (
@@ -191,6 +205,7 @@ export default class ScheduleSetup extends React.Component<
                     }}
                     fullWidth
                     multiline
+                    minRows={5}
                     value={this.state.carePlan.description ?? ""}
                     placeholder={"Recipient note"}
                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -207,6 +222,28 @@ export default class ScheduleSetup extends React.Component<
                   />
                 </>
               )}
+            </Item>
+            <Item>
+              <PatientPROs
+                fieldsOnly={!editing}
+                editable={editing}
+                onChange={() => {
+                  this.setState({
+                    unsavedStates: {
+                      ...this.state.unsavedStates,
+                      pro: true,
+                    },
+                  });
+                }}
+                onSave={() => {
+                  this.setState({
+                    unsavedStates: {
+                      ...this.state.unsavedStates,
+                      pro: false,
+                    },
+                  });
+                }}
+              ></PatientPROs>
             </Item>
           </Grid>
           <Grid item xs={12}>
@@ -230,7 +267,7 @@ export default class ScheduleSetup extends React.Component<
         </Grid>
         {this.getCloseSchedulePlannerAlert()}
         {this.renderSaveFooter()}
-      </>
+      </Container>
     );
   }
 
@@ -455,6 +492,8 @@ export default class ScheduleSetup extends React.Component<
         return client.update(patient).then((value: any) => {
           console.log(`Patient ${patient.id} updated`);
           this.saveCommunicationRequests();
+          // update PRO scores
+          this.savePROs();
         });
       },
       (reason: any) => {
@@ -525,6 +564,53 @@ export default class ScheduleSetup extends React.Component<
     );
   }
 
+  private savePROs() {
+    // @ts-ignore
+    const mostRecentPhq9 = this.context.mostRecentPhq9;
+    // @ts-ignore
+    const mostRecentCss = this.context.mostRecentCss;
+    // if (!mostRecentPhq9 && !mostRecentCss) {
+    //   return;
+    // }
+    // @ts-ignore
+    const client = this.context.client;
+    const requests = [];
+    if (mostRecentPhq9) {
+      let phq9Request;
+      if (mostRecentPhq9.id) {
+        phq9Request = client.update(mostRecentPhq9);
+      } else {
+        phq9Request = client.create(mostRecentPhq9);
+      }
+      requests.push(phq9Request);
+    }
+    if (mostRecentCss) {
+      let cssRequest;
+      if (mostRecentCss.id) {
+        cssRequest = client.update(mostRecentCss);
+      } else {
+        cssRequest = client.create(mostRecentCss);
+      }
+      requests.push(cssRequest);
+    }
+
+    if (!requests.length) {
+      return;
+    }
+
+    Promise.all(requests)
+      .then((results) => {
+        console.log("Save observations ", results)
+        // @ts-ignore
+        this.context.mostRecentPhq9 = Observation.from(results[0]);
+        // @ts-ignore
+        this.context.mostRecentCss = Observation.from(results[1]);
+      })
+      .catch((e) => {
+        console.log("Error saving observations ", e);
+      });
+  }
+
   private onSaved(value: IResource) {
     console.log("resource saved:", value);
     this.setState({ unsavedStates: defaultUnsavedStates});
@@ -537,11 +623,13 @@ export default class ScheduleSetup extends React.Component<
   }
 }
 
-const Item = styled(Box)(({ theme }) => ({
+const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: "#fff",
     ...theme.typography.body1,
-    padding: theme.spacing(2),
+    padding: theme.spacing(2, 3),
+    margin: theme.spacing(1, 0),
     flexGrow: 1,
+    minHeight: 200
 }));
 
 
@@ -554,7 +642,7 @@ const MessageScheduleList = (props: {
 
     const buildMessageItem = (message: CommunicationRequest, index: number) => {
         return (
-            <ListItem key={index} sx={{
+            <ListItem key={`message_${index}`} sx={{
                 width: '100%',
                 "& .MuiListItemSecondaryAction-root": {
                     right: 0.5
@@ -663,7 +751,7 @@ const MessageScheduleList = (props: {
         <Stack
           direction={"row"}
           justifyContent={"space-between"}
-          sx={{ padding: (theme) => theme.spacing(1, 2) }}
+          sx={{ padding: (theme) => theme.spacing(2) }}
         >
           <Button
             variant="outlined"

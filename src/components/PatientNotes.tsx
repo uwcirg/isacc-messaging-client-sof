@@ -1,9 +1,19 @@
 import React from 'react';
 import {FhirClientContext, FhirClientContextType} from '../FhirClientContext';
-import {Alert, Box, Button, CardActions, CardContent, CircularProgress, TextField, Typography} from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  CardActions,
+  CardContent,
+  CircularProgress,
+  TextField,
+  Typography,
+} from "@mui/material";
 import CarePlan from "../model/CarePlan";
 import {ICarePlan} from "@ahryman40k/ts-fhir-types/lib/R4";
 import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
 
 interface PatientNotesProps {
   onChange?: Function,
@@ -44,7 +54,7 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
             <CardContent sx={{ padding: 0 }}>
               <Typography variant={"h6"}>Recipient notes</Typography>
               {this.state.editable ? (
-                <Box sx={{margin: (theme) => theme.spacing(2, 1)}}>
+                <Box sx={{margin: (theme) => theme.spacing(1)}}>
                   <TextField
                     InputProps={{ sx: { typography: "body1" } }}
                     multiline
@@ -59,17 +69,18 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
                   />
                 </Box>
               ) : (
-                <Typography variant={"body1"} sx={{padding: (theme) => theme.spacing(1), whiteSpace: "pre-wrap"}}>
+                <Box sx={{padding: 1}}>
+                  <Typography variant={"body1"} sx={{whiteSpace: "pre-wrap"}}>
                   {carePlan.description}
-                </Typography>
+                  </Typography>
+                </Box>
               )}
               {this._updateError()}
             </CardContent>
-            <CardActions>
+            <CardActions disableSpacing>
               <Button
                 onClick={() => {
                   if (this.state.editable) {
-                    if (this.props.onSave) this.props.onSave();
                     this.updateNote(this.state.updatedPatientNote);
                   } else {
                     this.setState({
@@ -80,9 +91,9 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
                 }}
                 size="small"
                 variant="outlined"
-                startIcon={<EditIcon sx={{display: this.state.editable ? "none": "block"}}></EditIcon>}
+                startIcon={this.state.editable ? <SaveIcon/> : <EditIcon/>}
               >
-                {this.state.editable ? "Save notes" : "Update"}
+                {this.state.editable ? "Save notes" : "Update notes"}
               </Button>
             </CardActions>
           </>
@@ -107,6 +118,7 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
             (result: any) => {
                 context.currentCarePlan = CarePlan.from(result as ICarePlan);
                 console.log("Updated CarePlan:", context.currentCarePlan);
+                if (this.props.onSave) this.props.onSave();
                 this.setState({
                     editable: false,
                     updatedPatientNote: null
