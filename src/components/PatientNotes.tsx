@@ -1,12 +1,13 @@
 import React from 'react';
 import {FhirClientContext, FhirClientContextType} from '../FhirClientContext';
-import {Alert, Button, CardActions, CardContent, CircularProgress, TextField, Typography} from "@mui/material";
+import {Alert, Box, Button, CardActions, CardContent, CircularProgress, TextField, Typography} from "@mui/material";
 import CarePlan from "../model/CarePlan";
 import {ICarePlan} from "@ahryman40k/ts-fhir-types/lib/R4";
 import EditIcon from "@mui/icons-material/Edit";
 
 interface PatientNotesProps {
-
+  onChange?: Function,
+  onSave?: Function
 }
 type PatientNotesState = {
     error: string;
@@ -43,17 +44,20 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
             <CardContent sx={{ padding: 0 }}>
               <Typography variant={"h6"}>Recipient notes</Typography>
               {this.state.editable ? (
-                <TextField
-                  InputProps={{ sx: { typography: "body1" } }}
-                  multiline
-                  fullWidth
-                  minRows={4}
-                  value={this.state.updatedPatientNote ?? ""}
-                  placeholder={"Enter recipient note"}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    this.setState({ updatedPatientNote: event.target.value });
-                  }}
-                />
+                <Box sx={{margin: (theme) => theme.spacing(2, 1)}}>
+                  <TextField
+                    InputProps={{ sx: { typography: "body1" } }}
+                    multiline
+                    fullWidth
+                    minRows={4}
+                    value={this.state.updatedPatientNote ?? ""}
+                    placeholder={"Enter recipient note"}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                      if (this.props.onChange) this.props.onChange();
+                      this.setState({ updatedPatientNote: event.target.value });
+                    }}
+                  />
+                </Box>
               ) : (
                 <Typography variant={"body1"} sx={{padding: (theme) => theme.spacing(1), whiteSpace: "pre-wrap"}}>
                   {carePlan.description}
@@ -65,6 +69,7 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
               <Button
                 onClick={() => {
                   if (this.state.editable) {
+                    if (this.props.onSave) this.props.onSave();
                     this.updateNote(this.state.updatedPatientNote);
                   } else {
                     this.setState({

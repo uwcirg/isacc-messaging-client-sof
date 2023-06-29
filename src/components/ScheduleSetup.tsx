@@ -45,13 +45,19 @@ import { getFhirData } from "../util/isacc_util";
 interface ScheduleSetupProps {
 }
 
+type UnsavedStates = {
+  patient: boolean,
+  careplan: boolean,
+  communications: boolean
+}
+
 type ScheduleSetupState = {
     carePlan: CarePlan;
     showCloseSchedulePlannerAlert: boolean;
     alertSeverity: "error" | "warning" | "info" | "success";
     alertText: string;
     savingInProgress: boolean;
-    hasUnsavedChanges: boolean;
+    unsavedStates: UnsavedStates;
 }
 
 export type MessageDraft = {
@@ -59,6 +65,11 @@ export type MessageDraft = {
     scheduledDateTime: Date
 }
 
+const defaultUnsavedStates = {
+  patient: false,
+  careplan: false,
+  communications: false
+}
 
 const styles = {
     patientNotesField: {
@@ -84,7 +95,7 @@ export default class ScheduleSetup extends React.Component<
       alertText: null,
       alertSeverity: null,
       savingInProgress: false,
-      hasUnsavedChanges: false,
+      unsavedStates: defaultUnsavedStates,
     };
     this.planDefinition = getDefaultMessageSchedule();
     // This binding is necessary to make `this` work in the callback
@@ -102,8 +113,13 @@ export default class ScheduleSetup extends React.Component<
     window.removeEventListener("beforeunload", this.alertUser);
   }
 
+  hasUnsavedChanges() {
+    console.log("keys ", Object.entries(this.state.unsavedStates))
+    return Object.entries(this.state.unsavedStates).find(item => item[1]);
+  }
+
   alertUser(event: BeforeUnloadEvent) {
-    if (!this.state.hasUnsavedChanges) return;
+    if (!this.hasUnsavedChanges()) return;
     event.preventDefault();
     event.returnValue = "";
     return;
@@ -132,14 +148,38 @@ export default class ScheduleSetup extends React.Component<
             <Item>
               <Summary
                 editable={true}
-                onChange={() => this.setState({ hasUnsavedChanges: true })}
+                onChange={() =>
+                  this.setState({
+                    unsavedStates: {
+                      ...this.state.unsavedStates,
+                      patient: true,
+                    },
+                  })
+                }
               />
             </Item>
           </Grid>
           <Grid item xs={12} sm={6} alignSelf={"stretch"}>
             <Item>
               {editing ? (
-                <PatientNotes />
+                <PatientNotes
+                  onChange={() => {
+                    this.setState({
+                      unsavedStates: {
+                        ...this.state.unsavedStates,
+                        careplan: true,
+                      },
+                    });
+                  }}
+                  onSave={() => {
+                    this.setState({
+                      unsavedStates: {
+                        ...this.state.unsavedStates,
+                        careplan: false
+                      }
+                    })
+                  }}
+                />
               ) : (
                 <>
                   <Typography variant={"h6"}>{"Recipient note"}</Typography>
@@ -156,7 +196,13 @@ export default class ScheduleSetup extends React.Component<
                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                       const cp = this.state.carePlan;
                       cp.description = event.target.value;
-                      this.setState({ carePlan: cp, hasUnsavedChanges: true });
+                      this.setState({
+                        carePlan: cp,
+                        unsavedStates: {
+                          ...this.state.unsavedStates,
+                          careplan: true,
+                        },
+                      });
                     }}
                   />
                 </>
@@ -170,7 +216,10 @@ export default class ScheduleSetup extends React.Component<
                 onMessagePlanChanged={(carePlan: CarePlan) => {
                   this.setState({
                     carePlan: carePlan,
-                    hasUnsavedChanges: true,
+                    unsavedStates: {
+                      ...this.state.unsavedStates,
+                      communications: true,
+                    },
                   });
                 }}
                 saveSchedule={() => this.saveSchedule()}
@@ -208,11 +257,12 @@ export default class ScheduleSetup extends React.Component<
           alignItems={"center"}
           justifyContent={"center"}
         >
-          {this.state.hasUnsavedChanges && (
+          {this.hasUnsavedChanges() && (
             <Tooltip
               arrow
               color="warning"
               title="You have unsaved changes. Please click the DONE button to save them."
+              enterTouchDelay={0}
               slotProps={{
                 tooltip: {
                     sx: {
@@ -477,7 +527,7 @@ export default class ScheduleSetup extends React.Component<
 
   private onSaved(value: IResource) {
     console.log("resource saved:", value);
-    this.setState({ hasUnsavedChanges: false });
+    this.setState({ unsavedStates: defaultUnsavedStates});
     this.showSnackbar("success", "Schedule created successfully");
   }
 
