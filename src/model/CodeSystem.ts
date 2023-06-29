@@ -80,7 +80,7 @@ export const IsaccMessageCategory = {
 };
 
 export const RelationshipCategory = {
-    emergencyContact: Coding.make("http://hl7.org/fhir/ValueSet/patient-contactrelationship", "C")
+    emergencyContact: Coding.make("http://hl7.org/fhir/ValueSet/patient-contactrelationship", "EP")
 }
 
 export const Medium = {

@@ -1,5 +1,6 @@
 import * as React from "react";
 import {
+    AlertTitle,
     Box,
     Button,
     Chip,
@@ -126,13 +127,14 @@ export default class ScheduleSetup extends React.Component<
       <>
         {editing ? (
           <Alert severity={"info"}>
-            {`You are editing an existing CarePlan (CarePlan/${
+            <AlertTitle>You are editing an existing CarePlan</AlertTitle>
+            {`CarePlan/${
               this.state.carePlan.id
-            }, created ${new Date(this.state.carePlan.created)})`}
+            }, created ${new Date(this.state.carePlan.created)}`}
           </Alert>
         ) : null}
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} alignSelf={"stretch"}>
+          <Grid item xs={12} sm={12} md={6} alignSelf={"stretch"}>
             <Item>
               <Summary
                 editable={true}
@@ -140,7 +142,7 @@ export default class ScheduleSetup extends React.Component<
               />
             </Item>
           </Grid>
-          <Grid item xs={12} sm={6} alignSelf={"stretch"}>
+          <Grid item xs={12} sm={12} md={6} alignSelf={"stretch"} sx={{display: "flex", flexDirection: "column"}}>
             <Item>
               {editing ? (
                 <PatientNotes />
@@ -494,10 +496,14 @@ export default class ScheduleSetup extends React.Component<
   }
 }
 
-const Item = styled(Box)(({ theme }) => ({
+const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: "#fff",
     ...theme.typography.body1,
-    padding: theme.spacing(2),
+    padding: theme.spacing(2, 3),
+    // [theme.breakpoints.up("sm")]: {
+    //     padding: theme.spacing(2, 4, 2, 2)
+    // },
+    margin: theme.spacing(1, 0),
     flexGrow: 1,
 }));
 
@@ -511,7 +517,7 @@ const MessageScheduleList = (props: {
 
     const buildMessageItem = (message: CommunicationRequest, index: number) => {
         return (
-            <ListItem key={index} sx={{
+            <ListItem key={`message_${index}`} sx={{
                 width: '100%',
                 "& .MuiListItemSecondaryAction-root": {
                     right: 0.5

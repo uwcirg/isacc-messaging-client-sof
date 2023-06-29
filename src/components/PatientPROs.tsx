@@ -1,58 +1,79 @@
-import React from 'react';
-import {FhirClientContext, FhirClientContextType} from '../FhirClientContext';
+import React from "react";
+import { FhirClientContext, FhirClientContextType } from "../FhirClientContext";
 import {
   Alert,
   Box,
   Button,
   CircularProgress,
-  Snackbar,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
 import Client from "fhirclient/lib/Client";
-import {Bundle} from "../model/Bundle";
+import { Bundle } from "../model/Bundle";
 import Patient from "../model/Patient";
-import {ICoding, IObservation} from "@ahryman40k/ts-fhir-types/lib/R4";
-import {amber, deepOrange, grey, lightBlue, orange, red} from "@mui/material/colors";
-import {CSSAnswerCategories} from "../model/CodeSystem";
-import {Observation} from "../model/Observation";
+import { ICoding, IObservation } from "@ahryman40k/ts-fhir-types/lib/R4";
+import {
+  amber,
+  deepOrange,
+  grey,
+  lightBlue,
+  orange,
+  red,
+} from "@mui/material/colors";
+import { CSSAnswerCategories } from "../model/CodeSystem";
+import { Observation } from "../model/Observation";
 
 interface PatientPROsProps {
-   editable: boolean
+  editable: boolean;
 }
 
 type PatientPROsState = {
-    error: string;
-    mostRecentPhq9: Observation,
-    mostRecentCss: Observation,
-    loaded: boolean,
-    saveLoading: boolean,
-    saveError: boolean,
-    saveFeedbackOpen: boolean
-}
+  error: string;
+  editable: boolean;
+  mostRecentPhq9: Observation;
+  mostRecentCss: Observation;
+  loaded: boolean;
+  saveLoading: boolean;
+  saveError: boolean;
+};
 
 function colorForPhq9Obs(observation: Observation) {
-    if (!observation || !observation.valueQuantity || !observation.valueQuantity.value) return grey[100];
-    if (observation.valueQuantity.value < 5) return lightBlue[100];
-    if (observation.valueQuantity.value < 10) return amber[100];
-    if (observation.valueQuantity.value < 15) return orange[100];
-    if (observation.valueQuantity.value < 20) return deepOrange[100];
-    return red[100];
+  if (
+    !observation ||
+    !observation.valueQuantity ||
+    !observation.valueQuantity.value
+  )
+    return grey[100];
+  if (observation.valueQuantity.value < 5) return lightBlue[100];
+  if (observation.valueQuantity.value < 10) return amber[100];
+  if (observation.valueQuantity.value < 15) return orange[100];
+  if (observation.valueQuantity.value < 20) return deepOrange[100];
+  return red[100];
 }
 
 function colorForCssObs(value: Observation) {
-    let answerCoding = value?.valueCodeableConcept?.coding?.find((value: ICoding) => {
-        return CSSAnswerCategories.low.equals(value) || CSSAnswerCategories.medium.equals(value) || CSSAnswerCategories.high.equals(value);
-    });
-    if (!answerCoding) return grey[100];
-    if (CSSAnswerCategories.low.equals(answerCoding)) return lightBlue[100];
-    if (CSSAnswerCategories.medium.equals(answerCoding)) return amber[100];
-    return red[100];
+  let answerCoding = value?.valueCodeableConcept?.coding?.find(
+    (value: ICoding) => {
+      return (
+        CSSAnswerCategories.low.equals(value) ||
+        CSSAnswerCategories.medium.equals(value) ||
+        CSSAnswerCategories.high.equals(value)
+      );
+    }
+  );
+  if (!answerCoding) return grey[100];
+  if (CSSAnswerCategories.low.equals(answerCoding)) return lightBlue[100];
+  if (CSSAnswerCategories.medium.equals(answerCoding)) return amber[100];
+  return red[100];
 }
 
-export default class PatientPROs extends React.Component<PatientPROsProps, PatientPROsState> {
+export default class PatientPROs extends React.Component<
+  PatientPROsProps,
+  PatientPROsState
+> {
   static contextType = FhirClientContext;
 
   constructor(props: Readonly<PatientPROsProps> | PatientPROsProps) {
@@ -62,9 +83,9 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
       mostRecentPhq9: null,
       mostRecentCss: null,
       loaded: false,
+      editable: false,
       saveLoading: false,
       saveError: false,
-      saveFeedbackOpen: false,
     };
   }
 
@@ -147,11 +168,20 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
 
   renderEditView() {
     return (
-      <Stack direction={"column"} spacing={2} sx={{ marginTop: 1 }}>
+      <Stack
+        direction={"column"}
+        alignItems={"flex-start"}
+        spacing={4}
+        sx={{ padding: (theme) => theme.spacing(1), marginTop: 1 }}
+      >
         <TextField
           label="PHQ-9 score"
           size="small"
           type="number"
+          InputLabelProps={{
+            shrink: true,
+          }}
+          margin="dense"
           defaultValue={this.state.mostRecentPhq9?.valueDisplay ?? ""}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
             // @ts-ignore
@@ -182,6 +212,9 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
           label="C-SSRS score"
           size="small"
           type="number"
+          InputLabelProps={{
+            shrink: true,
+          }}
           defaultValue={this.state.mostRecentCss?.valueDisplay ?? ""}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
             // @ts-ignore
@@ -213,9 +246,13 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
             variant="outlined"
             disabled={this.state.saveLoading}
             startIcon={<SaveIcon></SaveIcon>}
+            size="small"
             fullWidth
             onClick={() => {
               if (!this.state.mostRecentPhq9 && !this.state.mostRecentCss) {
+                this.setState({
+                  editable: false
+                });
                 return;
               }
               // @ts-ignore
@@ -240,17 +277,24 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
                 requests.push(cssRequest);
               }
 
-              if (!requests.length) return;
+              if (!requests.length) {
+                this.setState({
+                  editable: false
+                });
+                return;
+              }
 
               this.setState({
                 saveLoading: true,
               });
 
               Promise.all(requests)
-                .then(() => {
+                .then((results) => {
                   this.setState({
                     saveLoading: false,
-                    saveFeedbackOpen: true,
+                    mostRecentPhq9: Observation.from(results[0]),
+                    mostRecentCss: Observation.from(results[1]),
+                    editable: false
                   });
                 })
                 .catch((e) => {
@@ -282,23 +326,46 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
             There was an error saving the scores. Please see console for detail.
           </Alert>
         )}
-        <Snackbar
-          open={this.state.saveFeedbackOpen}
-          autoHideDuration={1000}
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-          onClose={(event: React.SyntheticEvent | Event, reason?: string) => {
-            if (reason === "clickaway") {
-              return;
-            }
-            this.setState({
-              saveFeedbackOpen: false,
-            });
-          }}
-        >
-          <Alert severity="success">Scores are saved successfully.</Alert>
-        </Snackbar>
       </Stack>
     );
+  }
+
+  renderDisplayView() {
+    return (
+      <Stack
+        direction={"column"}
+        alignItems={"flex-start"}
+        spacing={2}
+        sx={{ padding: (theme) => theme.spacing(1) }}
+      >
+        {!this.state.editable && (
+          <>
+            <LabeledValueBubble
+              title={"PHQ-9"}
+              value={this.state.mostRecentPhq9?.valueDisplay ?? "-"}
+              backgroundColor={colorForPhq9Obs(this.state.mostRecentPhq9)}
+            />
+            <LabeledValueBubble
+              title={"C-SSRS"}
+              value={this.state.mostRecentCss?.valueDisplay ?? "-"}
+              backgroundColor={colorForCssObs(this.state.mostRecentCss)}
+            />
+            <Button
+              startIcon={<EditIcon></EditIcon>}
+              onClick={() => this.setState({ editable: true })}
+              variant="outlined"
+              size="small"
+            >
+              Update scores
+            </Button>
+          </>
+        )}
+      </Stack>
+    );
+  }
+
+  renderTitle() {
+    return <Typography variant={"h6"}>{"Suicide risk scores"}</Typography>;
   }
 
   render(): React.ReactNode {
@@ -311,49 +378,41 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
 
     return (
       <>
-        <Typography variant={"h6"}>{"Suicide risk scores"}</Typography>
-        <Stack
-          direction={"column"}
-          alignItems={"flex-start"}
-          spacing={2}
-          sx={{ padding: (theme) => theme.spacing(1) }}
-        >
-          {this.props.editable && this.renderEditView()}
-          {!this.props.editable && (
-            <>
-              <LabeledValueBubble
-                title={"PHQ-9"}
-                value={this.state.mostRecentPhq9?.valueDisplay ?? "-"}
-                backgroundColor={colorForPhq9Obs(this.state.mostRecentPhq9)}
-              />
-              <LabeledValueBubble
-                title={"C-SSRS"}
-                value={this.state.mostRecentCss?.valueDisplay ?? "-"}
-                backgroundColor={colorForCssObs(this.state.mostRecentCss)}
-              />
-            </>
-          )}
-        </Stack>
+        {this.renderTitle()}
+        {this.state.editable && this.renderEditView()}
+        {!this.state.editable && this.renderDisplayView()}
       </>
     );
   }
 }
 
-const LabeledValueBubble = (props: { title: string, value: string, backgroundColor: string }) => <Stack
-    alignItems={"center"}>
-        <Typography variant={"body2"} color={"text.secondary"} sx={{marginBottom: 0.5}}>
-            {props.title}
-        </Typography>
-        <Typography variant={"h6"} sx={{
-            borderRadius: "50px",
-            paddingTop: 1,
-            marginTop: 0,
-            paddingBottom: 2,
-            paddingLeft: 2,
-            paddingRight: 2,
-            color: "#000",
-            backgroundColor: props.backgroundColor
-        }}>
-            {props.value}
-        </Typography>
-</Stack>;
+const LabeledValueBubble = (props: {
+  title: string;
+  value: string;
+  backgroundColor: string;
+}) => (
+  <Stack alignItems={"center"}>
+    <Typography
+      variant={"body2"}
+      color={"text.secondary"}
+      sx={{ marginBottom: 0.5 }}
+    >
+      {props.title}
+    </Typography>
+    <Typography
+      variant={"h6"}
+      sx={{
+        borderRadius: "50px",
+        paddingTop: 1,
+        marginTop: 0,
+        paddingBottom: 2,
+        paddingLeft: 2,
+        paddingRight: 2,
+        color: "#000",
+        backgroundColor: props.backgroundColor,
+      }}
+    >
+      {props.value}
+    </Typography>
+  </Stack>
+);

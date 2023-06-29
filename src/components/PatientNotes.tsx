@@ -13,6 +13,7 @@ import {
 import CarePlan from "../model/CarePlan";
 import {ICarePlan} from "@ahryman40k/ts-fhir-types/lib/R4";
 import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
 
 interface PatientNotesProps {
 
@@ -86,9 +87,9 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
                 }}
                 size="small"
                 variant="outlined"
-                startIcon={<EditIcon sx={{display: this.state.editable ? "none": "block"}}></EditIcon>}
+                startIcon={this.state.editable ? <SaveIcon/> : <EditIcon/>}
               >
-                {this.state.editable ? "Save notes" : "Update"}
+                {this.state.editable ? "Save notes" : "Update notes"}
               </Button>
             </CardActions>
           </>

@@ -7,13 +7,17 @@ import {
   Chip,
   CircularProgress,
   Divider,
+  FormControl,
   FormControlLabel,
   IconButton,
   InputAdornment,
+  InputLabel,
   List,
   ListItem,
   ListItemAvatar,
   ListItemText,
+  MenuItem,
+  Select,
   Stack,
   Table,
   TableBody,
@@ -23,6 +27,7 @@ import {
   TextField,
   Typography
 } from "@mui/material";
+import { SelectChangeEvent } from '@mui/material/Select';
 import ClearIcon from "@mui/icons-material/Clear";
 import AddIcon from "@mui/icons-material/Add";
 import {
@@ -59,6 +64,7 @@ type ContactToAdd = {
 type SummaryState = {
     error: string;
     studyStartDateValidationError: DateValidationError | null;
+    DOBDateValidationError: DateValidationError | null;
     practitioners: IPractitioner[];
     selectedPractitioners: (string | IPractitioner)[];
     selectAllPractitioners: boolean;
@@ -73,6 +79,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     this.state = {
       error: "",
       studyStartDateValidationError: null,
+      DOBDateValidationError: null,
       practitioners: null,
       selectedPractitioners: null,
       selectAllPractitioners: false,
@@ -98,7 +105,8 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
       if (!patient.generalPractitioner) patient.generalPractitioner = [];
       if (
         !patient.generalPractitioner.find(
-          (p:Practitioner) => p.reference && p.reference.split("/")[1] === practitioner.id
+          (p: Practitioner) =>
+            p.reference && p.reference.split("/")[1] === practitioner.id
         )
       ) {
         // add current user to be one of the patient's general practitioners (list of followers)
@@ -144,14 +152,17 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     if (!patient) return <Alert severity={"error"}>{"No recipient"}</Alert>;
 
     let rows = [
-      { label: "First name", value: patient.name[0].given },
-      { label: "Last name", value: patient.name[0].family },
-      { label: "DOB", value: patient.birthDate },
+      { label: "First name", value: this._buildFirstNameEntry() },
+      { label: "Last name", value: this._buildLastNameEntry() },
+      { label: "DOB", value: this._buildDOBEntry() },
+      { label: "Gender", value: this._buildGenderEntry() },
       { label: "Preferred name", value: this._buildPreferredNameEntry() },
-      //{ label: "Gender", value: patient.gender },
       { label: "Pronouns", value: this._buildPronounsEntry() },
       { label: "Address", value: this._buildAddressEntry() },
-      { label: "Contact information", value: this._buildContactInformationEntry()},
+      {
+        label: "Contact information",
+        value: this._buildContactInformationEntry(),
+      },
       {
         label: "Emergency contact",
         value: this._buildEmergencyContactsEntry(),
@@ -179,16 +190,16 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           <TableContainer>
             <Table sx={{ minWidth: 50 }} size={"small"}>
               <TableBody>
-                {rows.map((row) => (
+                {rows.map((row, index) => (
                   <TableRow
-                    key={row.label}
                     sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                    key={`patient_info_row_${index}`}
                   >
                     <TableCell component="th" scope="row">
                       {row.label}
                     </TableCell>
                     <TableCell align="left">
-                      <Typography variant="body1">{row.value}</Typography>
+                      <Typography variant="body1" component={"div"}>{row.value}</Typography>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -197,6 +208,136 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           </TableContainer>
         )}
       </React.Fragment>
+    );
+  }
+
+  private _buildFirstNameEntry() {
+    // @ts-ignore
+    const patient = this.context.patient;
+    return this.props.editable ? (
+      <TextField
+        value={patient.firstName ? patient.firstName : ""}
+        placeholder={"First name"}
+        size="small"
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          patient.firstName = event.target.value;
+          if (this.props.onChange) this.props.onChange();
+          this.setState({});
+        }}
+        fullWidth
+      ></TextField>
+    ) : (
+      <Typography variant={"body1"} component={"div"}>{patient.firstName}</Typography>
+    );
+  }
+
+  private _buildLastNameEntry() {
+    // @ts-ignore
+    const patient = this.context.patient;
+    return this.props.editable ? (
+      <TextField
+        value={patient.lastName ? patient.lastName : ""}
+        placeholder={"Last name"}
+        size="small"
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          patient.lastName = event.target.value;
+          if (this.props.onChange) this.props.onChange();
+          this.setState({});
+        }}
+        fullWidth
+      ></TextField>
+    ) : (
+      <Typography variant={"body1"} component={"div"}>{patient.lastName}</Typography>
+    );
+  }
+
+
+  private _buildDOBEntry() {
+    // @ts-ignore
+    const patient = this.context.patient;
+    return this.props.editable ? (
+      <LocalizationProvider dateAdapter={AdapterMoment}>
+        <DatePicker
+          format="YYYY-MM-DD"
+          // @ts-ignore
+          value={patient.birthDate ? moment(patient.birthDate) : null}
+          onError={(newError) => {
+            this.setState({
+              DOBDateValidationError: newError,
+            });
+          }}
+          slotProps={{
+            textField: {
+              size: "small",
+              fullWidth : true,
+              helperText: this.state.DOBDateValidationError
+                ? "invalid entry"
+                : null,
+              //@ts-ignore
+              onChange: (value: moment.Moment, validationContext) => {
+                const inputValue = value
+                  ? value.toDate().toISOString().slice(0, 10)
+                  : null;
+                const validationError = validationContext?.validationError;
+                if (this.props.onChange) this.props.onChange();
+                if (!validationError) {
+                  patient.birthDate = inputValue;
+                  this.setState({});
+                } else {
+                  this.setState({
+                    DOBDateValidationError: validationError,
+                  });
+                }
+              },
+            },
+          }}
+          onChange={(newValue: Date | null) => {
+            patient.birthDate = newValue?.toISOString()?.slice(0, 10);
+            if (this.props.onChange) this.props.onChange();
+            this.setState({});
+          }}
+          disableFuture
+        ></DatePicker>
+      </LocalizationProvider>
+    ) : (
+      patient.birthDate
+    );
+  }
+
+  private _buildGenderEntry() {
+    // @ts-ignore
+    const patient = this.context.patient;
+    // see https://www.hl7.org/fhir/valueset-administrative-gender.html
+    const choices = ["male", "female", "other", "unknown"];
+    return (
+      <FormControl fullWidth>
+        <InputLabel></InputLabel>
+        <Select
+          labelId="input-gender-label"
+          id="gender-select"
+          label=""
+          placeholder="Gender"
+          value={patient.gender}
+          onChange={(event: SelectChangeEvent) => {
+            patient.gender = event.target.value;
+            if (this.props.onChange) this.props.onChange();
+            this.setState({});
+          }}
+          inputProps={{
+            size: "small",
+          }}
+          size="small"
+        >
+          {" "}
+          {choices.map((item, index) => {
+            return (
+              <MenuItem value={item} key={`gender_item_${index}`}>
+                {item}
+              </MenuItem>
+            );
+          })}
+        </Select>
+      </FormControl>
     );
   }
 
@@ -253,8 +394,8 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
       />
     );
     return this.props.editable
-    ? contactInformationEntry
-    : patient.smsContactPoint ?? "None on file";
+      ? contactInformationEntry
+      : patient.smsContactPoint ?? "None on file";
   }
 
   private _buildPreferredNameEntry() {
@@ -273,7 +414,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         fullWidth
       ></TextField>
     ) : (
-      <Typography variant={"body1"}>{patient.preferredName}</Typography>
+      <Typography variant={"body1"} component={"div"}>{patient.preferredName}</Typography>
     );
   }
 
@@ -293,7 +434,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         fullWidth
       ></TextField>
     ) : (
-      <Typography variant={"body1"}>{patient.pronouns}</Typography>
+      <Typography variant={"body1"} component={"div"}>{patient.pronouns}</Typography>
     );
   }
 
@@ -315,7 +456,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         fullWidth
       ></TextField>
     ) : (
-      <Typography variant={"body1"} sx={{ whiteSpace: "pre-wrap" }}>
+      <Typography variant={"body1"} component={"div"} sx={{ whiteSpace: "pre-wrap" }}>
         {patient.addressText}
       </Typography>
     );
@@ -324,7 +465,8 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
   private _buildEmergencyContactsEntry() {
     // @ts-ignore
     const patient = this.context.patient;
-    const Contacts = patient.contact?.map((o: any, index: number) => {
+    const emergencyContacts = patient.getEmergencyContacts();
+    const Contacts = emergencyContacts?.map((o: any, index: number) => {
       const name = o.name?.text ? (
         <Typography variant="subtitle2" component={"div"}>
           {o.name.text}
@@ -342,7 +484,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 <IconButton
                   edge="end"
                   onClick={() => {
-                    patient.removeContact(index);
+                    patient.removeEmergencyContact(index);
                     if (this.props.onChange) this.props.onChange();
                     this.setState({});
                   }}
@@ -352,13 +494,15 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
               ) : null
             }
           >
-            {this.props.editable && <ListItemAvatar>
-              <Avatar></Avatar>
-            </ListItemAvatar>}
+            {this.props.editable && (
+              <ListItemAvatar>
+                <Avatar></Avatar>
+              </ListItemAvatar>
+            )}
             <ListItemText primary={name} secondary={detail}></ListItemText>
           </ListItem>
           {patient.contact && index !== patient.contact.length - 1 && (
-            <Divider  />
+            <Divider key={`contact_list_divider_${index}`}/>
           )}
         </>
       );
@@ -372,7 +516,10 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         <List>
           {Contacts}
           {patient.contact?.length > 0 && <Divider></Divider>}
-          <ListItem alignItems="flex-start" sx={{marginTop: 1}}>
+          <ListItem
+            alignItems="flex-start"
+            sx={{ marginTop: patient.contact ? 1 : 0 }}
+          >
             <ListItemText
               primary={
                 <TextField
@@ -382,7 +529,6 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                     shrink: true,
                   }}
                   margin="dense"
-                  variant="standard"
                   size="small"
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                     if (this.props.onChange) this.props.onChange();
@@ -404,8 +550,10 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                     InputLabelProps={{
                       shrink: true,
                     }}
+                    sx={{
+                      marginTop: 2,
+                    }}
                     margin="dense"
-                    variant="standard"
                     size="small"
                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                       if (this.props.onChange) this.props.onChange();
@@ -424,7 +572,9 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                     InputLabelProps={{
                       shrink: true,
                     }}
-                    variant="standard"
+                    sx={{
+                      marginTop: 2,
+                    }}
                     size="small"
                     margin="dense"
                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -444,12 +594,12 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                     variant="outlined"
                     sx={{ textAlign: "left", marginTop: 1 }}
                     onClick={() => {
-                      if (this.props.onChange) this.props.onChange();
-                      patient.addContact(
+                      patient.addEmergencyContact(
                         this.state.contactToAdd.name,
                         this.state.contactToAdd.phoneNumber,
                         this.state.contactToAdd.email
                       );
+                      // if (this.props.onChange) this.props.onChange();
                       this.setState({
                         contactToAdd: { name: "", phoneNumber: "", email: "" },
                       });

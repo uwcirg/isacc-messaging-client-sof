@@ -4,6 +4,7 @@ import {
   IAddress,
   IAttachment,
   ICodeableConcept,
+  ICoding,
   IContactPoint,
   IElement,
   IExtension,
@@ -18,7 +19,7 @@ import {
   IResourceList,
   PatientGenderKind
 } from "@ahryman40k/ts-fhir-types/lib/R4";
-import {ExtensionUrl, SystemURL} from "./CodeSystem";
+import {ExtensionUrl, RelationshipCategory, SystemURL} from "./CodeSystem";
 
 export default class Patient implements IPatient {
   _active?: IElement;
@@ -218,7 +219,7 @@ export default class Patient implements IPatient {
     address.postalCode = text;
   }
 
-  addContact(
+  addEmergencyContact(
     name: string = null,
     phoneNumber: string = null,
     email: string = null
@@ -245,13 +246,45 @@ export default class Patient implements IPatient {
         value: email,
       });
     }
+    contactToAdd.relationship = [
+      {
+        coding: [RelationshipCategory.emergencyContact],
+      },
+    ];
+    console.log("contact to add ", contactToAdd);
     this.contact.push(contactToAdd);
   }
 
-  removeContact(index : number) {
+  removeEmergencyContact(index: number) {
     if (index != null) {
-      this.contact?.splice(index, 1);
+      let emergencyContact = this.getEmergencyContacts();
+      if (emergencyContact) {
+        emergencyContact?.splice(index, 1);
+        if (!this.contact) this.contact = [];
+        const nonEmergencyContacts = this.contact.filter(
+          (contact: IPatient_Contact) =>
+            !contact.relationship ||
+            contact.relationship.find((relationship: ICodeableConcept) =>
+              relationship.coding?.find(
+                (coding: ICoding) =>
+                  coding.code !== RelationshipCategory.emergencyContact.code
+              )
+            )
+        );
+        this.contact = [...nonEmergencyContacts, ...emergencyContact];
+      }
     }
+  }
+  
+  getEmergencyContacts(): IPatient_Contact[] {
+    return this.contact?.filter((contact: IPatient_Contact) =>
+      contact.relationship?.find((relationship: ICodeableConcept) =>
+        relationship.coding?.find(
+          (coding: ICoding) =>
+            coding.code === RelationshipCategory.emergencyContact.code
+        )
+      )
+    );
   }
 
   get studyStartDate(): string {
