@@ -1,7 +1,7 @@
 import React from "react";
 import FHIR from "fhirclient";
 import { FhirClientContext, FhirClientContextType } from "./FhirClientContext";
-import Box from "@mui/material/Box";
+import { Box, Stack } from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
 import Client from "fhirclient/lib/Client";
 import { queryPatientIdKey } from "./util/util";
@@ -9,9 +9,14 @@ import { getFhirData, getUserEmail } from "./util/isacc_util";
 import { Observation } from "./model/Observation";
 import Patient from "./model/Patient";
 import Practitioner from "./model/Practitioner";
+import CareTeam from "./model/CareTeam";
 import CarePlan from "./model/CarePlan";
 import { Bundle } from "./model/Bundle";
-import { ICarePlan, IObservation } from "@ahryman40k/ts-fhir-types/lib/R4";
+import {
+  ICarePlan,
+  IReference,
+  IObservation,
+} from "@ahryman40k/ts-fhir-types/lib/R4";
 import { IsaccCarePlanCategory } from "./model/CodeSystem";
 import ErrorComponent from "./components/ErrorComponent";
 
@@ -26,6 +31,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
   const [practitioner, setPractitioner] = React.useState(null);
   const [currentCarePlan, setCurrentCarePlan] = React.useState(null);
   const [allCarePlans, setAllCarePlans] = React.useState(null);
+  const [careTeam, setCareTeam] = React.useState(null);
   const [mostRecentPhq9, setMostRecentPhq9] = React.useState(null);
   const [mostRecentCss, setMostRecentCss] = React.useState(null);
   const [loaded, setLoaded] = React.useState(false);
@@ -65,6 +71,29 @@ export default function FhirClientProvider(props: Props): JSX.Element {
       })
       .catch((e) => {
         setError(e);
+        return null;
+      });
+  }
+
+  async function getCareTeam(
+    client: Client,
+    careTeamReference: IReference
+  ): Promise<CareTeam> {
+    if (!careTeamReference) return;
+    const id = careTeamReference.reference.split("/")[1];
+    if (!id) return;
+    return getFhirData(client, `/CareTeam/${id}`)
+      .then((result: any) => {
+        if (!result) {
+          return null;
+        }
+        return CareTeam.from(result);
+      })
+      .catch((e) => {
+        console.log("Error getting CareTeam resource ", e);
+        setError(
+          "Unable to retrieve CareTeam resource.  See console for detail"
+        );
         return null;
       });
   }
@@ -173,8 +202,10 @@ export default function FhirClientProvider(props: Props): JSX.Element {
                 getObs(client, resourceResult, Observation.CSS_OBS_CODE),
               ]).then((results: any[]) => {
                 if (results[0].status === "rejected") {
-                  setError("Unable to load patient's care plan. See console for detail.");
-                  console.log("Error loading carePlan ", results[0].reason)
+                  setError(
+                    "Unable to load patient's care plan. See console for detail."
+                  );
+                  console.log("Error loading carePlan ", results[0].reason);
                 } else {
                   const carePlanResults: CarePlan[] = results[0].value;
                   const activeCarePlans = carePlanResults?.filter(
@@ -189,6 +220,21 @@ export default function FhirClientProvider(props: Props): JSX.Element {
                     console.log(`Loaded ${mostRecentCarePlan.reference}`);
                   }
                   setAllCarePlans(carePlanResults);
+                  if (mostRecentCarePlan?.careTeam.length) {
+                    getCareTeam(client, mostRecentCarePlan.careTeam[0]).then(
+                      (result: CareTeam) => {
+                        if (result) {
+                          setCareTeam(result);
+                        } else {
+                          setCareTeam(CareTeam.create([], resourceResult.id));
+                        }
+                        setLoaded(true);
+                      }
+                    );
+                  } else {
+                    setCareTeam(CareTeam.create([], resourceResult.id));
+                    setLoaded(true);
+                  }
                 }
 
                 if (results[1]?.value) {
@@ -207,8 +253,6 @@ export default function FhirClientProvider(props: Props): JSX.Element {
                 if (results[2].status === "rejected") {
                   console.log("Error loading CSS result ", results[2].reason);
                 }
-
-                setLoaded(true);
               });
             } // end if Patient
           });
@@ -229,6 +273,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
         practitioner: practitioner,
         currentCarePlan: currentCarePlan,
         allCarePlans: allCarePlans,
+        careTeam: careTeam,
         mostRecentPhq9: mostRecentPhq9,
         mostRecentCss: mostRecentCss,
         error: error,
@@ -248,9 +293,15 @@ export default function FhirClientProvider(props: Props): JSX.Element {
 
           // client is undefined until auth.ready() is fulfilled
           return (
-            <Box>
-              <CircularProgress /> Authorizing...
-            </Box>
+            <Stack
+              direction={"row"}
+              spacing={2}
+              alignItems={"center"}
+              sx={{ padding: (theme) => theme.spacing(2) }}
+            >
+              <CircularProgress />
+              <Box>Authorizing...</Box>
+            </Stack>
           );
         }}
       </FhirClientContext.Consumer>

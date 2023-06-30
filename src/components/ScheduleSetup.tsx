@@ -271,90 +271,6 @@ export default class ScheduleSetup extends React.Component<
     );
   }
 
-<<<<<<< HEAD
-    private getCloseSchedulePlannerAlert() {
-        let clearSessionLink = getEnv("REACT_APP_DASHBOARD_URL") + "/clear_session";
-        let onClose = () => this.setState({showCloseSchedulePlannerAlert: false});
-
-        if (this.state.savingInProgress) {
-            return <Dialog open={this.state.savingInProgress}>
-                <DialogContent>
-                    <CircularProgress/>
-                    <DialogContentText>{"Saving..."}</DialogContentText>
-                </DialogContent>
-            </Dialog>;
-        }
-
-        if (this.state.alertSeverity === 'success') {
-            return <Dialog open={this.state.showCloseSchedulePlannerAlert}
-                           onClose={onClose}>
-                <DialogContent>
-                    <DialogContentText>{this.state.alertText}</DialogContentText>
-                    <DialogActions>
-                        <Button
-                            onClick={onClose}
-                            href={clearSessionLink}
-                            variant="contained"
-                        >
-                            Close schedule planner
-                        </Button>
-                    </DialogActions>
-                </DialogContent>
-            </Dialog>;
-        }
-        return <Snackbar open={this.state.showCloseSchedulePlannerAlert}
-                         autoHideDuration={6000}
-                         onClose={onClose}>
-            <Alert
-                onClose={onClose}
-                action={<Button href={clearSessionLink}>Close schedule planner</Button>}
-                severity={this.state.alertSeverity}
-                sx={{width: '100%'}}>
-                {this.state.alertText}
-            </Alert>
-        </Snackbar>;
-    }
-
-
-    private checkPhoneNumber(): Promise<any> {
-        // @ts-ignore
-        let patient: Patient = this.context.patient;
-        // @ts-ignore
-        let client: Client = this.context.client;
-
-        if (!patient.smsContactPoint) {
-            return new Promise((resolve,reject) => reject("No contact information entered."));
-        }
-
-        let params = new URLSearchParams({
-            "telecom": `${patient.smsContactPoint}`
-            // FIXME
-            // "_id:not: `${patient.id}`"  // this DOES NOT WORK, at least when tried against SMIT, R4 FHIR server 
-            // need to figure out the correct search paramter for excluding a patient id
-        }).toString();
-        return getFhirData(client, `/Patient?${params}`).then((bundle: Bundle): Promise<void> => {
-            return new Promise((resolve, reject) => {
-                if (bundle.type === "searchset") {
-                    if (bundle.entry) {
-                        let patients: Patient[] = bundle.entry.map((entry: IBundle_Entry) => {
-                            if (entry.resource.resourceType !== "Patient") {
-                                this.showSnackbar("error", "Unexpected resource type returned");
-                                return null;
-                            } else {
-                                console.log("Patient loaded:", entry);
-                                return Patient.from(entry.resource);
-                            }
-                        })
-                        if (patients.find(o => o.id !== patient.id)) { // exclude current patient, workaround for above FIXME
-                            reject(`Phone number is already associated with: ${patients.filter(o => o.id !== patient.id).map(
-                                (p: Patient) => `${p.fullNameDisplay} (${p.reference})`
-                            ).join("; ")}.`);
-                        } else {
-                            resolve();
-                        }
-                    } else {
-                        resolve();
-=======
   renderSaveFooter() {
     return (
       <Paper
@@ -395,7 +311,6 @@ export default class ScheduleSetup extends React.Component<
                 arrow: {
                     sx: {
                         color: (theme) => theme.palette.warning.dark
->>>>>>> 1e0879c483f300f9a6e06fa0a91c70fb22a07a4c
                     }
                 }
               }}
@@ -576,15 +491,45 @@ export default class ScheduleSetup extends React.Component<
       (value: any) => {
         return client.update(patient).then((value: any) => {
           console.log(`Patient ${patient.id} updated`);
-          this.saveCommunicationRequests();
-          // update PRO scores
-          this.savePROs();
+          this.saveCareTeam().then((result: IResource) => {
+            console.log(`CareTeam ${result.id} resources updated.`);
+            const currentCarePlan = this.state.carePlan;
+            if (currentCarePlan) {
+              currentCarePlan.careTeam = [{
+                reference: `CareTeam/${result.id}`
+              }];
+            }
+            this.setState({
+              carePlan: currentCarePlan
+            });
+            this.saveCommunicationRequests();
+            // update PRO scores
+            this.savePROs();
+          }).catch((e) => {
+            this.showSnackbar("error", "Error saving care team.  See console for detail.");
+            console.log("Error saving care team ", e);
+          })
+         
         });
       },
       (reason: any) => {
         this.showSnackbar("error", reason);
       }
     );
+  }
+
+  private saveCareTeam() : Promise<any> {
+     // @ts-ignore
+     const client = this.context.client;
+     // @ts-ignore
+     const careTeam = this.context.careTeam;
+     let ct;
+     if (careTeam.id) {
+       ct = client.update(careTeam);
+     } else {
+       ct = client.create(careTeam);
+     }
+     return ct;
   }
 
   private saveCommunicationRequests() {
@@ -614,6 +559,7 @@ export default class ScheduleSetup extends React.Component<
             (cr) => cr.resourceType === "CommunicationRequest"
           )
         );
+
         // create resource on server
         let p;
         if (this.state.carePlan.id) {

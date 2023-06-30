@@ -1,8 +1,9 @@
 import React from "react";
 import Client from "fhirclient/lib/Client";
-import Patient from "./model/Patient";
+import CareTeam from "./model/CareTeam";
 import CarePlan from "./model/CarePlan";
 import Practitioner from "./model/Practitioner";
+import Patient from "./model/Patient";
 import { Observation } from "./model/Observation";
 
 export type FhirClientContextType = {
@@ -11,6 +12,7 @@ export type FhirClientContextType = {
     practitioner: Practitioner;
     currentCarePlan: CarePlan;
     allCarePlans: CarePlan[],
+    careTeam: CareTeam;
     mostRecentPhq9: Observation,
     mostRecentCss: Observation
 
@@ -22,6 +24,7 @@ const defaultValue: FhirClientContextType = {
     practitioner: null,
     currentCarePlan: null,
     allCarePlans: null,
+    careTeam: null,
     mostRecentPhq9: null,
     mostRecentCss: null,
     error: ''
