@@ -61,6 +61,7 @@ type ScheduleSetupState = {
     alertText: string;
     savingInProgress: boolean;
     unsavedStates: UnsavedStates;
+    showUnsaveChangesTooltip: boolean;
 }
 
 export type MessageDraft = {
@@ -103,6 +104,7 @@ export default class ScheduleSetup extends React.Component<
       alertSeverity: null,
       savingInProgress: false,
       unsavedStates: defaultUnsavedStates,
+      showUnsaveChangesTooltip: false,
     };
     this.planDefinition = getDefaultMessageSchedule();
     // This binding is necessary to make `this` work in the callback
@@ -122,6 +124,27 @@ export default class ScheduleSetup extends React.Component<
 
   hasUnsavedChanges() {
     return Object.entries(this.state.unsavedStates).find(item => item[1]);
+  }
+
+  handleUnsaveChanges(key: string, changed: boolean = true) {
+    if (changed && !this.hasUnsavedChanges()) {
+      // flash tooltip to warn user first time
+      this.setState({
+        showUnsaveChangesTooltip: true
+      }, () => {
+        setTimeout(() => {
+          this.setState({
+            showUnsaveChangesTooltip: false
+          })
+        }, 5000)
+      })
+    }
+    this.setState({
+      unsavedStates: {
+        ...this.state.unsavedStates,
+        [key]: changed,
+      },
+    });
   }
 
   alertUser(event: BeforeUnloadEvent) {
@@ -155,14 +178,7 @@ export default class ScheduleSetup extends React.Component<
             <Item>
               <Summary
                 editable={true}
-                onChange={() =>
-                  this.setState({
-                    unsavedStates: {
-                      ...this.state.unsavedStates,
-                      patient: true,
-                    },
-                  })
-                }
+                onChange={() => this.handleUnsaveChanges("patient")}
               />
             </Item>
           </Grid>
@@ -178,20 +194,10 @@ export default class ScheduleSetup extends React.Component<
               {editing ? (
                 <PatientNotes
                   onChange={() => {
-                    this.setState({
-                      unsavedStates: {
-                        ...this.state.unsavedStates,
-                        careplan: true,
-                      },
-                    });
+                    this.handleUnsaveChanges("careplan")
                   }}
                   onSave={() => {
-                    this.setState({
-                      unsavedStates: {
-                        ...this.state.unsavedStates,
-                        careplan: false,
-                      },
-                    });
+                    this.handleUnsaveChanges("careplan", false)
                   }}
                 />
               ) : (
@@ -211,13 +217,7 @@ export default class ScheduleSetup extends React.Component<
                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                       const cp = this.state.carePlan;
                       cp.description = event.target.value;
-                      this.setState({
-                        carePlan: cp,
-                        unsavedStates: {
-                          ...this.state.unsavedStates,
-                          careplan: true,
-                        },
-                      });
+                      this.handleUnsaveChanges("careplan");
                     }}
                   />
                 </>
@@ -228,20 +228,10 @@ export default class ScheduleSetup extends React.Component<
                 fieldsOnly={!editing}
                 editable={editing}
                 onChange={() => {
-                  this.setState({
-                    unsavedStates: {
-                      ...this.state.unsavedStates,
-                      pro: true,
-                    },
-                  });
+                  this.handleUnsaveChanges("pro")
                 }}
                 onSave={() => {
-                  this.setState({
-                    unsavedStates: {
-                      ...this.state.unsavedStates,
-                      pro: false,
-                    },
-                  });
+                  this.handleUnsaveChanges("pro", false)
                 }}
               ></PatientPROs>
             </Item>
@@ -253,11 +243,8 @@ export default class ScheduleSetup extends React.Component<
                 onMessagePlanChanged={(carePlan: CarePlan) => {
                   this.setState({
                     carePlan: carePlan,
-                    unsavedStates: {
-                      ...this.state.unsavedStates,
-                      communications: true,
-                    },
                   });
+                  this.handleUnsaveChanges("communication");
                 }}
                 saveSchedule={() => this.saveSchedule()}
                 patient={patient}
@@ -286,7 +273,7 @@ export default class ScheduleSetup extends React.Component<
           padding: (theme) => theme.spacing(2, 0),
           textAlign: "center",
         }}
-        elevation={4}
+        elevation={6}
       >
         <Stack
           spacing={2}
@@ -298,8 +285,9 @@ export default class ScheduleSetup extends React.Component<
             <Tooltip
               arrow
               color="warning"
-              title="You have unsaved changes. Please click the DONE button to save them."
+              title="Hey, you have made changes. Make sure to click the DONE button if you want to save them."
               enterTouchDelay={0}
+              open={this.state.showUnsaveChangesTooltip}
               slotProps={{
                 tooltip: {
                     sx: {
@@ -569,9 +557,7 @@ export default class ScheduleSetup extends React.Component<
     const mostRecentPhq9 = this.context.mostRecentPhq9;
     // @ts-ignore
     const mostRecentCss = this.context.mostRecentCss;
-    // if (!mostRecentPhq9 && !mostRecentCss) {
-    //   return;
-    // }
+
     // @ts-ignore
     const client = this.context.client;
     const requests = [];
@@ -629,7 +615,7 @@ const Item = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(2, 3),
     margin: theme.spacing(1, 0),
     flexGrow: 1,
-    minHeight: 200
+    minHeight: 240
 }));
 
 

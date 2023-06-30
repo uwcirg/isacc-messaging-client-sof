@@ -155,8 +155,8 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
       { label: "First name", value: this._buildFirstNameEntry() },
       { label: "Last name", value: this._buildLastNameEntry() },
       { label: "DOB", value: this._buildDOBEntry() },
-      { label: "Gender", value: this._buildGenderEntry() },
       { label: "Preferred name", value: this._buildPreferredNameEntry() },
+      { label: "Gender", value: this._buildGenderEntry() },
       { label: "Pronouns", value: this._buildPronounsEntry() },
       { label: "Address", value: this._buildAddressEntry() },
       {
@@ -275,12 +275,12 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 : null,
               //@ts-ignore
               onChange: (value: moment.Moment, validationContext) => {
-                const inputValue = value
-                  ? value.toDate().toISOString().slice(0, 10)
-                  : null;
                 const validationError = validationContext?.validationError;
                 if (this.props.onChange) this.props.onChange();
                 if (!validationError) {
+                  const inputValue = value
+                  ? value.toDate().toISOString().slice(0, 10)
+                  : null;
                   patient.birthDate = inputValue;
                   this.setState({});
                 } else {
@@ -662,12 +662,12 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 : null,
               //@ts-ignore
               onChange: (value: moment.Moment, validationContext) => {
-                const inputValue = value
-                  ? value.toDate().toISOString().slice(0, 10)
-                  : null;
                 const validationError = validationContext?.validationError;
                 if (this.props.onChange) this.props.onChange();
                 if (!validationError) {
+                  const inputValue = value
+                  ? value.toDate().toISOString().slice(0, 10)
+                  : null;
                   patient.studyStartDate = inputValue;
                   this.setState({});
                 } else {
