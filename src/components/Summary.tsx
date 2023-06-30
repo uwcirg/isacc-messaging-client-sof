@@ -145,19 +145,35 @@ export default class Summary extends React.Component<
       const entries = bundle?.entry?.map(
         (e: IBundle_Entry) => e.resource as IPractitioner
       );
+      const matchedPrimaryAuthor = entries?.filter((p: IPractitioner) => {
+        return patient.generalPractitioner?.find((gp: IReference) =>
+          gp.reference?.includes(p.id)
+        );
+      });
+      const matchedCareTeamParticipants = entries?.filter(
+        (p: IPractitioner) => {
+          // @ts-ignore
+          return this.context.careTeam?.participant?.find(
+            (ip: ICareTeam_Participant) => {
+              return ip.member?.reference.includes(p.id);
+            }
+          );
+        }
+      );
       this.setState({
         practitioners: entries,
-        primaryAuthor: entries?.filter((p: IPractitioner) => {
-          return patient.generalPractitioner?.find((gp: IReference) => gp.reference?.includes(p.id))
-        })[0],
-        selectedPractitioners: entries?.filter((p: IPractitioner) => {
-          // @ts-ignore
-          return  this.context.careTeam?.participant?.find((ip: ICareTeam_Participant) => {
-            return (
-             ip.member?.reference.includes(p.id)
-            );
-          });
-        }),
+        primaryAuthor: matchedPrimaryAuthor.length
+          ? matchedPrimaryAuthor[0]
+          : null,
+        selectedPractitioners: [
+          ...matchedCareTeamParticipants,
+          ...(matchedPrimaryAuthor.length &&
+          !matchedCareTeamParticipants.find((p: IPractitioner) => {
+            return p.id === matchedPrimaryAuthor[0].id;
+          })
+            ? [matchedPrimaryAuthor[0]]
+            : []),
+        ],
       });
     });
   }
@@ -866,6 +882,12 @@ export default class Summary extends React.Component<
           size="small"
           value={this.state.selectedPractitioners ?? []}
           options={this.state.practitioners}
+          getOptionDisabled={(option) => {
+            return (
+              (option as Practitioner).id ===
+              (this.state.primaryAuthor as Practitioner)?.id
+            );
+          }}
           getOptionLabel={(option) =>
             this.getPractitionerLabel(option as IPractitioner)
           }
@@ -886,11 +908,12 @@ export default class Summary extends React.Component<
           }
           onChange={(event: any, value: (string | IPractitioner)[]) => {
             this.setState({
-              selectedPractitioners: (!value || !value.length)
-                ? this.state.primaryAuthor
-                  ? [this.state.primaryAuthor]
-                  : []
-                : value,
+              selectedPractitioners:
+                !value || !value.length
+                  ? this.state.primaryAuthor
+                    ? [this.state.primaryAuthor]
+                    : []
+                  : value,
               selectAllPractitioners: false,
             });
             if (this.props.onChange) this.props.onChange();
