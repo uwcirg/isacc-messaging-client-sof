@@ -303,12 +303,12 @@ export default class Summary extends React.Component<
                 : null,
               //@ts-ignore
               onChange: (value: moment.Moment, validationContext) => {
-                const inputValue = value
-                  ? value.toDate().toISOString().slice(0, 10)
-                  : null;
                 const validationError = validationContext?.validationError;
                 if (this.props.onChange) this.props.onChange();
                 if (!validationError) {
+                  const inputValue = value
+                  ? value.toDate().toISOString().slice(0, 10)
+                  : null;
                   patient.birthDate = inputValue;
                   this.setState({});
                 } else {
@@ -698,12 +698,12 @@ export default class Summary extends React.Component<
                 : null,
               //@ts-ignore
               onChange: (value: moment.Moment, validationContext) => {
-                const inputValue = value
-                  ? value.toDate().toISOString().slice(0, 10)
-                  : null;
                 const validationError = validationContext?.validationError;
                 if (this.props.onChange) this.props.onChange();
                 if (!validationError) {
+                  const inputValue = value
+                  ? value.toDate().toISOString().slice(0, 10)
+                  : null;
                   patient.studyStartDate = inputValue;
                   this.setState({});
                 } else {
