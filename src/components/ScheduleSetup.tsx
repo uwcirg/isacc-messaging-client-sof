@@ -167,10 +167,10 @@ export default class ScheduleSetup extends React.Component<
       <Container maxWidth={"lg"}>
         {editing ? (
           <Alert severity={"info"}>
-            <AlertTitle>You are editing an existing CarePlan</AlertTitle>
-            {`CarePlan/${this.state.carePlan.id}, created ${new Date(
+            <AlertTitle>You are editing an existing CarePlan.</AlertTitle>
+            {`CarePlan/${this.state.carePlan.id}, created on ${new Date(
               this.state.carePlan.created
-            )}`}
+            ).toLocaleString()}`}
           </Alert>
         ) : null}
         <Grid container spacing={2}>
