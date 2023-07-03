@@ -5,11 +5,8 @@ import {FhirClientContext, FhirClientContextType} from "../FhirClientContext";
 import Client from "fhirclient/lib/Client";
 import {CommunicationRequest} from "../model/CommunicationRequest";
 import {makeCarePlan} from "../model/modelUtil";
-import {Alert, Button, CircularProgress} from "@mui/material";
+import {Alert, AlertTitle, Button, CircularProgress, Stack, Typography} from "@mui/material";
 import CarePlan from "../model/CarePlan";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogActions from "@mui/material/DialogActions";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import {IBundle_Entry, ICommunicationRequest} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {getDefaultMessageSchedule} from "../model/PlanDefinition";
@@ -202,21 +199,26 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
 
         // @ts-ignore
         let existingCarePlan: CarePlan = this.context.currentCarePlan;
-        let creationDate = existingCarePlan?.created
-        let alertMessage = `The recipient already has a CarePlan. Would you like to edit this CarePlan or revoke it and create a new one?`;
-        if (creationDate) {
-            alertMessage = `The recipient already has a CarePlan (created ${new Date(creationDate)}).\nWould you like to edit this CarePlan or revoke it and create a new one?`;
-        }
+        let creationDate = existingCarePlan?.created;
+        const alertTitle = `The recipient already has a CarePlan. ${creationDate ? "( created on " + (new Date(creationDate)).toLocaleString() + " )" : ""}`;
+        let alertMessage = `Would you like to edit this CarePlan or revoke it and create a new one?`;
 
-        return <DialogContent>
-            <DialogContentText><Alert severity="warning" sx={{whiteSpace: "pre-line"}}>{alertMessage}</Alert></DialogContentText>
-            <DialogActions>
-                <Button
-                    onClick={edit} variant="contained">Edit</Button>
-                <Button
-                    onClick={createNew} variant="outlined">Revoke and create new</Button>
-            </DialogActions>
-        </DialogContent>;
+        return (
+          <Stack direction={"column"} spacing={2}>
+            <Alert severity="warning" sx={{ whiteSpace: "pre-line" }}>
+                <AlertTitle>{alertTitle}</AlertTitle>
+                <Typography variant="body1" component="div">{alertMessage}</Typography>
+            </Alert>
+            <Stack direction={"row"} spacing={1} justifyContent={"flex-end"}>
+              <Button onClick={edit} variant="contained">
+                Edit
+              </Button>
+              <Button onClick={createNew} variant="outlined">
+                Revoke and create new
+              </Button>
+            </Stack>
+          </Stack>
+        );
 
     }
 }

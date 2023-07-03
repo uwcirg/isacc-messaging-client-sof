@@ -1,5 +1,5 @@
 import { AppPageScaffold } from "./AppPage";
-import { Grid, GridProps, Paper, Stack } from "@mui/material";
+import { AlertTitle, Grid, GridProps, Paper, Stack, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import Summary from "./Summary";
 import PatientNotes from "./PatientNotes";
@@ -15,9 +15,11 @@ export const MessagingApp = () => {
   if (!context.currentCarePlan) {
     content = (
       <Alert severity="error">
-        {
-          "Recipient has no ISACC CarePlan. Ensure the recipient is enrolled and has a message schedule CarePlan."
-        }
+        <AlertTitle>Recipient has no ISACC CarePlan</AlertTitle>
+        <Typography variant="body1" component="div"> {
+          "Ensure the recipient is enrolled and has a message schedule CarePlan."
+        }</Typography>
+       
       </Alert>
     );
   } else {
