@@ -25,7 +25,7 @@ export default class CareTeam implements ICareTeam {
         ({
           member: {
             reference: `${resourceType}/${p.id}`,
-            display: `${p.name[0].given}, ${p.name[0].family}`
+            display: `${p.name[0].family}, ${p.name[0].given}`
           },
         } as ICareTeam_Participant)
     );

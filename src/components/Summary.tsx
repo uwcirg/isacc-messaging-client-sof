@@ -979,6 +979,6 @@ export default class Summary extends React.Component<
     if (typeof option === "string") return option;
     if (!option.name || !option.name[0])
       return `${option.resourceType}/${option.id}`;
-    return `${option.name[0].given}, ${option.name[0].family}`;
+    return `${option.name[0].family}, ${option.name[0].given}`;
   }
 }
