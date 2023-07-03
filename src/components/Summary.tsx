@@ -126,6 +126,7 @@ export default class Summary extends React.Component<
         const practitionerMemberReference = {
           member: {
             reference: `Practitioner/${practitioner.id}`,
+            display: this.getPractitionerLabel(practitioner)
           },
         };
         // @ts-ignore
@@ -779,6 +780,7 @@ export default class Summary extends React.Component<
       practitioners?.map((v) => ({
         type: "Practitioner",
         reference: `Practitioner/${(v as IPractitioner).id}`,
+        display: this.getPractitionerLabel(v)
       }));
     return (
       <Autocomplete
@@ -797,6 +799,8 @@ export default class Summary extends React.Component<
           // @ts-ignore
           const patient = this.context.patient;
 
+          if (this.props.onChange) this.props.onChange();
+
           patient.generalPractitioner = value ? toReferences([value]) : null;
 
           // @ts-ignore
@@ -814,6 +818,7 @@ export default class Summary extends React.Component<
               {
                 member: {
                   reference: `Practitioner/${(value as IPractitioner).id}`,
+                  display: this.getPractitionerLabel(value)
                 },
               },
             ];
@@ -922,7 +927,7 @@ export default class Summary extends React.Component<
               // @ts-ignore
               this.context.careTeam.participant = this.state.primaryAuthor
                 ? CareTeam.toParticipants("Practitioner", [
-                    (this.state.primaryAuthor as IPractitioner).id,
+                    (this.state.primaryAuthor as IPractitioner),
                   ])
                 : null;
               return;
@@ -930,7 +935,7 @@ export default class Summary extends React.Component<
             // @ts-ignore
             this.context.careTeam.participant = CareTeam.toParticipants(
               "Practitioner",
-              value.map((p) => (p as IPractitioner).id)
+              value.map((p) => (p as IPractitioner))
             );
           }}
         />
@@ -958,7 +963,7 @@ export default class Summary extends React.Component<
                 // @ts-ignore
                 this.context.careTeam.participant = CareTeam.toParticipants(
                   "Practitioner",
-                  this.state.practitioners.map((p) => (p as IPractitioner).id)
+                  this.state.practitioners.map((p) => (p as IPractitioner))
                 );
                 if (this.props.onChange) this.props.onChange();
               }}
@@ -974,6 +979,6 @@ export default class Summary extends React.Component<
     if (typeof option === "string") return option;
     if (!option.name || !option.name[0])
       return `${option.resourceType}/${option.id}`;
-    return `${option.name[0].given} ${option.name[0].family}`;
+    return `${option.name[0].given}, ${option.name[0].family}`;
   }
 }

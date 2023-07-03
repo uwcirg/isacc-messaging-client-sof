@@ -1,6 +1,7 @@
 import {
   ICareTeam,
   ICareTeam_Participant,
+  IPractitioner,
   IReference,
 } from "@ahryman40k/ts-fhir-types/lib/R4";
 
@@ -16,14 +17,15 @@ export default class CareTeam implements ICareTeam {
 
   static toParticipants(
     resourceType: string,
-    ids: string[]
+    practitioners: IPractitioner[]
   ): ICareTeam_Participant[] {
-    if (!ids) return [];
-    return ids.map(
-      (id) =>
+    if (!practitioners) return [];
+    return practitioners.map(
+      (p) =>
         ({
           member: {
-            reference: `${resourceType}/${id}`,
+            reference: `${resourceType}/${p.id}`,
+            display: `${p.name[0].given}, ${p.name[0].family}`
           },
         } as ICareTeam_Participant)
     );
