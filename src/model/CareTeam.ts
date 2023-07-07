@@ -25,10 +25,29 @@ export default class CareTeam implements ICareTeam {
         ({
           member: {
             reference: `${resourceType}/${p.id}`,
-            display: `${p.name[0].family}, ${p.name[0].given}`
+            display:
+              p.name && p.name[0]
+                ? `${p.name[0].family}, ${p.name[0].given}`
+                : "",
           },
         } as ICareTeam_Participant)
     );
+  }
+
+  static toParticipant(
+    resourceType: string,
+    practitioner: IPractitioner
+  ): ICareTeam_Participant {
+    if (!practitioner) return null;
+    return {
+      member: {
+        reference: `${resourceType}/${practitioner.id}`,
+        display:
+          practitioner.name && practitioner.name[0]
+            ? `${practitioner.name[0].family}, ${practitioner.name[0].given}`
+            : "",
+      },
+    } as ICareTeam_Participant;
   }
 
   static create(
@@ -40,7 +59,7 @@ export default class CareTeam implements ICareTeam {
     if (patientId) {
       ct.subject = {
         reference: `Patient/${patientId}`,
-        type: "Patient"
+        type: "Patient",
       };
     }
     ct.participant = participants;

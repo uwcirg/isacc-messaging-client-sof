@@ -119,12 +119,10 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         );
       if (!isInCareTeam) {
         // add current user to be one of the patient's care team participants (list of followers)
-        const practitionerMemberReference = {
-          member: {
-            reference: `Practitioner/${practitioner.id}`,
-            display: this.getPractitionerLabel(practitioner),
-          },
-        };
+        const practitionerMemberReference = CareTeam.toParticipant(
+          "Practitioner",
+          practitioner
+        );
         // @ts-ignore
         this.context.careTeam.participant = (careTeam.participant ?? []).concat(
           [practitionerMemberReference]
@@ -175,10 +173,9 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           : null;
       this.setState({
         practitioners: entries,
-        primaryAuthor: matchedPrimaryAuthor.length === 1
-          ? matchedPrimaryAuthor[0]
-          : null,
-        selectedPractitioners: matchedCareTeamParticipants??[],
+        primaryAuthor:
+          matchedPrimaryAuthor.length === 1 ? matchedPrimaryAuthor[0] : null,
+        selectedPractitioners: matchedCareTeamParticipants ?? [],
       });
     });
   }
@@ -813,12 +810,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             // @ts-ignore
             this.context.careTeam.participant = [
               ...(currentPartipants ?? []),
-              {
-                member: {
-                  reference: `Practitioner/${(value as IPractitioner).id}`,
-                  display: this.getPractitionerLabel(value),
-                },
-              },
+              CareTeam.toParticipant("Practitioner", (value as IPractitioner)),
             ];
           } else {
             if (careTeam) {
