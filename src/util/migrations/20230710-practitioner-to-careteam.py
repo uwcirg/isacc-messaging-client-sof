@@ -1,8 +1,12 @@
-import requests
 import json
+import requests
+import sys
 
-# TODO change or switch to parameter
-fhir_server = "https://fhir.isacc.dev.cirg.uw.edu/fhir"
+script_name = sys.argv.pop()
+
+default_fhir_server = "https://fhir.isacc.dev.cirg.uw.edu/fhir"
+# use first argument as FHIR server base URL, if passed
+fhir_server = next(iter(sys.argv), default_fhir_server)
 
 # Get all Patient resources
 patients_response = requests.get(f"{fhir_server}/Patient?_count=50")
