@@ -2,6 +2,8 @@ import json
 import requests
 import sys
 
+# NOT IDEMPOTENT, ONLY RUN ON SYSTEMS THAT HAVE DATA PRIOR TO https://github.com/uwcirg/isacc-messaging-client-sof/pull/55 !
+
 script_name = sys.argv.pop()
 
 default_fhir_server = "https://fhir.isacc.dev.cirg.uw.edu/fhir"
@@ -20,7 +22,6 @@ patients = patients_response.json()["entry"]
 for patient_entry in patients:
     patient = patient_entry["resource"]
     patient_id = patient["id"]
-    # Justin
     # mcjustin tested this with https://fhir.isacc.dev.cirg.uw.edu/fhir/Patient/1
     #if patient_id != '1':
     #    print(f"Iterating patients, skipping {patient_id}")
