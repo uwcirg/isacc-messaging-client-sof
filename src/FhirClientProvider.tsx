@@ -220,7 +220,11 @@ export default function FhirClientProvider(props: Props): JSX.Element {
                     console.log(`Loaded ${mostRecentCarePlan.reference}`);
                   }
                   setAllCarePlans(carePlanResults);
-                  if (mostRecentCarePlan?.careTeam.length) {
+                  if (
+                    mostRecentCarePlan &&
+                    mostRecentCarePlan.careTeam &&
+                    mostRecentCarePlan.careTeam
+                  ) {
                     getCareTeam(client, mostRecentCarePlan.careTeam[0]).then(
                       (result: CareTeam) => {
                         if (result) {
