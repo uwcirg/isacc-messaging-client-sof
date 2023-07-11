@@ -791,7 +791,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     return (
       <Autocomplete
         size="small"
-        value={this.state.primaryAuthor ?? currentPractitioner}
+        value={this.state.primaryAuthor}
         options={this.state.practitioners}
         getOptionLabel={(option) =>
           this.getPractitionerLabel(option as IPractitioner)
