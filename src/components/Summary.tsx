@@ -770,21 +770,8 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         this.context.patient.generalPractitioner = this.toReferences([
           currentPractitioner,
         ]);
-        // @ts-ignore
-        this.context.careTeam.participant = [
-          // @ts-ignore
-          ...(this.context.careTeam?.participant ?? []),
-          CareTeam.toParticipant(
-            "Practitioner",
-            currentPractitioner as IPractitioner
-          ),
-        ];
         this.setState({
-          primaryAuthor: currentPractitioner,
-          selectedPractitioners: [
-            ...this.state.selectedPractitioners,
-            currentPractitioner,
-          ],
+          primaryAuthor: currentPractitioner
         });
       }
     }
