@@ -250,11 +250,11 @@ export default function FhirClientProvider(props: Props): JSX.Element {
                   console.log(`Loading CSS result `, results[2].value);
                 }
 
-                if (results[1].status === "rejected") {
+                if (results[1]?.status === "rejected") {
                   console.log("Error loading PHQ9 result ", results[1].reason);
                 }
 
-                if (results[2].status === "rejected") {
+                if (results[2]?.status === "rejected") {
                   console.log("Error loading CSS result ", results[2].reason);
                 }
               });

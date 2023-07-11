@@ -115,20 +115,29 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     // @ts-ignore
     const practitioner = this.context.practitioner;
     if (practitioner) {
-      const isInCareTeam = // @ts-ignore
+      // if patient does not have a primary author, add the current user as one
+      if (!patient.generalPractitioner) {
+        patient.generalPractitioner = [];
+        const practitionerReference = {
+          type: "Practitioner",
+          reference: `Practitioner/${practitioner.id}`,
+        };
+        patient.generalPractitioner.push(practitionerReference);
+        const isInCareTeam = // @ts-ignore
         this.context.careTeam.participant?.find((p: ICareTeam_Participant) =>
           p.member?.reference?.includes(practitioner.id)
         );
-      if (!isInCareTeam) {
-        // add current user to be one of the patient's care team participants (list of followers)
-        const practitionerMemberReference = CareTeam.toParticipant(
-          "Practitioner",
-          practitioner
-        );
-        // @ts-ignore
-        this.context.careTeam.participant = (careTeam.participant ?? []).concat(
-          [practitionerMemberReference]
-        );
+        if (!isInCareTeam) {
+          // add current user to be one of the patient's care team participants (list of followers)
+          const practitionerMemberReference = CareTeam.toParticipant(
+            "Practitioner",
+            practitioner
+          );
+          // @ts-ignore
+          this.context.careTeam.participant = (careTeam.participant ?? []).concat(
+            [practitionerMemberReference]
+          );
+        }
       }
     }
 
