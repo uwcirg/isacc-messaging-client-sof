@@ -907,12 +907,21 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             currentPractitioner as IPractitioner
           ),
         ];
-        this.setState({
-          selectedPractitioners: [
-            ...(this.state.selectedPractitioners ?? []),
-            currentPractitioner,
-          ],
-        });
+        if (
+          !this.state.selectedPractitioners?.find(
+            (sp: IPractitioner | string) =>
+              (sp as IPractitioner).id ===
+              (currentPractitioner as IPractitioner).id
+          )
+        ) {
+          this.setState({
+            selectedPractitioners: [
+              ...(this.state.selectedPractitioners ?? []),
+              currentPractitioner,
+            ],
+          });
+        }
+        
       }
     }
     // @ts-ignore
