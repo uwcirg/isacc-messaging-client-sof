@@ -223,7 +223,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
                   if (
                     mostRecentCarePlan &&
                     mostRecentCarePlan.careTeam &&
-                    mostRecentCarePlan.careTeam
+                    mostRecentCarePlan.careTeam.length
                   ) {
                     getCareTeam(client, mostRecentCarePlan.careTeam[0]).then(
                       (result: CareTeam) => {
