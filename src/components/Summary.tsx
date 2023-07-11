@@ -767,6 +767,9 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     if (!patient.generalPractitioner || !patient.generalPractitioner.length) {
       if (currentPractitioner) {
         patient.generalPractitioner = this.toReferences([currentPractitioner]);
+        this.setState({
+          primaryAuthor: currentPractitioner
+        })
       }
     }
     return (
@@ -889,8 +892,21 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             currentPractitioner as IPractitioner
           ),
         ];
+        this.setState({
+          selectedPractitioners: [
+            ...(this.state.selectedPractitioners ?? []),
+            currentPractitioner,
+          ],
+        });
       }
     }
+    // @ts-ignore
+    const patient = this.context.patient;
+    const generalPractitioner = this.state.primaryAuthor
+      ? this.state.primaryAuthor
+      : patient?.generalPractitioner
+      ? patient?.generalPractitioner[0]
+      : null;
     return (
       <>
         <Autocomplete
@@ -905,7 +921,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           getOptionDisabled={(option) => {
             return (
               (option as IPractitioner).id ===
-              (this.state.primaryAuthor as IPractitioner)?.id
+              (generalPractitioner as IPractitioner)?.id
             );
           }}
           getOptionLabel={(option) =>
@@ -921,7 +937,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 {...getTagProps({ index })}
                 disabled={
                   (option as IPractitioner)?.id ===
-                  (this.state.primaryAuthor as IPractitioner)?.id
+                  (generalPractitioner as IPractitioner)?.id
                 }
               />
             ))
