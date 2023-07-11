@@ -58,7 +58,6 @@ export default function FhirClientProvider(props: Props): JSX.Element {
     client: Client,
     email: string
   ): Promise<Practitioner> {
-    email = "achen2401+test@gmail.com"
     if (!client || !email) return;
     return getFhirData(
       client,

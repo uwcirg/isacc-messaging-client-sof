@@ -143,7 +143,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
       this.setState({
         practitioners: entries,
         primaryAuthor:
-          matchedPrimaryAuthor.length === 1 ? matchedPrimaryAuthor[0] : null,
+          matchedPrimaryAuthor.length? matchedPrimaryAuthor[0] : null,
         selectedPractitioners:
           arrCTPractitioners && arrCTPractitioners.length
             ? arrCTPractitioners
