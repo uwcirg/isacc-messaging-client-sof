@@ -79,7 +79,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
     client: Client,
     careTeamReference: IReference
   ): Promise<CareTeam> {
-    if (!careTeamReference) return;
+    if (!careTeamReference || !careTeamReference.reference) return;
     const id = careTeamReference.reference.split("/")[1];
     if (!id) return;
     return getFhirData(client, `/CareTeam/${id}`)
