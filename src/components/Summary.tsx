@@ -766,10 +766,26 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     const patient = this.context.patient;
     if (!patient.generalPractitioner || !patient.generalPractitioner.length) {
       if (currentPractitioner) {
-        patient.generalPractitioner = this.toReferences([currentPractitioner]);
+        // @ts-ignore
+        this.context.patient.generalPractitioner = this.toReferences([
+          currentPractitioner,
+        ]);
+        // @ts-ignore
+        this.context.careTeam.participant = [
+          // @ts-ignore
+          ...(this.context.careTeam?.participant ?? []),
+          CareTeam.toParticipant(
+            "Practitioner",
+            currentPractitioner as IPractitioner
+          ),
+        ];
         this.setState({
-          primaryAuthor: currentPractitioner
-        })
+          primaryAuthor: currentPractitioner,
+          selectedPractitioners: [
+            ...this.state.selectedPractitioners,
+            currentPractitioner,
+          ],
+        });
       }
     }
     return (
@@ -886,7 +902,6 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         this.context.careTeam.participant = [
           // @ts-ignore
           ...(this.context.careTeam.participant ?? []),
-
           CareTeam.toParticipant(
             "Practitioner",
             currentPractitioner as IPractitioner
