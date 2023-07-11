@@ -177,11 +177,12 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           matchedCareTeamParticipants
         );
       }
-      // @ts-ignore
-      this.context.patient.generalPractitioner =
-        matchedPrimaryAuthor && matchedPrimaryAuthor.length === 1
-          ? this.toReferences([matchedPrimaryAuthor[0]])
-          : null;
+      if (matchedPrimaryAuthor && matchedPrimaryAuthor.length === 1) {
+        // @ts-ignore
+        this.context.patient.generalPractitioner = this.toReferences([
+          matchedPrimaryAuthor[0],
+        ]);
+      }
       this.setState({
         practitioners: entries,
         primaryAuthor:
@@ -793,7 +794,10 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
   private _buildPrimaryAuthorEntry() {
     if (!this.props.editable) {
       if (!this.state.primaryAuthor) return NONE_TEXT;
-      else return this.getPractitionerLabel(this.state.primaryAuthor as IPractitioner);
+      else
+        return this.getPractitionerLabel(
+          this.state.primaryAuthor as IPractitioner
+        );
     }
     return (
       <Autocomplete
