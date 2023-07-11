@@ -762,6 +762,13 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     }
     // @ts-ignore
     const currentPractitioner = this.context.practitioner;
+    // @ts-ignore
+    const patient = this.context.patient;
+    if (!patient.generalPractitioner || !patient.generalPractitioner.length) {
+      if (currentPractitioner) {
+        patient.generalPractitioner = this.toReferences([currentPractitioner]);
+      }
+    }
     return (
       <Autocomplete
         size="small"
@@ -781,7 +788,9 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
 
           if (this.props.onChange) this.props.onChange();
 
-          patient.generalPractitioner = value ? this.toReferences([value]) : null;
+          patient.generalPractitioner = value
+            ? this.toReferences([value])
+            : null;
 
           // @ts-ignore
           const currentPartipants = this.context.careTeam?.participant?.filter(
@@ -795,7 +804,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             // @ts-ignore
             this.context.careTeam.participant = [
               ...(currentPartipants ?? []),
-              CareTeam.toParticipant("Practitioner", (value as IPractitioner)),
+              CareTeam.toParticipant("Practitioner", value as IPractitioner),
             ];
           } else {
             if (careTeam) {
@@ -856,7 +865,20 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
 
   private _buildPractitionerSelector() {
     // @ts-ignore
-    const arrCurrentPractitioner = this.context.practitioner? [this.context.practitioner] : [];
+    const currentPractitioner = this.context.practitioner;
+    const arrCurrentPractitioner = currentPractitioner
+      ? [currentPractitioner]
+      : [];
+    // @ts-ignore
+    this.context.careTeam.participant = [
+      // @ts-ignore
+      ...(this.context.careTeam.participant ?? []),
+
+      CareTeam.toParticipant(
+        "Practitioner",
+        currentPractitioner as IPractitioner
+      ),
+    ];
     return (
       <>
         <Autocomplete
