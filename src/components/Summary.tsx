@@ -78,6 +78,8 @@ type SummaryState = {
   contactToAdd: ContactToAdd;
 };
 
+const NONE_TEXT = "--";
+
 export default class Summary extends React.Component<SummaryProps, SummaryState> {
   static contextType = FhirClientContext;
 
@@ -353,6 +355,9 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
   private _buildGenderEntry() {
     // @ts-ignore
     const patient = this.context.patient;
+    if (!this.props.editable) {
+      return patient.gender ?? NONE_TEXT;
+    }
     // see https://www.hl7.org/fhir/valueset-administrative-gender.html
     const choices = ["male", "female", "other", "unknown"];
     return (
@@ -441,7 +446,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     );
     return this.props.editable
       ? contactInformationEntry
-      : patient.smsContactPoint ?? "None on file";
+      : patient.smsContactPoint ?? NONE_TEXT;
   }
 
   private _buildPreferredNameEntry() {
@@ -461,7 +466,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
       ></TextField>
     ) : (
       <Typography variant={"body1"} component={"div"}>
-        {patient.preferredName}
+        {patient.preferredName ?? NONE_TEXT}
       </Typography>
     );
   }
@@ -483,7 +488,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
       ></TextField>
     ) : (
       <Typography variant={"body1"} component={"div"}>
-        {patient.pronouns}
+        {patient.pronouns ?? NONE_TEXT}
       </Typography>
     );
   }
@@ -511,7 +516,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         component={"div"}
         sx={{ whiteSpace: "pre-wrap" }}
       >
-        {patient.addressText}
+        {patient.addressText ?? NONE_TEXT}
       </Typography>
     );
   }
@@ -562,7 +567,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
       );
     });
     if (!this.props.editable) {
-      if (!patient.contact) return "None on file";
+      if (!patient.contact) return NONE_TEXT;
       return <>{Contacts}</>;
     }
     return (
@@ -686,7 +691,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         fullWidth
       ></TextField>
     ) : (
-      patient.userID
+      patient.userID ?? NONE_TEXT
     );
   }
 
@@ -741,7 +746,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         ></DatePicker>
       </LocalizationProvider>
     ) : (
-      patient.studyStartDate
+      patient.studyStartDate ?? NONE_TEXT
     );
   }
 
@@ -772,11 +777,15 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         }}
       />
     ) : (
-      patient.studyStatus
+      patient.studyStatus ?? NONE_TEXT
     );
   }
 
   private _buildPrimaryAuthorEntry() {
+    if (!this.props.editable) {
+      if (!this.state.primaryAuthor) return NONE_TEXT;
+      else return this.getPractitionerLabel(this.state.primaryAuthor as IPractitioner);
+    }
     return (
       <Autocomplete
         size="small"
@@ -863,7 +872,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           )}
         </Stack>
       ) : (
-        "None on file"
+        NONE_TEXT
       );
     if (!this.props.editable) return selectedPractitionersDisplay;
     return this._buildPractitionerSelector();
