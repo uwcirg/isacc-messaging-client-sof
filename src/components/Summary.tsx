@@ -780,16 +780,24 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             p.member?.reference?.includes(currentPractitioner?.id)
           );
         if (!isInCareTeam) {
+          const currentSelectedPratitioners = CareTeam.toParticipants(
+            "Practitioner",
+            this.state.selectedPractitioners as IPractitioner[]
+          );
           // @ts-ignore
           this.context.careTeam.participant = [
             // @ts-ignore
-            ...(this.context.careTeam.participant ?? []),
+            ...(this.context.careTeam.participant
+              // @ts-ignore
+              ? this.context.careTeam.participant
+              : currentSelectedPratitioners
+              ? currentSelectedPratitioners
+              : []),
             CareTeam.toParticipant(
               "Practitioner",
               currentPractitioner as IPractitioner
             ),
           ];
-          
         }
         if (
           !this.state.selectedPractitioners?.find(
@@ -917,10 +925,19 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           p.member?.reference?.includes(currentPractitioner?.id)
         );
       if (!isInCareTeam) {
+        const currentSelectedPratitioners = CareTeam.toParticipants(
+          "Practitioner",
+          this.state.selectedPractitioners as IPractitioner[]
+        );
         // @ts-ignore
         this.context.careTeam.participant = [
           // @ts-ignore
-          ...(this.context.careTeam.participant ?? []),
+          ...(this.context.careTeam.participant
+            ? // @ts-ignore
+              this.context.careTeam.participant
+            : currentSelectedPratitioners
+            ? currentSelectedPratitioners
+            : []),
           CareTeam.toParticipant(
             "Practitioner",
             currentPractitioner as IPractitioner
