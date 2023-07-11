@@ -773,6 +773,38 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         this.setState({
           primaryAuthor: currentPractitioner
         });
+         // @ts-ignore
+   
+        const isInCareTeam = // @ts-ignore
+          this.context.careTeam.participant?.find((p: ICareTeam_Participant) =>
+            p.member?.reference?.includes(currentPractitioner?.id)
+          );
+        if (!isInCareTeam) {
+          // @ts-ignore
+          this.context.careTeam.participant = [
+            // @ts-ignore
+            ...(this.context.careTeam.participant ?? []),
+            CareTeam.toParticipant(
+              "Practitioner",
+              currentPractitioner as IPractitioner
+            ),
+          ];
+          
+        }
+        if (
+          !this.state.selectedPractitioners?.find(
+            (sp: IPractitioner | string) =>
+              (sp as IPractitioner).id ===
+              (currentPractitioner as IPractitioner).id
+          )
+        ) {
+          this.setState({
+            selectedPractitioners: [
+              ...(this.state.selectedPractitioners ?? []),
+              currentPractitioner,
+            ],
+          });
+        }
       }
     }
     return (
@@ -894,21 +926,20 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             currentPractitioner as IPractitioner
           ),
         ];
-        if (
-          !this.state.selectedPractitioners?.find(
-            (sp: IPractitioner | string) =>
-              (sp as IPractitioner).id ===
-              (currentPractitioner as IPractitioner).id
-          )
-        ) {
-          this.setState({
-            selectedPractitioners: [
-              ...(this.state.selectedPractitioners ?? []),
-              currentPractitioner,
-            ],
-          });
-        }
-        
+      }
+      if (
+        !this.state.selectedPractitioners?.find(
+          (sp: IPractitioner | string) =>
+            (sp as IPractitioner).id ===
+            (currentPractitioner as IPractitioner).id
+        )
+      ) {
+        this.setState({
+          selectedPractitioners: [
+            ...(this.state.selectedPractitioners ?? []),
+            currentPractitioner,
+          ],
+        });
       }
     }
     // @ts-ignore
