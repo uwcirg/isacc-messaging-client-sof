@@ -869,24 +869,35 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     const arrCurrentPractitioner = currentPractitioner
       ? [currentPractitioner]
       : [];
+    const noSelectedPractitioners =
+      !this.state.selectedPractitioners ||
+      !this.state.selectedPractitioners.length;
     // @ts-ignore
-    this.context.careTeam.participant = [
-      // @ts-ignore
-      ...(this.context.careTeam.participant ?? []),
+    if (currentPractitioner) {
+      const isInCareTeam = // @ts-ignore
+        this.context.careTeam.participant?.find((p: ICareTeam_Participant) =>
+          p.member?.reference?.includes(currentPractitioner?.id)
+        );
+      if (!isInCareTeam) {
+        // @ts-ignore
+        this.context.careTeam.participant = [
+          // @ts-ignore
+          ...(this.context.careTeam.participant ?? []),
 
-      CareTeam.toParticipant(
-        "Practitioner",
-        currentPractitioner as IPractitioner
-      ),
-    ];
+          CareTeam.toParticipant(
+            "Practitioner",
+            currentPractitioner as IPractitioner
+          ),
+        ];
+      }
+    }
     return (
       <>
         <Autocomplete
           multiple
           size="small"
           value={
-            this.state.selectedPractitioners &&
-            this.state.selectedPractitioners.length
+            !(noSelectedPractitioners)
               ? this.state.selectedPractitioners
               : arrCurrentPractitioner
           }
