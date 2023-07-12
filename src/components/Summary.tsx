@@ -752,6 +752,62 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     );
   }
 
+  private handleSetCurrentUserAsPrimaryAuthor() {
+    // @ts-ignore
+    const currentPractitioner = this.context.practitioner;
+    if (!currentPractitioner) return;
+    // @ts-ignore
+    this.context.patient.generalPractitioner = this.toReferences([
+      currentPractitioner,
+    ]);
+    this.setState({
+      primaryAuthor: currentPractitioner
+    });
+  }
+
+  private handleSetCurrentUserAsCareTeamParticipant() {
+    // @ts-ignore
+    const currentPractitioner = this.context.practitioner;
+    if (!currentPractitioner) return;
+    const isInCareTeam = // @ts-ignore
+      this.context.careTeam.participant?.find((p: ICareTeam_Participant) =>
+        p.member?.reference?.includes(currentPractitioner?.id)
+      );
+    if (!isInCareTeam) {
+      const currentSelecteParticipants = CareTeam.toParticipants(
+        "Practitioner",
+        this.state.selectedPractitioners as IPractitioner[]
+      );
+      // @ts-ignore
+      this.context.careTeam.participant = [
+        // @ts-ignore
+        ...(this.context.careTeam.participant
+          ? // @ts-ignore
+            this.context.careTeam.participant
+          : currentSelecteParticipants
+          ? currentSelecteParticipants
+          : []),
+        CareTeam.toParticipant(
+          "Practitioner",
+          currentPractitioner as IPractitioner
+        ),
+      ];
+    }
+    if (
+      !this.state.selectedPractitioners?.find(
+        (sp: IPractitioner | string) =>
+          (sp as IPractitioner).id === (currentPractitioner as IPractitioner).id
+      )
+    ) {
+      this.setState({
+        selectedPractitioners: [
+          ...(this.state.selectedPractitioners ?? []),
+          currentPractitioner,
+        ],
+      });
+    }
+  }
+
   private _buildPrimaryAuthorEntry() {
     if (!this.props.editable) {
       if (!this.state.primaryAuthor) return NONE_TEXT;
@@ -766,54 +822,10 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     const patient = this.context.patient;
     if (!patient.generalPractitioner || !patient.generalPractitioner.length) {
       if (currentPractitioner) {
-        // @ts-ignore
-        this.context.patient.generalPractitioner = this.toReferences([
-          currentPractitioner,
-        ]);
-        this.setState({
-          primaryAuthor: currentPractitioner
-        });
-         // @ts-ignore
-   
-        const isInCareTeam = // @ts-ignore
-          this.context.careTeam.participant?.find((p: ICareTeam_Participant) =>
-            p.member?.reference?.includes(currentPractitioner?.id)
-          );
-        if (!isInCareTeam) {
-          const currentSelectedPratitioners = CareTeam.toParticipants(
-            "Practitioner",
-            this.state.selectedPractitioners as IPractitioner[]
-          );
-          // @ts-ignore
-          this.context.careTeam.participant = [
-            // @ts-ignore
-            ...(this.context.careTeam.participant
-              // @ts-ignore
-              ? this.context.careTeam.participant
-              : currentSelectedPratitioners
-              ? currentSelectedPratitioners
-              : []),
-            CareTeam.toParticipant(
-              "Practitioner",
-              currentPractitioner as IPractitioner
-            ),
-          ];
-        }
-        if (
-          !this.state.selectedPractitioners?.find(
-            (sp: IPractitioner | string) =>
-              (sp as IPractitioner).id ===
-              (currentPractitioner as IPractitioner).id
-          )
-        ) {
-          this.setState({
-            selectedPractitioners: [
-              ...(this.state.selectedPractitioners ?? []),
-              currentPractitioner,
-            ],
-          });
-        }
+        this.handleSetCurrentUserAsPrimaryAuthor();
+        this.handleSetCurrentUserAsCareTeamParticipant();
       }
+      
     }
     return (
       <Autocomplete
@@ -918,46 +930,8 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     const noSelectedPractitioners =
       !this.state.selectedPractitioners ||
       !this.state.selectedPractitioners.length;
-    // @ts-ignore
     if (currentPractitioner) {
-      const isInCareTeam = // @ts-ignore
-        this.context.careTeam.participant?.find((p: ICareTeam_Participant) =>
-          p.member?.reference?.includes(currentPractitioner?.id)
-        );
-      if (!isInCareTeam) {
-        const currentSelectedPratitioners = CareTeam.toParticipants(
-          "Practitioner",
-          this.state.selectedPractitioners as IPractitioner[]
-        );
-        // @ts-ignore
-        this.context.careTeam.participant = [
-          // @ts-ignore
-          ...(this.context.careTeam.participant
-            ? // @ts-ignore
-              this.context.careTeam.participant
-            : currentSelectedPratitioners
-            ? currentSelectedPratitioners
-            : []),
-          CareTeam.toParticipant(
-            "Practitioner",
-            currentPractitioner as IPractitioner
-          ),
-        ];
-      }
-      if (
-        !this.state.selectedPractitioners?.find(
-          (sp: IPractitioner | string) =>
-            (sp as IPractitioner).id ===
-            (currentPractitioner as IPractitioner).id
-        )
-      ) {
-        this.setState({
-          selectedPractitioners: [
-            ...(this.state.selectedPractitioners ?? []),
-            currentPractitioner,
-          ],
-        });
-      }
+      this.handleSetCurrentUserAsCareTeamParticipant();
     }
     // @ts-ignore
     const patient = this.context.patient;
