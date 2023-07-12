@@ -105,8 +105,6 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
 
     // @ts-ignore
     let client: Client = this.context.client;
-    // @ts-ignore
-    const patient = this.context.patient;
 
     let params = new URLSearchParams({
       _count: "250",
@@ -114,13 +112,16 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     }).toString();
     getFhirData(client, `/Practitioner?${params}`).then((bundle: Bundle) => {
       console.log("Loaded practitioners", bundle);
+       // @ts-ignore
+      const patient = this.context.patient;
       const entries = bundle?.entry?.map(
         (e: IBundle_Entry) => e.resource as IPractitioner
       );
       let matchedPrimaryAuthor: IPractitioner[] = entries?.filter(
         (p: IPractitioner) => {
-          return patient.generalPractitioner?.find((gp: IReference) =>
-            gp.reference?.includes(p.id)
+          //@ts-ignore
+          return this.context.patient?.generalPractitioner?.find(
+            (gp: IReference) => gp.reference?.includes(p.id)
           );
         }
       );
