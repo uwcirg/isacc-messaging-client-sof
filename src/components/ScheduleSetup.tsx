@@ -479,15 +479,45 @@ export default class ScheduleSetup extends React.Component<
       (value: any) => {
         return client.update(patient).then((value: any) => {
           console.log(`Patient ${patient.id} updated`);
-          this.saveCommunicationRequests();
-          // update PRO scores
-          this.savePROs();
+          this.saveCareTeam().then((result: IResource) => {
+            console.log(`CareTeam ${result.id} resources updated.`);
+            const currentCarePlan = this.state.carePlan;
+            if (currentCarePlan) {
+              currentCarePlan.careTeam = [{
+                reference: `CareTeam/${result.id}`
+              }];
+            }
+            this.setState({
+              carePlan: currentCarePlan
+            });
+            this.saveCommunicationRequests();
+            // update PRO scores
+            this.savePROs();
+          }).catch((e) => {
+            this.showSnackbar("error", "Error saving care team.  See console for detail.");
+            console.log("Error saving care team ", e);
+          })
+         
         });
       },
       (reason: any) => {
         this.showSnackbar("error", reason);
       }
     );
+  }
+
+  private saveCareTeam() : Promise<any> {
+     // @ts-ignore
+     const client = this.context.client;
+     // @ts-ignore
+     const careTeam = this.context.careTeam;
+     let ct;
+     if (careTeam.id) {
+       ct = client.update(careTeam);
+     } else {
+       ct = client.create(careTeam);
+     }
+     return ct;
   }
 
   private saveCommunicationRequests() {
@@ -517,6 +547,7 @@ export default class ScheduleSetup extends React.Component<
             (cr) => cr.resourceType === "CommunicationRequest"
           )
         );
+
         // create resource on server
         let p;
         if (this.state.carePlan.id) {
