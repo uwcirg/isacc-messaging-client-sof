@@ -157,8 +157,10 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
         }).toString();
         getFhirData(client,`CommunicationRequest?${params}`).then((bundle: Bundle) => {
             if (bundle.type === "searchset") {
-                if (!bundle.entry) return [];
-
+                if (!bundle.entry) {
+                    this.setState({editMode: true});
+                    return [];
+                }
                 let crs: CommunicationRequest[] = bundle.entry.map((e: IBundle_Entry) => {
                     if (e.resource.resourceType !== "CommunicationRequest") {
                         this.setState({error: "Unexpected resource type returned"});
@@ -217,6 +219,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
                 Revoke and create new
               </Button>
             </Stack>
+            {this.state.error && <Alert severity="error">{this.state.error}</Alert>}
           </Stack>
         );
 
