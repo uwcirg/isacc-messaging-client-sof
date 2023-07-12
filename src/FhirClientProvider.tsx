@@ -103,7 +103,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
     const searchParams = new URLSearchParams({
       category: IsaccCarePlanCategory.isaccMessagePlan.code,
       subject: `Patient/${patientId}`,
-      _sort: "-_lastUpdated",
+      _sort: "-_id",
     }).toString();
     return getFhirData(client, `/CarePlan?${searchParams}`).then(
       (bundle: Bundle) => {
