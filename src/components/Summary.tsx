@@ -121,7 +121,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         (p: IPractitioner) => {
           //@ts-ignore
           return this.context.patient?.generalPractitioner?.find(
-            (gp: IReference) => gp.reference?.includes(p.id)
+            (gp: IReference) => gp.reference?.split("/")[1] === p.id
           );
         }
       );
@@ -131,11 +131,11 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             // @ts-ignore
             this.context.careTeam?.participant?.find(
               (ip: ICareTeam_Participant) => {
-                return ip.member?.reference.includes(p.id);
+                return ip.member?.reference.split("/")[1] === p.id;
               }
             );
           const isGeneralPractitioner = patient.generalPractitioner?.find(
-            (gp: IReference) => gp.reference?.includes(p.id)
+            (gp: IReference) => gp.reference?.split("/")[1] === p.id
           );
           return isCareTeamParticipant || isGeneralPractitioner;
         }
@@ -772,7 +772,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     if (!currentPractitioner) return;
     const isInCareTeam = // @ts-ignore
       this.context.careTeam.participant?.find((p: ICareTeam_Participant) =>
-        p.member?.reference?.includes(currentPractitioner?.id)
+        p.member?.reference?.split("/")[1] === currentPractitioner?.id
       );
     if (!isInCareTeam) {
       const currentSelecteParticipants = CareTeam.toParticipants(
@@ -854,9 +854,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           // @ts-ignore
           const currentPartipants = this.context.careTeam?.participant?.filter(
             (p: ICareTeam_Participant) => {
-              return !p.member?.reference?.includes(
-                (value as IPractitioner)?.id
-              );
+              return !(p.member?.reference?.split("/")[1] === (value as IPractitioner)?.id);
             }
           );
           if (value) {
