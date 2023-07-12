@@ -758,7 +758,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     if (!currentPractitioner) return;
     // @ts-ignore
     this.context.patient.generalPractitioner = this.toReferences([
-      currentPractitioner,
+      currentPractitioner
     ]);
     this.setState({
       primaryAuthor: currentPractitioner
