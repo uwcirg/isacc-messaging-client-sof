@@ -114,6 +114,15 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
       console.log("Loaded practitioners", bundle);
        // @ts-ignore
       const patient = this.context.patient;
+      if (this.props.editable) {
+        if (
+          !patient.generalPractitioner ||
+          !patient.generalPractitioner.length
+        ) {
+          this.handleSetCurrentUserAsGeneralPractitioner();
+        }
+        this.handleSetCurrentUserAsCareTeamParticipant();
+      }
       const entries = bundle?.entry?.map(
         (e: IBundle_Entry) => e.resource as IPractitioner
       );
@@ -753,7 +762,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     );
   }
 
-  private handleSetCurrentUserAsPrimaryAuthor() {
+  private handleSetCurrentUserAsGeneralPractitioner() {
     // @ts-ignore
     const currentPractitioner = this.context.practitioner;
     if (!currentPractitioner) return;
@@ -761,9 +770,6 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     this.context.patient.generalPractitioner = this.toReferences([
       currentPractitioner
     ]);
-    this.setState({
-      primaryAuthor: currentPractitioner
-    });
   }
 
   private handleSetCurrentUserAsCareTeamParticipant() {
@@ -771,41 +777,22 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     const currentPractitioner = this.context.practitioner;
     if (!currentPractitioner) return;
     const isInCareTeam = // @ts-ignore
-      this.context.careTeam.participant?.find((p: ICareTeam_Participant) =>
+      this.context.careTeam?.participant?.find((p: ICareTeam_Participant) =>
         p.member?.reference?.split("/")[1] === currentPractitioner?.id
       );
     if (!isInCareTeam) {
-      const currentSelecteParticipants = CareTeam.toParticipants(
-        "Practitioner",
-        this.state.selectedPractitioners as IPractitioner[]
-      );
       // @ts-ignore
       this.context.careTeam.participant = [
         // @ts-ignore
-        ...(this.context.careTeam.participant
+        ...(this.context.careTeam?.participant
           ? // @ts-ignore
-            this.context.careTeam.participant
-          : currentSelecteParticipants
-          ? currentSelecteParticipants
+            this.context.careTeam?.participant
           : []),
         CareTeam.toParticipant(
           "Practitioner",
           currentPractitioner as IPractitioner
         ),
       ];
-    }
-    if (
-      !this.state.selectedPractitioners?.find(
-        (sp: IPractitioner | string) =>
-          (sp as IPractitioner).id === (currentPractitioner as IPractitioner).id
-      )
-    ) {
-      this.setState({
-        selectedPractitioners: [
-          ...(this.state.selectedPractitioners ?? []),
-          currentPractitioner,
-        ],
-      });
     }
   }
 
@@ -817,21 +804,10 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           this.state.primaryAuthor as IPractitioner
         );
     }
-    // @ts-ignore
-    const currentPractitioner = this.context.practitioner;
-    // @ts-ignore
-    const patient = this.context.patient;
-    if (!patient.generalPractitioner || !patient.generalPractitioner.length) {
-      if (currentPractitioner) {
-        this.handleSetCurrentUserAsPrimaryAuthor();
-        this.handleSetCurrentUserAsCareTeamParticipant();
-      }
-      
-    }
     return (
       <Autocomplete
         size="small"
-        value={this.state.primaryAuthor}
+        value={this.state.primaryAuthor as IPractitioner}
         options={this.state.practitioners}
         getOptionLabel={(option) =>
           this.getPractitionerLabel(option as IPractitioner)
@@ -850,14 +826,17 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           patient.generalPractitioner = value
             ? this.toReferences([value])
             : null;
-
-          // @ts-ignore
-          const currentPartipants = this.context.careTeam?.participant?.filter(
-            (p: ICareTeam_Participant) => {
-              return !(p.member?.reference?.split("/")[1] === (value as IPractitioner)?.id);
-            }
-          );
           if (value) {
+            const currentPartipants =
+              // @ts-ignore
+              this.context.careTeam?.participant?.filter(
+                (p: ICareTeam_Participant) => {
+                  return !(
+                    p.member?.reference?.split("/")[1] ===
+                    (value as IPractitioner)?.id
+                  );
+                }
+              );
             // @ts-ignore
             this.context.careTeam.participant = [
               ...(currentPartipants ?? []),
@@ -870,7 +849,8 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 // @ts-ignore
                 this.context.careTeam.participant?.filter(
                   (p: ICareTeam_Participant) => {
-                    return !p.member.reference.includes(
+                    return !(
+                      p.member.reference.split("/")[1] !==
                       (this.state.primaryAuthor as IPractitioner)?.id
                     );
                   }
@@ -921,38 +901,22 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
   }
 
   private _buildPractitionerSelector() {
-    // @ts-ignore
-    const currentPractitioner = this.context.practitioner;
-    const arrCurrentPractitioner = currentPractitioner
-      ? [currentPractitioner]
-      : [];
-    const noSelectedPractitioners =
-      !this.state.selectedPractitioners ||
-      !this.state.selectedPractitioners.length;
-    if (currentPractitioner) {
-      this.handleSetCurrentUserAsCareTeamParticipant();
-    }
-    // @ts-ignore
-    const patient = this.context.patient;
     const generalPractitioner = this.state.primaryAuthor
       ? this.state.primaryAuthor
-      : patient?.generalPractitioner
-      ? patient?.generalPractitioner[0]
       : null;
+    const defaultSelection: IPractitioner[] = this.state.primaryAuthor
+      ? [this.state.primaryAuthor as IPractitioner]
+      : [];
     return (
       <>
         <Autocomplete
           multiple
           size="small"
-          value={
-            !(noSelectedPractitioners)
-              ? this.state.selectedPractitioners
-              : arrCurrentPractitioner
-          }
+          value={this.state.selectedPractitioners}
           options={this.state.practitioners}
           getOptionDisabled={(option) => {
             return (
-              (option as IPractitioner).id ===
+              (option as IPractitioner)?.id ===
               (generalPractitioner as IPractitioner)?.id
             );
           }}
@@ -977,11 +941,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           onChange={(event: any, value: (string | IPractitioner)[]) => {
             this.setState({
               selectedPractitioners:
-                !value || !value.length
-                  ? this.state.primaryAuthor
-                    ? [this.state.primaryAuthor]
-                    : []
-                  : value,
+                !value || !value.length ? defaultSelection : value,
               selectAllPractitioners: false,
             });
             if (this.props.onChange) this.props.onChange();
@@ -989,9 +949,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             if (!value || !value.length) {
               // @ts-ignore
               this.context.careTeam.participant = this.state.primaryAuthor
-                ? CareTeam.toParticipants("Practitioner", [
-                    this.state.primaryAuthor as IPractitioner,
-                  ])
+                ? CareTeam.toParticipants("Practitioner", defaultSelection)
                 : null;
               return;
             }
@@ -1019,7 +977,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                   selectedPractitioners: event.target.checked
                     ? this.state.practitioners
                     : this.state.primaryAuthor
-                    ? [this.state.primaryAuthor]
+                    ? defaultSelection
                     : [],
                 });
 
