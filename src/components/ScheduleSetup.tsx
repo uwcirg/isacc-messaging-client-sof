@@ -490,9 +490,9 @@ export default class ScheduleSetup extends React.Component<
             this.setState({
               carePlan: currentCarePlan
             });
-            this.saveCommunicationRequests();
             // update PRO scores
             this.savePROs();
+            this.saveCommunicationRequests();
           }).catch((e) => {
             this.showSnackbar("error", "Error saving care team.  See console for detail.");
             console.log("Error saving care team ", e);
