@@ -180,15 +180,15 @@ export class ActivityDefinition implements IActivityDefinition {
 }
 
 export async function getMessageSchedule(
-  projectID: string = null
+  siteID: string = null
 ): Promise<PlanDefinition> {
-  console.log("Project ID ", projectID);
-  if (!projectID) return getDefaultMessageSchedule();
+  console.log("Site ID ", siteID);
+  if (!siteID) return getDefaultMessageSchedule();
   const planDefinition = await import(
-    `../fhir/PlanDefinition_${projectID}.json`
+    `../fhir/PlanDefinition_${siteID}.json`
   ).catch((e) => {
     console.log(
-      `Error occurred. Unable to load project plan definition for ${projectID} Loading the default instead.`,
+      `Error occurred. Unable to load project plan definition for ${siteID} Loading the default instead.`,
       e
     );
     return getDefaultMessageSchedule();
