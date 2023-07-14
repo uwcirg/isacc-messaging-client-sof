@@ -520,6 +520,9 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         <>
           <ListItem
             key={`contact_item_${index}`}
+            sx={{
+              paddingLeft: 0
+            }}
             secondaryAction={
               this.props.editable ? (
                 <IconButton
@@ -559,7 +562,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           {patient.contact?.length > 0 && <Divider></Divider>}
           <ListItem
             alignItems="flex-start"
-            sx={{ marginTop: patient.contact ? 1 : 0 }}
+            sx={{ marginTop: patient.contact ? 1 : 0, paddingLeft: 0, paddingRight: 0 }}
           >
             <ListItemText
               primary={
