@@ -1,4 +1,4 @@
-import {ICodeableConcept, IObservation, IQuantity, IReference} from "@ahryman40k/ts-fhir-types/lib/R4";
+import {ICodeableConcept, ICoding, IObservation, IQuantity, IReference} from "@ahryman40k/ts-fhir-types/lib/R4";
 
 export class Observation implements IObservation {
     code: ICodeableConcept;
@@ -22,27 +22,27 @@ export class Observation implements IObservation {
     static PHQ9_OBS_CODE = "44261-6";
     static CSS_OBS_CODE = "93373-9";
 
-    static createPHQ9Observation(value: string, patientId: string) {
+    static createPHQ9Observation(value: ICoding, patientId: string) {
         return Observation.create(
             this.PHQ9_OBS_CODE,
             "http://loinc.org",
-            "PHQ9 score",
+            "PHQ9 severity",
             value,
             patientId
         );
     }
 
-    static createCSSObservation(value: string, patientId: string) {
+    static createCSSObservation(value: ICoding, patientId: string) {
         return Observation.create(
             this.CSS_OBS_CODE,
             "http://loinc.org",
-            "C-SSRS score",
+            "C-SSRS severity",
             value,
             patientId
         );
     }
 
-    static create(code: string, system: string, display: string, value: string, patientId: string) : Observation {
+    static create(code: string, system: string, display: string, value: ICoding, patientId: string) : Observation {
         const o = new Observation();
         if (code) {
             o.code = {
@@ -55,10 +55,13 @@ export class Observation implements IObservation {
                 ]
             }
         }
-        // allow only quantity for now
-        o.valueQuantity = {
-            value : parseFloat(value)
-        };
+        if (value) {
+            o.valueCodeableConcept = {
+                coding: [
+                    value
+                ]
+            }
+        }
         o.subject = {
             reference : "Patient/"+patientId
         };
@@ -79,10 +82,10 @@ export class Observation implements IObservation {
             }
             return coding.code;
         }
-        if (this.valueQuantity){
-            return `${this.valueQuantity.value}`;
-        }
-        console.log(`Malformed Observation value: ${this}`);
+        // if (this.valueQuantity){
+        //     return `${this.valueQuantity.value}`;
+        // }
+        console.log(`Malformed Observation value `, this);
         return "";
     }
 

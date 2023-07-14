@@ -90,10 +90,18 @@ export const Medium = {
   )
 };
 
-export const CSSAnswerCategories = {
-    low: Coding.make("http://loinc.org", "LA9194-7"),
-    medium: Coding.make("http://loinc.org", "LA6751-7"),
-    high: Coding.make("http://loinc.org", "LA9193-9")
+export const PHQ9SeverityCategories : any = {
+  low: Coding.make("http://loinc.org", "LA9194-7", "low"),
+  medium: Coding.make("http://loinc.org", "LA6751-7", "medium"),
+  high: Coding.make("http://loinc.org", "LA9193-9", "high"),
+  unknown: Coding.make("http://loinc.org", "LA4489-6", "unknown"),
+}
+
+export const CSSAnswerCategories : any = {
+  low: Coding.make("http://loinc.org", "LA9194-7", "low"),
+  medium: Coding.make("http://loinc.org", "LA6751-7", "medium"),
+  high: Coding.make("http://loinc.org", "LA9193-9", "high"),
+  unknown: Coding.make("http://loinc.org", "LA4489-6", "unknown"),
 }
 
 export const ExtensionUrl = {
