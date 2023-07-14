@@ -12,7 +12,7 @@ import Practitioner from "./model/Practitioner";
 import CareTeam from "./model/CareTeam";
 import CarePlan from "./model/CarePlan";
 import { Bundle } from "./model/Bundle";
-import {getMessageSchedule} from "./model/PlanDefinition";
+import {getMessageScheduleBySite} from "./model/PlanDefinition";
 import {
   ICarePlan,
   IReference,
@@ -177,7 +177,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
         Promise.allSettled([
           getPractitioner(client, getUserEmail(client)),
           getPatient(client),
-          getMessageSchedule(getEnv("REACT_APP_SITE_ID"))
+          getMessageScheduleBySite(getEnv("REACT_APP_SITE_ID"))
         ]).then((results: any[]) => {
           // check if patient resource is returned
           const hasPatientResult = results.find(

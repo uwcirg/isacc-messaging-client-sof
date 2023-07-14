@@ -179,7 +179,7 @@ export class ActivityDefinition implements IActivityDefinition {
     }
 }
 
-export async function getMessageSchedule(
+export async function getMessageScheduleBySite(
   siteID: string = null
 ): Promise<PlanDefinition> {
   console.log("Site ID ", siteID);
