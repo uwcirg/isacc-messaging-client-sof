@@ -31,7 +31,7 @@ import Alert from "@mui/material/Alert";
 import Patient from "../model/Patient";
 import PatientPROs from "./PatientPROs";
 import Summary from "./Summary";
-import PlanDefinition, {getDefaultMessageSchedule} from "../model/PlanDefinition";
+import PlanDefinition from "../model/PlanDefinition";
 import {getEnv} from "../util/util";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
@@ -106,12 +106,13 @@ export default class ScheduleSetup extends React.Component<
       unsavedStates: defaultUnsavedStates,
       showUnsaveChangesTooltip: false,
     };
-    this.planDefinition = getDefaultMessageSchedule();
     // This binding is necessary to make `this` work in the callback
     this.alertUser = this.alertUser.bind(this);
   }
 
   componentDidMount() {
+    // @ts-ignore
+    this.planDefinition = this.context.planDefinition;
     //@ts-ignore
     let carePlan: CarePlan = this.context.currentCarePlan;
     this.setState({ carePlan: carePlan });

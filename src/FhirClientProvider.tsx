@@ -4,7 +4,7 @@ import { FhirClientContext, FhirClientContextType } from "./FhirClientContext";
 import { Box, Stack } from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
 import Client from "fhirclient/lib/Client";
-import { queryPatientIdKey } from "./util/util";
+import { queryPatientIdKey, fetchEnvData, getEnv } from "./util/util";
 import { getFhirData, getUserEmail } from "./util/isacc_util";
 import { Observation } from "./model/Observation";
 import Patient from "./model/Patient";
@@ -12,6 +12,7 @@ import Practitioner from "./model/Practitioner";
 import CareTeam from "./model/CareTeam";
 import CarePlan from "./model/CarePlan";
 import { Bundle } from "./model/Bundle";
+import {getMessageSchedule} from "./model/PlanDefinition";
 import {
   ICarePlan,
   IReference,
@@ -28,6 +29,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
   const [client, setClient] = React.useState(null);
   const [error, setError] = React.useState("");
   const [patient, setPatient] = React.useState(null);
+  const [planDefinition, setPlanDefintion] = React.useState(null);
   const [practitioner, setPractitioner] = React.useState(null);
   const [currentCarePlan, setCurrentCarePlan] = React.useState(null);
   const [allCarePlans, setAllCarePlans] = React.useState(null);
@@ -168,12 +170,14 @@ export default function FhirClientProvider(props: Props): JSX.Element {
   }
 
   React.useEffect(() => {
+    fetchEnvData();
     FHIR.oauth2.ready().then(
       (client: Client) => {
         setClient(client);
         Promise.allSettled([
           getPractitioner(client, getUserEmail(client)),
           getPatient(client),
+          getMessageSchedule(getEnv("REACT_APP_SITE_ID"))
         ]).then((results: any[]) => {
           // check if patient resource is returned
           const hasPatientResult = results.find(
@@ -193,6 +197,9 @@ export default function FhirClientProvider(props: Props): JSX.Element {
             if (resourceType === "Practitioner") {
               console.log("Loaded practitioner ", resourceResult);
               setPractitioner(resourceResult);
+            } else if (resourceType === "PlanDefinition") {
+              console.log("Loaded plan definition ", resourceResult);
+              setPlanDefintion(resourceResult);
             } else if (resourceType === "Patient") {
               setPatient(resourceResult);
               console.log(`Loaded ${resourceResult.reference}`);
@@ -274,6 +281,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
       value={{
         client: client,
         patient: patient,
+        planDefinition: planDefinition,
         practitioner: practitioner,
         currentCarePlan: currentCarePlan,
         allCarePlans: allCarePlans,

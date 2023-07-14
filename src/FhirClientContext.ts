@@ -4,11 +4,13 @@ import CareTeam from "./model/CareTeam";
 import CarePlan from "./model/CarePlan";
 import Practitioner from "./model/Practitioner";
 import Patient from "./model/Patient";
+import PlanDefinition from "./model/PlanDefinition";
 import { Observation } from "./model/Observation";
 
 export type FhirClientContextType = {
     client: Client;
     patient: Patient;
+    planDefinition: PlanDefinition;
     practitioner: Practitioner;
     currentCarePlan: CarePlan;
     allCarePlans: CarePlan[],
@@ -21,6 +23,7 @@ export type FhirClientContextType = {
 const defaultValue: FhirClientContextType = {
     client: null,
     patient: null,
+    planDefinition: null,
     practitioner: null,
     currentCarePlan: null,
     allCarePlans: null,

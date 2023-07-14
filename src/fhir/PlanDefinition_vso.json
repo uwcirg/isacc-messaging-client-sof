@@ -1,7 +1,7 @@
 {
   "resourceType": "PlanDefinition",
-  "id": "isacc_default_message_schedule",
-  "title": "Default CC Message Schedule",
+  "id": "PlanDefinition_vso",
+  "title": "aring Contacts PlanDefinition for VSO",
   "status": "active",
   "action": [
     {
