@@ -25,19 +25,20 @@ import {
   TableContainer,
   TableRow,
   TextField,
-  Typography
+  Typography,
 } from "@mui/material";
-import { SelectChangeEvent } from '@mui/material/Select';
+import { SelectChangeEvent } from "@mui/material/Select";
 import ClearIcon from "@mui/icons-material/Clear";
 import AddIcon from "@mui/icons-material/Add";
 import {
   IBundle_Entry,
+  ICareTeam_Participant,
   IContactPoint,
   IPractitioner,
-  IReference
+  IReference,
 } from "@ahryman40k/ts-fhir-types/lib/R4";
-import React from 'react';
-import {FhirClientContext} from '../FhirClientContext';
+import React from "react";
+import { FhirClientContext } from "../FhirClientContext";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import * as moment from "moment";
@@ -45,31 +46,38 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { DateValidationError } from "@mui/x-date-pickers/models";
 import Patient from "../model/Patient";
 import Client from "fhirclient/lib/Client";
-import {Bundle} from "../model/Bundle";
-import { AsYouType, isPossiblePhoneNumber,parsePhoneNumber } from 'libphonenumber-js';
-import { getFhirData } from '../util/isacc_util';
-import Practitioner from '../model/Practitioner';
+import { Bundle } from "../model/Bundle";
+import {
+  AsYouType,
+  isPossiblePhoneNumber,
+  parsePhoneNumber,
+} from "libphonenumber-js";
+import { getFhirData } from "../util/isacc_util";
+import CareTeam from "../model/CareTeam";
 
 interface SummaryProps {
-    editable?: boolean,
-    onChange?: Function
+  editable?: boolean;
+  onChange?: Function;
 }
 
 type ContactToAdd = {
-  name: string,
-  phoneNumber: string,
-  email: string
-}
+  name: string;
+  phoneNumber: string;
+  email: string;
+};
 
 type SummaryState = {
-    error: string;
-    studyStartDateValidationError: DateValidationError | null;
-    DOBDateValidationError: DateValidationError | null;
-    practitioners: IPractitioner[];
-    selectedPractitioners: (string | IPractitioner)[];
-    selectAllPractitioners: boolean;
-    contactToAdd: ContactToAdd;
-}
+  error: string;
+  studyStartDateValidationError: DateValidationError | null;
+  DOBDateValidationError: DateValidationError | null;
+  practitioners: IPractitioner[];
+  selectedPractitioners: (string | IPractitioner)[];
+  selectAllPractitioners: boolean;
+  primaryAuthor: string | IPractitioner;
+  contactToAdd: ContactToAdd;
+};
+
+const NONE_TEXT = "--";
 
 export default class Summary extends React.Component<SummaryProps, SummaryState> {
   static contextType = FhirClientContext;
@@ -83,6 +91,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
       practitioners: null,
       selectedPractitioners: null,
       selectAllPractitioners: false,
+      primaryAuthor: null,
       contactToAdd: {
         name: "",
         phoneNumber: "",
@@ -96,27 +105,6 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
 
     // @ts-ignore
     let client: Client = this.context.client;
-    // @ts-ignore
-    const patient = this.context.patient;
-
-    // @ts-ignore
-    const practitioner = this.context.practitioner;
-    if (practitioner) {
-      if (!patient.generalPractitioner) patient.generalPractitioner = [];
-      if (
-        !patient.generalPractitioner.find(
-          (p: Practitioner) =>
-            p.reference && p.reference.split("/")[1] === practitioner.id
-        )
-      ) {
-        // add current user to be one of the patient's general practitioners (list of followers)
-        const practitionerReference = {
-          type: "Practitioner",
-          reference: `Practitioner/${practitioner.id}`,
-        };
-        patient.generalPractitioner.push(practitionerReference);
-      }
-    }
 
     let params = new URLSearchParams({
       _count: "250",
@@ -124,18 +112,54 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     }).toString();
     getFhirData(client, `/Practitioner?${params}`).then((bundle: Bundle) => {
       console.log("Loaded practitioners", bundle);
+       // @ts-ignore
+      const patient = this.context.patient;
+      if (this.props.editable) {
+        if (
+          !patient.generalPractitioner ||
+          !patient.generalPractitioner.length
+        ) {
+          this.handleSetCurrentUserAsGeneralPractitioner();
+        }
+        this.handleSetCurrentUserAsCareTeamParticipant();
+      }
       const entries = bundle?.entry?.map(
         (e: IBundle_Entry) => e.resource as IPractitioner
       );
+      let matchedPrimaryAuthor: IPractitioner[] = entries?.filter(
+        (p: IPractitioner) => {
+          //@ts-ignore
+          return this.context.patient?.generalPractitioner?.find(
+            (gp: IReference) => gp.reference?.split("/")[1] === p.id
+          );
+        }
+      );
+      let arrCTPractitioners: IPractitioner[] = entries?.filter(
+        (p: IPractitioner) => {
+          const isCareTeamParticipant =
+            // @ts-ignore
+            this.context.careTeam?.participant?.find(
+              (ip: ICareTeam_Participant) => {
+                return ip.member?.reference.split("/")[1] === p.id;
+              }
+            );
+          const isGeneralPractitioner = patient.generalPractitioner?.find(
+            (gp: IReference) => gp.reference?.split("/")[1] === p.id
+          );
+          return isCareTeamParticipant || isGeneralPractitioner;
+        }
+      );
+
       this.setState({
         practitioners: entries,
-        selectedPractitioners: entries?.filter((p: IPractitioner) => {
-          return patient.generalPractitioner?.find((gpRef: IReference) => {
-            return (
-              gpRef.type === "Practitioner" && gpRef.reference.includes(p.id)
-            );
-          });
-        }),
+        primaryAuthor:
+          matchedPrimaryAuthor && matchedPrimaryAuthor.length === 1
+            ? matchedPrimaryAuthor[0]
+            : null,
+        selectedPractitioners:
+          arrCTPractitioners && arrCTPractitioners.length
+            ? arrCTPractitioners
+            : [],
       });
     });
   }
@@ -177,6 +201,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
       },
       { label: "Study start date", value: this._buildStudyStartDateEntry() },
       { label: "ISACC status", value: this._buildStudyStatusEntry() },
+      { label: "Primary author", value: this._buildPrimaryAuthorEntry() },
       {
         label: "Notify on incoming message",
         value: this._buildNotifyPractitionersEntry(),
@@ -199,7 +224,9 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                       {row.label}
                     </TableCell>
                     <TableCell align="left">
-                      <Typography variant="body1" component={"div"}>{row.value}</Typography>
+                      <Typography variant="body1" component={"div"}>
+                        {row.value}
+                      </Typography>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -227,7 +254,9 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         fullWidth
       ></TextField>
     ) : (
-      <Typography variant={"body1"} component={"div"}>{patient.firstName}</Typography>
+      <Typography variant={"body1"} component={"div"}>
+        {patient.firstName}
+      </Typography>
     );
   }
 
@@ -247,10 +276,11 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         fullWidth
       ></TextField>
     ) : (
-      <Typography variant={"body1"} component={"div"}>{patient.lastName}</Typography>
+      <Typography variant={"body1"} component={"div"}>
+        {patient.lastName}
+      </Typography>
     );
   }
-
 
   private _buildDOBEntry() {
     // @ts-ignore
@@ -269,7 +299,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           slotProps={{
             textField: {
               size: "small",
-              fullWidth : true,
+              fullWidth: true,
               helperText: this.state.DOBDateValidationError
                 ? "invalid entry"
                 : null,
@@ -279,8 +309,8 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 if (this.props.onChange) this.props.onChange();
                 if (!validationError) {
                   const inputValue = value
-                  ? value.toDate().toISOString().slice(0, 10)
-                  : null;
+                    ? value.toDate().toISOString().slice(0, 10)
+                    : null;
                   patient.birthDate = inputValue;
                   this.setState({});
                 } else {
@@ -307,6 +337,9 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
   private _buildGenderEntry() {
     // @ts-ignore
     const patient = this.context.patient;
+    if (!this.props.editable) {
+      return patient.gender ?? NONE_TEXT;
+    }
     // see https://www.hl7.org/fhir/valueset-administrative-gender.html
     const choices = ["male", "female", "other", "unknown"];
     return (
@@ -395,7 +428,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     );
     return this.props.editable
       ? contactInformationEntry
-      : patient.smsContactPoint ?? "None on file";
+      : patient.smsContactPoint ?? NONE_TEXT;
   }
 
   private _buildPreferredNameEntry() {
@@ -414,7 +447,9 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         fullWidth
       ></TextField>
     ) : (
-      <Typography variant={"body1"} component={"div"}>{patient.preferredName}</Typography>
+      <Typography variant={"body1"} component={"div"}>
+        {patient.preferredName ?? NONE_TEXT}
+      </Typography>
     );
   }
 
@@ -434,7 +469,9 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         fullWidth
       ></TextField>
     ) : (
-      <Typography variant={"body1"} component={"div"}>{patient.pronouns}</Typography>
+      <Typography variant={"body1"} component={"div"}>
+        {patient.pronouns ?? NONE_TEXT}
+      </Typography>
     );
   }
 
@@ -456,8 +493,12 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         fullWidth
       ></TextField>
     ) : (
-      <Typography variant={"body1"} component={"div"} sx={{ whiteSpace: "pre-wrap" }}>
-        {patient.addressText}
+      <Typography
+        variant={"body1"}
+        component={"div"}
+        sx={{ whiteSpace: "pre-wrap" }}
+      >
+        {patient.addressText ?? NONE_TEXT}
       </Typography>
     );
   }
@@ -502,13 +543,13 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             <ListItemText primary={name} secondary={detail}></ListItemText>
           </ListItem>
           {patient.contact && index !== patient.contact.length - 1 && (
-            <Divider key={`contact_list_divider_${index}`}/>
+            <Divider key={`contact_list_divider_${index}`} />
           )}
         </>
       );
     });
     if (!this.props.editable) {
-      if (!patient.contact) return "None on file";
+      if (!patient.contact) return NONE_TEXT;
       return <>{Contacts}</>;
     }
     return (
@@ -599,7 +640,6 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                         this.state.contactToAdd.phoneNumber,
                         this.state.contactToAdd.email
                       );
-                      // if (this.props.onChange) this.props.onChange();
                       this.setState({
                         contactToAdd: { name: "", phoneNumber: "", email: "" },
                       });
@@ -632,7 +672,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         fullWidth
       ></TextField>
     ) : (
-      patient.userID
+      patient.userID ?? NONE_TEXT
     );
   }
 
@@ -666,8 +706,8 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 if (this.props.onChange) this.props.onChange();
                 if (!validationError) {
                   const inputValue = value
-                  ? value.toDate().toISOString().slice(0, 10)
-                  : null;
+                    ? value.toDate().toISOString().slice(0, 10)
+                    : null;
                   patient.studyStartDate = inputValue;
                   this.setState({});
                 } else {
@@ -687,7 +727,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         ></DatePicker>
       </LocalizationProvider>
     ) : (
-      patient.studyStartDate
+      patient.studyStartDate ?? NONE_TEXT
     );
   }
 
@@ -718,7 +758,112 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
         }}
       />
     ) : (
-      patient.studyStatus
+      patient.studyStatus ?? NONE_TEXT
+    );
+  }
+
+  private handleSetCurrentUserAsGeneralPractitioner() {
+    // @ts-ignore
+    const currentPractitioner = this.context.practitioner;
+    if (!currentPractitioner) return;
+    // @ts-ignore
+    this.context.patient.generalPractitioner = this.toReferences([
+      currentPractitioner
+    ]);
+  }
+
+  private handleSetCurrentUserAsCareTeamParticipant() {
+    // @ts-ignore
+    const currentPractitioner = this.context.practitioner;
+    if (!currentPractitioner) return;
+    const isInCareTeam = // @ts-ignore
+      this.context.careTeam?.participant?.find((p: ICareTeam_Participant) =>
+        p.member?.reference?.split("/")[1] === currentPractitioner?.id
+      );
+    if (!isInCareTeam) {
+      // @ts-ignore
+      this.context.careTeam.participant = [
+        // @ts-ignore
+        ...(this.context.careTeam?.participant
+          ? // @ts-ignore
+            this.context.careTeam?.participant
+          : []),
+        CareTeam.toParticipant(
+          "Practitioner",
+          currentPractitioner as IPractitioner
+        ),
+      ];
+    }
+  }
+
+  private _buildPrimaryAuthorEntry() {
+    if (!this.props.editable) {
+      if (!this.state.primaryAuthor) return NONE_TEXT;
+      else
+        return this.getPractitionerLabel(
+          this.state.primaryAuthor as IPractitioner
+        );
+    }
+    return (
+      <Autocomplete
+        size="small"
+        value={this.state.primaryAuthor as IPractitioner}
+        options={this.state.practitioners}
+        getOptionLabel={(option) =>
+          this.getPractitionerLabel(option as IPractitioner)
+        }
+        renderInput={(params) => (
+          <TextField {...params} placeholder={"Primary Author"} />
+        )}
+        onChange={(event: any, value: string | IPractitioner) => {
+          // @ts-ignore
+          const patient = this.context.patient;
+
+          if (this.props.onChange) this.props.onChange();
+
+          patient.generalPractitioner = value
+            ? this.toReferences([value])
+            : null;
+          const currentPartipants = CareTeam.toParticipants(
+            "Practitioner",
+            value
+              ? (this.state.selectedPractitioners as IPractitioner[])?.filter(
+                  (ip) => {
+                    return (
+                      (ip as IPractitioner)?.id !==
+                      (value as IPractitioner)?.id
+                    );
+                  }
+                )
+              : (this.state.selectedPractitioners as IPractitioner[])
+          );
+          // @ts-ignore
+          this.context.careTeam.participant = [
+            ...(currentPartipants ?? []),
+            ...(value
+              ? [
+                  CareTeam.toParticipant(
+                    "Practitioner",
+                    value as IPractitioner
+                  ),
+                ]
+              : []),
+          ];
+          this.setState({
+            primaryAuthor: value ? (value as IPractitioner) : null,
+            selectedPractitioners: [
+              ...(this.state.selectedPractitioners &&
+              this.state.selectedPractitioners.length
+                ? this.state.selectedPractitioners.filter(
+                    (p) =>
+                      (p as IPractitioner)?.id !== (value as IPractitioner)?.id
+                  )
+                : []),
+              ...(value ? [value] : []),
+            ],
+          });
+        }}
+      />
     );
   }
 
@@ -742,42 +887,71 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           )}
         </Stack>
       ) : (
-        "None on file"
+        NONE_TEXT
       );
     if (!this.props.editable) return selectedPractitionersDisplay;
-    // @ts-ignore
-    const patient: Patient = this.context.patient;
-    const toReferences = (practitioners: (string | IPractitioner)[]) =>
-      practitioners?.map((v) => ({
-        type: "Practitioner",
-        reference: `Practitioner/${(v as IPractitioner).id}`,
-      }));
+    return this._buildPractitionerSelector();
+  }
+
+  private _buildPractitionerSelector() {
+    const generalPractitioner = this.state.primaryAuthor
+      ? this.state.primaryAuthor
+      : null;
+    const defaultSelection: IPractitioner[] = this.state.primaryAuthor
+      ? [this.state.primaryAuthor as IPractitioner]
+      : [];
     return (
       <>
         <Autocomplete
           multiple
           size="small"
-          value={this.state.selectedPractitioners ?? []}
+          value={this.state.selectedPractitioners}
           options={this.state.practitioners}
+          getOptionDisabled={(option) => {
+            return (
+              (option as IPractitioner)?.id ===
+              (generalPractitioner as IPractitioner)?.id
+            );
+          }}
           getOptionLabel={(option) =>
             this.getPractitionerLabel(option as IPractitioner)
           }
           renderInput={(params) => (
             <TextField {...params} placeholder={"Users"} />
           )}
+          renderTags={(tagValue, getTagProps) =>
+            tagValue.map((option, index) => (
+              <Chip
+                label={this.getPractitionerLabel(option as IPractitioner)}
+                {...getTagProps({ index })}
+                disabled={
+                  (option as IPractitioner)?.id ===
+                  (generalPractitioner as IPractitioner)?.id
+                }
+              />
+            ))
+          }
           onChange={(event: any, value: (string | IPractitioner)[]) => {
-            this.setState({
-              selectedPractitioners: value,
-            });
             if (this.props.onChange) this.props.onChange();
+            this.setState({
+              selectedPractitioners:
+                !value || !value.length
+                  ? defaultSelection
+                  : value,
+              selectAllPractitioners: false,
+            });
             if (!value || !value.length) {
-              this.setState({
-                selectAllPractitioners: false,
-              });
-              patient.generalPractitioner = null;
+              // @ts-ignore
+              this.context.careTeam.participant = this.state.primaryAuthor
+                ? CareTeam.toParticipants("Practitioner", defaultSelection)
+                : null;
               return;
             }
-            patient.generalPractitioner = toReferences(value);
+            // @ts-ignore
+            this.context.careTeam.participant = CareTeam.toParticipants(
+              "Practitioner",
+              value.map((p) => p as IPractitioner)
+            );
           }}
         />
         <FormControlLabel
@@ -796,10 +970,15 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                   selectAllPractitioners: event.target.checked,
                   selectedPractitioners: event.target.checked
                     ? this.state.practitioners
-                    : null,
+                    : this.state.primaryAuthor
+                    ? defaultSelection
+                    : [],
                 });
-                patient.generalPractitioner = toReferences(
-                  this.state.practitioners
+
+                // @ts-ignore
+                this.context.careTeam.participant = CareTeam.toParticipants(
+                  "Practitioner",
+                  this.state.practitioners.map((p) => p as IPractitioner)
                 );
                 if (this.props.onChange) this.props.onChange();
               }}
@@ -810,10 +989,18 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     );
   }
 
+  private toReferences = (practitioners: (string | IPractitioner)[]) =>
+    practitioners?.map((v) => ({
+      type: "Practitioner",
+      reference: `Practitioner/${(v as IPractitioner).id}`,
+      display: this.getPractitionerLabel(v),
+    }));
+
   private getPractitionerLabel(option: IPractitioner | string) {
+    if (!option) return null;
     if (typeof option === "string") return option;
     if (!option.name || !option.name[0])
       return `${option.resourceType}/${option.id}`;
-    return `${option.name[0].given} ${option.name[0].family}`;
+    return `${option.name[0].family}, ${option.name[0].given}`;
   }
 }
