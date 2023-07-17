@@ -119,10 +119,10 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
         direction={{ xs: "column", sm: "row" }}
         spacing={6}
         alignItems={"flex-start"}
-        sx={{ margin: (theme) => theme.spacing(2, 0, 2) }}
+        sx={{ margin: (theme) => theme.spacing(0, 0, 2) }}
       >
         <FormControl>
-          <FormLabel id="phq9-radio-buttons-group-label">Acute suicide risk (PHQ-9)</FormLabel>
+          <FormLabel id="phq9-radio-buttons-group-label">Acute suicide risk</FormLabel>
           <RadioGroup
             aria-labelledby="phq9-radio-buttons-group-label"
             name="phq9-radio-buttons-group"
@@ -133,6 +133,7 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
               if (this.props.onChange) this.props.onChange();
               // @ts-ignore
               const patient = this.context.patient;
+              // TODO find appropriate coding for this
               const targetCategory = Object.values(
                 PHQ9SeverityCategories
               ).filter((o: ICoding) => o.code === event.target.value)[0];
@@ -173,7 +174,7 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
           </RadioGroup>
         </FormControl>
         <FormControl>
-          <FormLabel id="css-radio-buttons-group-label">Chronic suicide risk (C-SSRS)</FormLabel>
+          <FormLabel id="css-radio-buttons-group-label">Chronic suicide risk</FormLabel>
           <RadioGroup
             aria-labelledby="css-radio-buttons-group-label"
             name="css-radio-buttons-group"
@@ -183,6 +184,7 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
               let mostRecentCss = this.context.mostRecentCss;
               // @ts-ignore
               const patient = this.context.patient;
+              // TODO find appropriate coding for this
               const targetCategory = Object.values(CSSAnswerCategories).filter(
                 (o: ICoding) => o.code === event.target.value
               )[0];
@@ -345,12 +347,12 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
           <>
             <Stack alignItems={"center"} spacing={2.5} sx={{ marginBottom: 1 }}>
               <LabeledValueBubble
-                title={"Acute suicide risk (PHQ-9)"}
+                title={"Acute suicide risk"}
                 value={mostRecentPhq9?.valueDisplay ?? "-"}
                 backgroundColor={colorForPhq9Obs(mostRecentPhq9)}
               />
               <LabeledValueBubble
-                title={"Chronic suicide risk (C-SSRS)"}
+                title={"Chronic suicide risk"}
                 value={mostRecentCss?.valueDisplay ?? "-"}
                 backgroundColor={colorForCssObs(mostRecentCss)}
               />
