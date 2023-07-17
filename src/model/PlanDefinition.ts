@@ -8,7 +8,7 @@ import {
     ITiming,
     PlanDefinitionStatusKind
 } from "@ahryman40k/ts-fhir-types/lib/R4";
-import defaultSchedule from "../resource/default_message_schedule.json"
+import defaultSchedule from "../fhir/PlanDefinition.json"
 import {ITriggerDefinition} from "@ahryman40k/ts-fhir-types/lib/R4/Resource/RTTI_TriggerDefinition";
 import Patient from "./Patient";
 import {birthdaysBetweenDates} from "../util/isacc_util";
@@ -179,7 +179,25 @@ export class ActivityDefinition implements IActivityDefinition {
     }
 }
 
+export async function getMessageScheduleBySite(
+  siteID: string = null
+): Promise<PlanDefinition> {
+  console.log("Site ID ", siteID);
+  if (!siteID) return getDefaultMessageSchedule();
+  const planDefinition = await import(
+    `../fhir/PlanDefinition_${siteID}.json`
+  ).catch((e) => {
+    console.log(
+      `Error occurred. Unable to load project plan definition for ${siteID} Loading the default instead.`,
+      e
+    );
+    return getDefaultMessageSchedule();
+  });
+  return PlanDefinition.from(planDefinition as IPlanDefinition);
+}
+
 export function getDefaultMessageSchedule(): PlanDefinition {
+    console.log("Loading the default plan definition.");
     let raw = defaultSchedule as IPlanDefinition;
     return PlanDefinition.from(raw);
 }
