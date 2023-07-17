@@ -1,32 +1,35 @@
 {
   "resourceType": "PlanDefinition",
   "id": "PlanDefinition_vso",
-  "title": "aring Contacts PlanDefinition for VSO",
+  "title": "Caring Contacts PlanDefinition for VSO",
   "status": "active",
   "action": [
     {
-      "definitionCanonical": "#Week0Day0Msg"
+      "definitionCanonical": "#Day0Msg0"
     },
     {
-      "definitionCanonical": "#Week0Day1Msg"
+      "definitionCanonical": "#Day6Msg0"
     },
     {
-      "definitionCanonical": "#Week0Day2Msg"
+      "definitionCanonical": "#Day14Msg0"
     },
     {
-      "definitionCanonical": "#Week0Day3Msg"
+      "definitionCanonical": "#Day21Msg0"
     },
     {
-      "definitionCanonical": "#Week0Day5Msg"
+      "definitionCanonical": "#Day35Msg0"
     },
     {
-      "definitionCanonical": "#Week1Day0Msg"
+      "definitionCanonical": "#Day49Msg0"
     },
     {
-      "definitionCanonical": "#Week1Day2Msg"
+      "definitionCanonical": "#Day63Msg0"
     },
     {
-      "definitionCanonical": "#Week1Day4Msg"
+      "definitionCanonical": "#Day77Msg0"
+    },
+    {
+      "definitionCanonical": "#AutumnMsg"
     },
     {
       "definitionCanonical": "#BirthdayMsg",
@@ -41,8 +44,8 @@
   "contained": [
     {
       "resourceType": "ActivityDefinition",
-      "id": "Week0Day0Msg",
-      "name": "Week 0 Day 0 Message",
+      "id": "Day0Msg0",
+      "name": "Day 0 Message 0",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
@@ -51,7 +54,7 @@
           "period": 0,
           "periodUnit": "d",
           "timeOfDay": [
-            "13:30:00"
+            "18:00:00"
           ]
         }
       },
@@ -60,119 +63,15 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "{name} - Good to meet you today! Could you respond so I know you got this message? Thanks {userName}"
+            "expression": "Hello {name}, hope your day is going well. You are not alone on this journey. If you need immediate help, don't forget about the 24/7 National Hotline - 988 & press 1, or you can text the Veterans Crisis Line @ 838-255, or check our website: nine9line.org -QRF NineLine Team"
           }
         }
       ]
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Week0Day1Msg",
-      "name": "Week 0 Day 1 Message",
-      "status": "active",
-      "kind": "CommunicationRequest",
-      "timingTiming": {
-        "repeat": {
-          "frequency": 1,
-          "period": 1,
-          "periodUnit": "d",
-          "timeOfDay": [
-            "09:41:00"
-          ]
-        }
-      },
-      "dynamicValue": [
-        {
-          "path": "payload.contentString",
-          "expression": {
-            "language": "text/cql",
-            "expression": "Hi there {name}, Hope you are having a good day.  I am here for you if you need me. {userName}"
-          }
-        }
-      ]
-    },
-    {
-      "resourceType": "ActivityDefinition",
-      "id": "Week0Day2Msg",
-      "name": "Week 0 Day 2 Message",
-      "status": "active",
-      "kind": "CommunicationRequest",
-      "timingTiming": {
-        "repeat": {
-          "frequency": 1,
-          "period": 2,
-          "periodUnit": "d",
-          "timeOfDay": [
-            "12:00:00"
-          ]
-        }
-      },
-      "dynamicValue": [
-        {
-          "path": "payload.contentString",
-          "expression": {
-            "language": "text/cql",
-            "expression": "Hi {name} - You made your first steps. Don't give up now {userName}"
-          }
-        }
-      ]
-    },
-    {
-      "resourceType": "ActivityDefinition",
-      "id": "Week0Day3Msg",
-      "name": "Week 0 Day 3 Message",
-      "status": "active",
-      "kind": "CommunicationRequest",
-      "timingTiming": {
-        "repeat": {
-          "frequency": 1,
-          "period": 3,
-          "periodUnit": "d",
-          "timeOfDay": [
-            "11:20:00"
-          ]
-        }
-      },
-      "dynamicValue": [
-        {
-          "path": "payload.contentString",
-          "expression": {
-            "language": "text/cql",
-            "expression": "Hello {name}, I know life can be difficult sometimes; I just want you to know that I'm thinking about you and sending positive thoughts your way.  Sincerely, {userName}  "
-          }
-        }
-      ]
-    },
-    {
-      "resourceType": "ActivityDefinition",
-      "id": "Week0Day5Msg",
-      "name": "Week 0 Day 5 Message",
-      "status": "active",
-      "kind": "CommunicationRequest",
-      "timingTiming": {
-        "repeat": {
-          "frequency": 1,
-          "period": 5,
-          "periodUnit": "d",
-          "timeOfDay": [
-            "19:03:00"
-          ]
-        }
-      },
-      "dynamicValue": [
-        {
-          "path": "payload.contentString",
-          "expression": {
-            "language": "text/cql",
-            "expression": "Hey {name}, hope things are going well and you're having a good week. - {userName}"
-          }
-        }
-      ]
-    },
-    {
-      "resourceType": "ActivityDefinition",
-      "id": "Week1Day0Msg",
-      "name": "Week 1 Day 0 Message",
+      "id": "Day6Msg0",
+      "name": "Day 6 Message 0",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
@@ -181,7 +80,7 @@
           "period": 7,
           "periodUnit": "d",
           "timeOfDay": [
-            "16:24:00"
+            "10:24:00"
           ]
         }
       },
@@ -190,24 +89,99 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hi {name}, hope all's well and you're taking good care of yourself {userName}"
+            "expression": "Hey {name}, I know some days can be hard. Just know we are thinking of you and wishing you the best! -QRF NineLine Team"
+          }
+        }
+      ]
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day14Msg0",
+      "name": "Day 14 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 15,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "08:47:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Sending good thoughts and energy your way! -OPC care team"
+          }
+        }
+      ]
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day21Msg0",
+      "name": "Day 21 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 22,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "08:35:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Life can be difficult at times. We are cheering for you {name}! -OPC care team"
+          }
+        }
+      ]
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day35Msg0",
+      "name": "Day 35 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 36,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "09:02:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Did you know that exercise can be helpful for treating depression? If you’re feeling low, even 10 minutes of walking can release those feel-good endorphins. -OPC care team"
           }
         }
       ]
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Week1Day2Msg",
-      "name": "Week 1 Day 2 Message",
+      "id": "Day49Msg0",
+      "name": "Day 49 Message 0",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 9,
+          "period": 50,
           "periodUnit": "d",
           "timeOfDay": [
-            "12:30:00"
+            "08:40:00"
           ]
         }
       },
@@ -216,24 +190,24 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hello again, {name}! Know that I am thinking of you and sending positive vibes your way! Feel free to text if you need anything. {userName}"
+            "expression": "It’s a beautiful day to be alive {name}! Thinking of you today! -OPC care team"
           }
         }
       ]
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Week1Day4Msg",
-      "name": "Week 1 Day 4 Message",
+      "id": "Day63Msg0",
+      "name": "Day 63 Message 0",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 11,
+          "period": 64,
           "periodUnit": "d",
           "timeOfDay": [
-            "10:00:00"
+            "08:53:00"
           ]
         }
       },
@@ -242,7 +216,58 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "{name}, Hope everything is going well.  {userName}"
+            "expression": "We hope this message finds you well, {name}. Sending positive vibes your way. -OPC care team"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day77Msg0",
+      "name": "Day 77 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 78,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "08:42:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hey {name}. Sometimes it’s helpful to make a list of things you are thankful for. For example, we are thankful you are participating in this study! Hope you’ll find something to be thankful for today as well. -OPC care team"
+          }
+        }
+      ]
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "AutumnMsg",
+      "name": "Autumn Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 60,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "08:37:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "{name}, welcome to a season of change! Though change can be scary, it can be very beautiful. What positive changes have you seen this season? -OPC care team"
           }
         }
       ]
@@ -256,7 +281,7 @@
       "timingTiming": {
         "repeat": {
           "timeOfDay": [
-            "10:08:00"
+            "08:37:00"
           ]
         }
       },
@@ -265,7 +290,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Happy Birthday, {name}! Hope the day brings you happiness and next year holds good things for you."
+            "expression": "Happy Birthday {name}! -OPC care team"
           }
         }
       ]
