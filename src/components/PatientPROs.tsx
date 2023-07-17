@@ -136,21 +136,6 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
               const targetCategory = Object.values(
                 PHQ9SeverityCategories
               ).filter((o: ICoding) => o.code === event.target.value)[0];
-              // if (mostRecentPhq9) {
-              //   const updatedAnswer = {
-              //     ...mostRecentPhq9,
-              //     valueCodeableConcept: {
-              //       coding: [targetCategory],
-              //     },
-              //   };
-              //   this.setState({
-              //     selectedPHQ9Code: event.target.value,
-              //     mostRecentPHQ9: updatedAnswer,
-              //   });
-              //   // @ts-ignore
-              //   this.context.mostRecentPhq9 = updatedAnswer;
-              //   return;
-              // }
               let newAnswer = Observation.createPHQ9Observation(
                 targetCategory,
                 patient?.id
@@ -201,21 +186,6 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
               const targetCategory = Object.values(CSSAnswerCategories).filter(
                 (o: ICoding) => o.code === event.target.value
               )[0];
-              // if (mostRecentCss) {
-              //   const updatedAnswer = {
-              //     ...mostRecentCss,
-              //     valueCodeableConcept: {
-              //       coding: [targetCategory],
-              //     },
-              //   };
-              //   // @ts-ignore
-              //   this.context.mostRecentCss = updatedAnswer;
-              //   this.setState({
-              //     selectedCSSCode: event.target.value,
-              //     mostRecentCSS: updatedAnswer,
-              //   });
-              //   return;
-              // }
 
               let newAnswer = Observation.createCSSObservation(
                 targetCategory,
