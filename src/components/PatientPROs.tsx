@@ -117,12 +117,12 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
     return (
       <Stack
         direction={{ xs: "column", sm: "row" }}
-        spacing={4}
+        spacing={6}
         alignItems={"flex-start"}
         sx={{ margin: (theme) => theme.spacing(2, 0, 2) }}
       >
         <FormControl>
-          <FormLabel id="phq9-radio-buttons-group-label">PHQ-9</FormLabel>
+          <FormLabel id="phq9-radio-buttons-group-label">Acute suicide risk (PHQ-9)</FormLabel>
           <RadioGroup
             aria-labelledby="phq9-radio-buttons-group-label"
             name="phq9-radio-buttons-group"
@@ -136,25 +136,28 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
               const targetCategory = Object.values(
                 PHQ9SeverityCategories
               ).filter((o: ICoding) => o.code === event.target.value)[0];
-              if (mostRecentPhq9) {
-                const updatedAnswer = {
-                  ...mostRecentPhq9,
-                  valueCodeableConcept: {
-                    coding: [targetCategory],
-                  },
-                };
-                this.setState({
-                  selectedPHQ9Code: event.target.value,
-                  mostRecentPHQ9: updatedAnswer,
-                });
-                // @ts-ignore
-                this.context.mostRecentPhq9 = updatedAnswer;
-                return;
-              }
-              const newAnswer = Observation.createPHQ9Observation(
+              // if (mostRecentPhq9) {
+              //   const updatedAnswer = {
+              //     ...mostRecentPhq9,
+              //     valueCodeableConcept: {
+              //       coding: [targetCategory],
+              //     },
+              //   };
+              //   this.setState({
+              //     selectedPHQ9Code: event.target.value,
+              //     mostRecentPHQ9: updatedAnswer,
+              //   });
+              //   // @ts-ignore
+              //   this.context.mostRecentPhq9 = updatedAnswer;
+              //   return;
+              // }
+              let newAnswer = Observation.createPHQ9Observation(
                 targetCategory,
                 patient?.id
               );
+              if (mostRecentPhq9) {
+                newAnswer.id = mostRecentPhq9.id;
+              }
               // @ts-ignore
               this.context.mostRecentPhq9 = newAnswer;
               this.setState({
@@ -185,7 +188,7 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
           </RadioGroup>
         </FormControl>
         <FormControl>
-          <FormLabel id="css-radio-buttons-group-label">C-SSRS</FormLabel>
+          <FormLabel id="css-radio-buttons-group-label">Chronic suicide risk (C-SSRS)</FormLabel>
           <RadioGroup
             aria-labelledby="css-radio-buttons-group-label"
             name="css-radio-buttons-group"
@@ -198,26 +201,31 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
               const targetCategory = Object.values(CSSAnswerCategories).filter(
                 (o: ICoding) => o.code === event.target.value
               )[0];
-              if (mostRecentCss) {
-                const updatedAnswer = {
-                  ...mostRecentCss,
-                  valueCodeableConcept: {
-                    coding: [targetCategory],
-                  },
-                };
-                // @ts-ignore
-                this.context.mostRecentCss = updatedAnswer;
-                this.setState({
-                  selectedCSSCode: event.target.value,
-                  mostRecentCSS: updatedAnswer,
-                });
-                return;
-              }
+              // if (mostRecentCss) {
+              //   const updatedAnswer = {
+              //     ...mostRecentCss,
+              //     valueCodeableConcept: {
+              //       coding: [targetCategory],
+              //     },
+              //   };
+              //   // @ts-ignore
+              //   this.context.mostRecentCss = updatedAnswer;
+              //   this.setState({
+              //     selectedCSSCode: event.target.value,
+              //     mostRecentCSS: updatedAnswer,
+              //   });
+              //   return;
+              // }
 
-              const newAnswer = Observation.createCSSObservation(
+              let newAnswer = Observation.createCSSObservation(
                 targetCategory,
                 patient?.id
               );
+
+              if (mostRecentCss) {
+                newAnswer.id = mostRecentCss.id;
+              }
+            
               // @ts-ignore
               this.context.mostRecentCss = newAnswer;
 
@@ -367,12 +375,12 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
           <>
             <Stack alignItems={"center"} spacing={2.5} sx={{ marginBottom: 1 }}>
               <LabeledValueBubble
-                title={"PHQ-9"}
+                title={"Acute suicide risk (PHQ-9)"}
                 value={mostRecentPhq9?.valueDisplay ?? "-"}
                 backgroundColor={colorForPhq9Obs(mostRecentPhq9)}
               />
               <LabeledValueBubble
-                title={"C-SSRS"}
+                title={"Chronic suicide risk (C-SSRS)"}
                 value={mostRecentCss?.valueDisplay ?? "-"}
                 backgroundColor={colorForCssObs(mostRecentCss)}
               />
