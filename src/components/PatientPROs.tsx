@@ -307,7 +307,7 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
                 });
             }}
           >
-            Save scores
+            Save
           </Button>
           {this.state.saveLoading && (
             <CircularProgress
@@ -324,7 +324,7 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
         </Box>
         {this.state.saveError && (
           <Alert severity="error">
-            There was an error saving the scores. Please see console for detail.
+            There was an error saving the data. Please see console for detail.
           </Alert>
         )}
       </Stack>
@@ -363,7 +363,7 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
               variant="outlined"
               size="small"
             >
-              Update scores
+              Update
             </Button>
           </>
         )}
