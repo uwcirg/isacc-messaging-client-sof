@@ -86,7 +86,7 @@ export class Observation implements IObservation {
         //     return `${this.valueQuantity.value}`;
         // }
         console.log(`Malformed Observation value `, this);
-        return "";
+        return null;
     }
 
 }
