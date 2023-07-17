@@ -5,6 +5,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  Divider,
   FormControlLabel,
   FormControl,
   FormLabel,
@@ -104,14 +105,21 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
     }
     // @ts-ignore
     let mostRecentPhq9 = this.context.mostRecentPhq9;
+    if (mostRecentPhq9) {
+      this.setState({
+        mostRecentPHQ9: mostRecentPhq9,
+        selectedPHQ9Code: mostRecentPhq9?.valueCodeableConcept?.coding[0]?.code,
+      });
+    }
     // @ts-ignore
     let mostRecentCss = this.context.mostRecentCss;
-    this.setState({
-      mostRecentCSS: mostRecentCss,
-      mostRecentPHQ9: mostRecentPhq9,
-      selectedPHQ9Code: mostRecentPhq9?.valueCodeableConcept?.coding[0]?.code,
-      selectedCSSCode: mostRecentCss?.valueCodeableConcept?.coding[0]?.code,
-    });
+    if (mostRecentCss) {
+      this.setState({
+        mostRecentCSS: mostRecentCss,
+        selectedCSSCode: mostRecentCss?.valueCodeableConcept?.coding[0]?.code,
+      });
+    }
+    
   }
   renderFields() {
     return (
@@ -389,6 +397,7 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
       return (
         <>
           {this.renderTitle()}
+          <Divider sx={{marginBottom: 2, borderColor: "#FFF"}} />
           {this.renderFields()}
         </>
       );
