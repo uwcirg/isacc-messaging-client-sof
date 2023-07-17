@@ -5,22 +5,24 @@ import {
   Box,
   Button,
   CircularProgress,
+  FormControlLabel,
+  FormControl,
+  FormLabel,
+  Radio,
+  RadioGroup,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
 import { ICoding } from "@ahryman40k/ts-fhir-types/lib/R4";
 import {
-  amber,
-  deepOrange,
   grey,
   lightBlue,
   orange,
   red,
 } from "@mui/material/colors";
-import { CSSAnswerCategories } from "../model/CodeSystem";
+import { CSSAnswerCategories, PHQ9SeverityCategories } from "../model/CodeSystem";
 import { Observation } from "../model/Observation";
 
 interface PatientPROsProps {
@@ -33,24 +35,28 @@ interface PatientPROsProps {
 type PatientPROsState = {
   error: string;
   editable: boolean;
-  mostRecentPhq9: Observation;
-  mostRecentCss: Observation;
+  mostRecentPHQ9: Observation;
+  mostRecentCSS: Observation;
+  selectedPHQ9Code: string;
+  selectedCSSCode: string;
   loaded: boolean;
   saveLoading: boolean;
   saveError: boolean;
 };
 
-function colorForPhq9Obs(observation: Observation) {
-  if (
-    !observation ||
-    !observation.valueQuantity ||
-    !observation.valueQuantity.value
-  )
-    return grey[100];
-  if (observation.valueQuantity.value < 5) return lightBlue[100];
-  if (observation.valueQuantity.value < 10) return amber[100];
-  if (observation.valueQuantity.value < 15) return orange[100];
-  if (observation.valueQuantity.value < 20) return deepOrange[100];
+function colorForPhq9Obs(value: Observation) {
+  let answerCoding = value?.valueCodeableConcept?.coding?.find(
+    (value: ICoding) => {
+      return (
+        PHQ9SeverityCategories.low.equals(value) ||
+        PHQ9SeverityCategories.medium.equals(value) ||
+        PHQ9SeverityCategories.high.equals(value)
+      );
+    }
+  );
+  if (!answerCoding) return grey[100];
+  if (PHQ9SeverityCategories.low.equals(answerCoding)) return lightBlue[100];
+  if (PHQ9SeverityCategories.medium.equals(answerCoding)) return orange[100];
   return red[100];
 }
 
@@ -66,7 +72,7 @@ function colorForCssObs(value: Observation) {
   );
   if (!answerCoding) return grey[100];
   if (CSSAnswerCategories.low.equals(answerCoding)) return lightBlue[100];
-  if (CSSAnswerCategories.medium.equals(answerCoding)) return amber[100];
+  if (CSSAnswerCategories.medium.equals(answerCoding)) return orange[100];
   return red[100];
 }
 
@@ -77,8 +83,10 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
     super(props);
     this.state = {
       error: "",
-      mostRecentPhq9: null,
-      mostRecentCss: null,
+      mostRecentPHQ9: null,
+      mostRecentCSS: null,
+      selectedPHQ9Code: null,
+      selectedCSSCode: null,
       loaded: true,
       editable: false,
       saveLoading: false,
@@ -94,79 +102,132 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
       console.log("Context not available in componentDidMount!");
       return;
     }
-  }
-  renderFields() {
     // @ts-ignore
     let mostRecentPhq9 = this.context.mostRecentPhq9;
     // @ts-ignore
     let mostRecentCss = this.context.mostRecentCss;
+    this.setState({
+      mostRecentCSS: mostRecentCss,
+      mostRecentPHQ9: mostRecentPhq9,
+      selectedPHQ9Code: mostRecentPhq9?.valueCodeableConcept?.coding[0]?.code,
+      selectedCSSCode: mostRecentCss?.valueCodeableConcept?.coding[0]?.code,
+    });
+  }
+  renderFields() {
     return (
       <Stack
-        direction={"column"}
-        spacing={2}
+        direction={{ xs: "column", sm: "row" }}
+        spacing={6}
         alignItems={"flex-start"}
-        sx={{ marginTop: (theme) => theme.spacing(1) }}
+        sx={{ margin: (theme) => theme.spacing(0, 0, 2) }}
       >
-        <TextField
-          label="PHQ-9 score"
-          size="small"
-          type="number"
-          InputLabelProps={{
-            shrink: true,
-          }}
-          margin="dense"
-          defaultValue={mostRecentPhq9?.valueDisplay ?? ""}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-            if (this.props.onChange) this.props.onChange();
-            // @ts-ignore
-            const patient = this.context.patient;
-            if (mostRecentPhq9) {
+        <FormControl>
+          <FormLabel id="phq9-radio-buttons-group-label">Acute suicide risk</FormLabel>
+          <RadioGroup
+            aria-labelledby="phq9-radio-buttons-group-label"
+            name="phq9-radio-buttons-group"
+            value={this.state.selectedPHQ9Code}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
               // @ts-ignore
-              this.context.mostRecentPhq9 = {
-                ...mostRecentPhq9,
-                valueQuantity: {
-                  value: parseFloat(event.target.value),
-                },
-              };
-              return;
-            }
-            if (!event.target.value) return;
-            // @ts-ignore
-            this.context.mostRecentPhq9 = Observation.createPHQ9Observation(
-              event.target.value,
-              patient?.id
-            );
-          }}
-        ></TextField>
-        <TextField
-          label="C-SSRS score"
-          size="small"
-          type="number"
-          InputLabelProps={{
-            shrink: true,
-          }}
-          defaultValue={mostRecentCss?.valueDisplay ?? ""}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-            // @ts-ignore
-            const patient = this.context.patient;
-            if (mostRecentCss) {
+              let mostRecentPhq9 = this.context.mostRecentPhq9;
+              if (this.props.onChange) this.props.onChange();
               // @ts-ignore
-              this.context.mostRecentCss = {
-                ...mostRecentCss,
-                valueQuantity: {
-                  value: parseFloat(event.target.value),
-                },
-              };
-              return;
-            }
-            if (!event.target.value) return;
-            // @ts-ignore
-            this.context.mostRecentCss = Observation.createCSSObservation(
-              event.target.value,
-              patient?.id
-            );
-          }}
-        ></TextField>
+              const patient = this.context.patient;
+              // TODO find appropriate coding for this
+              const targetCategory = Object.values(
+                PHQ9SeverityCategories
+              ).filter((o: ICoding) => o.code === event.target.value)[0];
+              let newAnswer = Observation.createPHQ9Observation(
+                targetCategory,
+                patient?.id
+              );
+              if (mostRecentPhq9) {
+                newAnswer.id = mostRecentPhq9.id;
+              }
+              // @ts-ignore
+              this.context.mostRecentPhq9 = newAnswer;
+              this.setState({
+                selectedPHQ9Code: event.target.value,
+                mostRecentPHQ9: newAnswer,
+              });
+            }}
+          >
+            {Object.keys(PHQ9SeverityCategories).map(
+              (category: string, index: number) => (
+                <FormControlLabel
+                  value={
+                    ((PHQ9SeverityCategories as any)[category] as ICoding).code
+                  }
+                  slotProps={{
+                    typography: {
+                      sx: {
+                        textTransform: "capitalize",
+                      },
+                    },
+                  }}
+                  control={<Radio />}
+                  label={category}
+                  key={`phq9_label_${category}_${index}`}
+                />
+              )
+            )}
+          </RadioGroup>
+        </FormControl>
+        <FormControl>
+          <FormLabel id="css-radio-buttons-group-label">Chronic suicide risk</FormLabel>
+          <RadioGroup
+            aria-labelledby="css-radio-buttons-group-label"
+            name="css-radio-buttons-group"
+            value={this.state.selectedCSSCode}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              // @ts-ignore
+              let mostRecentCss = this.context.mostRecentCss;
+              // @ts-ignore
+              const patient = this.context.patient;
+              // TODO find appropriate coding for this
+              const targetCategory = Object.values(CSSAnswerCategories).filter(
+                (o: ICoding) => o.code === event.target.value
+              )[0];
+
+              let newAnswer = Observation.createCSSObservation(
+                targetCategory,
+                patient?.id
+              );
+
+              if (mostRecentCss) {
+                newAnswer.id = mostRecentCss.id;
+              }
+            
+              // @ts-ignore
+              this.context.mostRecentCss = newAnswer;
+
+              this.setState({
+                selectedCSSCode: event.target.value,
+                mostRecentCSS: newAnswer,
+              });
+            }}
+          >
+            {Object.keys(CSSAnswerCategories).map(
+              (category: string, index: number) => (
+                <FormControlLabel
+                  value={
+                    ((CSSAnswerCategories as any)[category] as ICoding).code
+                  }
+                  control={<Radio />}
+                  label={category}
+                  key={`css_label_${category}_${index}`}
+                  slotProps={{
+                    typography: {
+                      sx: {
+                        textTransform: "capitalize",
+                      },
+                    },
+                  }}
+                />
+              )
+            )}
+          </RadioGroup>
+        </FormControl>
       </Stack>
     );
   }
@@ -284,16 +345,18 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
       >
         {!this.state.editable && (
           <>
-            <LabeledValueBubble
-              title={"PHQ-9"}
-              value={mostRecentPhq9?.valueDisplay ?? "-"}
-              backgroundColor={colorForPhq9Obs(mostRecentPhq9)}
-            />
-            <LabeledValueBubble
-              title={"C-SSRS"}
-              value={mostRecentCss?.valueDisplay ?? "-"}
-              backgroundColor={colorForCssObs(mostRecentCss)}
-            />
+            <Stack alignItems={"center"} spacing={2.5} sx={{ marginBottom: 1 }}>
+              <LabeledValueBubble
+                title={"Acute suicide risk"}
+                value={mostRecentPhq9?.valueDisplay ?? "-"}
+                backgroundColor={colorForPhq9Obs(mostRecentPhq9)}
+              />
+              <LabeledValueBubble
+                title={"Chronic suicide risk"}
+                value={mostRecentCss?.valueDisplay ?? "-"}
+                backgroundColor={colorForCssObs(mostRecentCss)}
+              />
+            </Stack>
             <Button
               startIcon={<EditIcon></EditIcon>}
               onClick={() => this.setState({ editable: true })}
@@ -309,7 +372,7 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
   }
 
   renderTitle() {
-    return <Typography variant={"h6"}>{"Suicide risk scores"}</Typography>;
+    return <Typography variant={"h6"}>{"Suicide risk level"}</Typography>;
   }
 
   render(): React.ReactNode {
@@ -355,14 +418,15 @@ const LabeledValueBubble = (props: {
     <Typography
       variant={"h6"}
       sx={{
-        borderRadius: "50px",
-        paddingTop: 1,
+        borderRadius: "100vmax",
+        paddingTop: 2,
         marginTop: 0,
         paddingBottom: 2,
         paddingLeft: 2,
         paddingRight: 2,
         color: "#000",
         backgroundColor: props.backgroundColor,
+        textTransform: "capitalize"
       }}
     >
       {props.value}
