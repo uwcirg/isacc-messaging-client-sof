@@ -769,6 +769,11 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     // @ts-ignore
     const currentPractitioner = this.context.practitioner;
     if (!currentPractitioner) return;
+
+    // @ts-ignore
+    // only pre-populate primary author for new recipient
+    if (this.context.careTeam?.id) return;
+
     // @ts-ignore
     this.context.patient.generalPractitioner = this.toReferences([
       currentPractitioner
@@ -779,6 +784,10 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     // @ts-ignore
     const currentPractitioner = this.context.practitioner;
     if (!currentPractitioner) return;
+    // @ts-ignore
+    // only pre-populate care team for new recipient
+    if (this.context.careTeam?.id) return;
+
     const isInCareTeam = // @ts-ignore
       this.context.careTeam?.participant?.find((p: ICareTeam_Participant) =>
         p.member?.reference?.split("/")[1] === currentPractitioner?.id

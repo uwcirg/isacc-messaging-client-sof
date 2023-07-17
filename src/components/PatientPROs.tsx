@@ -248,6 +248,7 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
             startIcon={<SaveIcon></SaveIcon>}
             size="small"
             fullWidth
+            sx={{minWidth: "120px"}}
             onClick={() => {
               // @ts-ignore
               const mostRecentPhq9 = this.context.mostRecentPhq9;
@@ -362,6 +363,7 @@ export default class PatientPROs extends React.Component<PatientPROsProps, Patie
               onClick={() => this.setState({ editable: true })}
               variant="outlined"
               size="small"
+              sx={{minWidth: "120px"}}
             >
               Update
             </Button>
