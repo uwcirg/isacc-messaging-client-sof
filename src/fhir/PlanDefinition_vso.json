@@ -92,7 +92,7 @@
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 7,
+          "period": 6,
           "periodUnit": "d",
           "timeOfDay": [
             "10:24:00"
@@ -118,7 +118,7 @@
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 15,
+          "period": 14,
           "periodUnit": "d",
           "timeOfDay": [
             "14:36:00"
@@ -144,7 +144,7 @@
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 23,
+          "period": 22,
           "periodUnit": "d",
           "timeOfDay": [
             "09:18:00"
@@ -170,7 +170,7 @@
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 33,
+          "period": 32,
           "periodUnit": "d",
           "timeOfDay": [
             "12:10:00"
@@ -196,7 +196,7 @@
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 45,
+          "period": 44,
           "periodUnit": "d",
           "timeOfDay": [
             "11:30:00"
@@ -222,7 +222,7 @@
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 53,
+          "period": 52,
           "periodUnit": "d",
           "timeOfDay": [
             "09:54:00"
@@ -248,7 +248,7 @@
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 60,
+          "period": 59,
           "periodUnit": "d",
           "timeOfDay": [
             "13:23:00"
@@ -274,7 +274,7 @@
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 67,
+          "period": 66,
           "periodUnit": "d",
           "timeOfDay": [
             "15:42:00"
@@ -300,7 +300,7 @@
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 75,
+          "period": 74,
           "periodUnit": "d",
           "timeOfDay": [
             "11:32:00"
@@ -326,7 +326,7 @@
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 82,
+          "period": 81,
           "periodUnit": "d",
           "timeOfDay": [
             "16:50:00"
@@ -352,7 +352,7 @@
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 91,
+          "period": 90,
           "periodUnit": "d",
           "timeOfDay": [
             "10:15:00"
