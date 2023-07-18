@@ -1,32 +1,50 @@
 {
   "resourceType": "PlanDefinition",
   "id": "PlanDefinition_vso",
-  "title": "aring Contacts PlanDefinition for VSO",
+  "title": "Caring Contacts PlanDefinition for VSO",
   "status": "active",
   "action": [
     {
-      "definitionCanonical": "#Week0Day0Msg"
+      "definitionCanonical": "#Day0Msg0"
     },
     {
-      "definitionCanonical": "#Week0Day1Msg"
+      "definitionCanonical": "#Day6Msg0"
     },
     {
-      "definitionCanonical": "#Week0Day2Msg"
+      "definitionCanonical": "#Day14Msg0"
     },
     {
-      "definitionCanonical": "#Week0Day3Msg"
+      "definitionCanonical": "#Day22Msg0"
     },
     {
-      "definitionCanonical": "#Week0Day5Msg"
+      "definitionCanonical": "#Day32Msg0"
     },
     {
-      "definitionCanonical": "#Week1Day0Msg"
+      "definitionCanonical": "#Day44Msg0"
     },
     {
-      "definitionCanonical": "#Week1Day2Msg"
+      "definitionCanonical": "#Day52Msg0"
     },
     {
-      "definitionCanonical": "#Week1Day4Msg"
+      "definitionCanonical": "#Day59Msg0"
+    },
+    {
+      "definitionCanonical": "#Day66Msg0"
+    },
+    {
+      "definitionCanonical": "#Day74Msg0"
+    },
+    {
+      "definitionCanonical": "#Day81Msg0"
+    },
+    {
+      "definitionCanonical": "#Day90Msg0"
+    },
+    {
+      "definitionCanonical": "#VeteransDayMsg"
+    },
+    {
+      "definitionCanonical": "#FallWinterMsg"
     },
     {
       "definitionCanonical": "#BirthdayMsg",
@@ -41,8 +59,8 @@
   "contained": [
     {
       "resourceType": "ActivityDefinition",
-      "id": "Week0Day0Msg",
-      "name": "Week 0 Day 0 Message",
+      "id": "Day0Msg0",
+      "name": "Day 0 Message 0",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
@@ -51,7 +69,7 @@
           "period": 0,
           "periodUnit": "d",
           "timeOfDay": [
-            "13:30:00"
+            "18:00:00"
           ]
         }
       },
@@ -60,24 +78,24 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "{name} - Good to meet you today! Could you respond so I know you got this message? Thanks {userName}"
+            "expression": "Hello {name}, hope your day is going well. You are not alone on this journey. If you need immediate help, don't forget about the 24/7 National Hotline - 988 & press 1, or you can text the Veterans Crisis Line @ 838-255, or check our website: nine9line.org -QRF NineLine Team"
           }
         }
       ]
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Week0Day1Msg",
-      "name": "Week 0 Day 1 Message",
+      "id": "Day6Msg0",
+      "name": "Day 6 Message 0",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 1,
+          "period": 6,
           "periodUnit": "d",
           "timeOfDay": [
-            "09:41:00"
+            "10:24:00"
           ]
         }
       },
@@ -86,24 +104,24 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hi there {name}, Hope you are having a good day.  I am here for you if you need me. {userName}"
+            "expression": "Hey {name}, I know some days can be hard. Just know we are thinking of you and wishing you the best! -QRF NineLine Team"
           }
         }
       ]
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Week0Day2Msg",
-      "name": "Week 0 Day 2 Message",
+      "id": "Day14Msg0",
+      "name": "Day 14 Message 0",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 2,
+          "period": 14,
           "periodUnit": "d",
           "timeOfDay": [
-            "12:00:00"
+            "14:36:00"
           ]
         }
       },
@@ -112,24 +130,24 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hi {name} - You made your first steps. Don't give up now {userName}"
+            "expression": "We will be with you all the way. -QRF NineLine Team"
           }
         }
       ]
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Week0Day3Msg",
-      "name": "Week 0 Day 3 Message",
+      "id": "Day22Msg0",
+      "name": "Day 22 Message 0",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 3,
+          "period": 22,
           "periodUnit": "d",
           "timeOfDay": [
-            "11:20:00"
+            "09:18:00"
           ]
         }
       },
@@ -138,24 +156,24 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hello {name}, I know life can be difficult sometimes; I just want you to know that I'm thinking about you and sending positive thoughts your way.  Sincerely, {userName}  "
+            "expression": "{name}, just letting you know, we’re not always available but if you need to talk to someone, the National Hotline number is 988 & press 1 and the Veterans Crisis Line number is 838-255. -QRF NineLine Team"
           }
         }
       ]
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Week0Day5Msg",
-      "name": "Week 0 Day 5 Message",
+      "id": "Day32Msg0",
+      "name": "Day 32 Message 0",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 5,
+          "period": 32,
           "periodUnit": "d",
           "timeOfDay": [
-            "19:03:00"
+            "12:10:00"
           ]
         }
       },
@@ -164,24 +182,24 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hey {name}, hope things are going well and you're having a good week. - {userName}"
+            "expression": "Hey {name}, we know life can be difficult at times but we are cheering for you! -QRF NineLine Team"
           }
         }
       ]
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Week1Day0Msg",
-      "name": "Week 1 Day 0 Message",
+      "id": "Day44Msg0",
+      "name": "Day 44 Message 0",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 7,
+          "period": 44,
           "periodUnit": "d",
           "timeOfDay": [
-            "16:24:00"
+            "11:30:00"
           ]
         }
       },
@@ -190,24 +208,24 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hi {name}, hope all's well and you're taking good care of yourself {userName}"
+            "expression": "Hey {name}, I hope this message finds you in good health! Sending positive vibes your way! -QRF NineLine Team"
           }
         }
       ]
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Week1Day2Msg",
-      "name": "Week 1 Day 2 Message",
+      "id": "Day52Msg0",
+      "name": "Day 52 Message 0",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 9,
+          "period": 52,
           "periodUnit": "d",
           "timeOfDay": [
-            "12:30:00"
+            "09:54:00"
           ]
         }
       },
@@ -216,24 +234,24 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hello again, {name}! Know that I am thinking of you and sending positive vibes your way! Feel free to text if you need anything. {userName}"
+            "expression": "Hey {name}, thinking of you today! -QRF NineLine Team"
           }
         }
       ]
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Week1Day4Msg",
-      "name": "Week 1 Day 4 Message",
+      "id": "Day59Msg0",
+      "name": "Day 59 Message 0",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 11,
+          "period": 59,
           "periodUnit": "d",
           "timeOfDay": [
-            "10:00:00"
+            "13:23:00"
           ]
         }
       },
@@ -242,7 +260,163 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "{name}, Hope everything is going well.  {userName}"
+            "expression": "Hey {name}, sending good thoughts and energy your way! -QRF NineLine Team"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day66Msg0",
+      "name": "Day 66 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 66,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "15:42:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hello {name}! I hope this finds you in a good place. I believe in you and am glad to connect when you need to. -QRF NineLine Team"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day74Msg0",
+      "name": "Day 74 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 74,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "11:32:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hey {name}, you don’t have to walk alone, if you ever need anything we are here! -QRF NineLine Team"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day81Msg0",
+      "name": "Day 81 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 81,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "16:50:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "{name}, know that I am thinking of you today and that I believe in you. I am with you and support you. –QRF NineLine Team"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day90Msg0",
+      "name": "Day 90 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 90,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "10:15:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Thanks again for being willing to participate in this project. If at some point you’re in need of support, please remember the 24/7 National Crisis line is 988 & press 1 and the Veterans Crisis Line number is 838-255. NineLine is here if you need us @ 253-922-7225 –QRF NineLine Team"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "VeteransDayMsg",
+      "name": "Veterans Day Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 93,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "08:42:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Happy Veteran’s Day. Thank you {name} for volunteering for service. What you’ve done is greatly appreciated. We know that this time can be difficult, if you need someone please reach out @ 253-922-7225. We’re here for you if you need us. -QRF NineLine Team"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "FallWinterMsg",
+      "name": "Fall Winter Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 124,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "12:34:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hey {name}, just wanted to send you encouragement this holiday season, as the darkness can sometimes negatively impact us. I hope you will be able to take care of yourself and do things that nourish you, physically, mentally and emotionally. If you ever need someone to talk to, get a hold of us at 253-922-7225. Wishing you a warm winter. -QRF NineLine team"
           }
         }
       ]
@@ -256,7 +430,7 @@
       "timingTiming": {
         "repeat": {
           "timeOfDay": [
-            "10:08:00"
+            "08:37:00"
           ]
         }
       },
@@ -265,7 +439,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Happy Birthday, {name}! Hope the day brings you happiness and next year holds good things for you."
+            "expression": "Happy Birthday, {name}! Best wishes to you in this next year of life. –QRF NineLine Team"
           }
         }
       ]
