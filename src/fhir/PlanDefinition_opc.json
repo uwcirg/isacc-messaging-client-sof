@@ -8,12 +8,6 @@
       "definitionCanonical": "#Day0Msg0"
     },
     {
-      "definitionCanonical": "#Day0Msg1"
-    },
-    {
-      "definitionCanonical": "#Day0Msg2"
-    },
-    {
       "definitionCanonical": "#Day7Msg0"
     },
     {
@@ -69,59 +63,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Thank you for signing up for the Caring Contacts study at OPC {name}! Can you please respond to let us know you received this message? -OPC care team"
-          }
-        }
-      ]
-    },
-    {
-      "resourceType": "ActivityDefinition",
-      "id": "Day0Msg1",
-      "name": "Day 0 Message 1",
-      "status": "active",
-      "kind": "CommunicationRequest",
-      "timingTiming": {
-        "repeat": {
-          "frequency": 1,
-          "period": 1,
-          "periodUnit": "d",
-          "timeOfDay": [
-            "18:01:00"
-          ]
-        }
-      },
-      "dynamicValue": [
-        {
-          "path": "payload.contentString",
-          "expression": {
-            "language": "text/cql",
-            "expression": "As a reminder, we're here and will respond when the clinic is open Mon-Fri 8-5."
-          }
-        }
-      ]
-    },
-    {
-      "resourceType": "ActivityDefinition",
-      "id": "Day0Msg2",
-      "name": "Day 0 Message 2",
-      "status": "active",
-      "kind": "CommunicationRequest",
-      "timingTiming": {
-        "repeat": {
-          "frequency": 1,
-          "period": 1,
-          "periodUnit": "d",
-          "timeOfDay": [
-            "18:01:00"
-          ]
-        }
-      },
-      "dynamicValue": [
-        {
-          "path": "payload.contentString",
-          "expression": {
-            "language": "text/cql",
-            "expression": "If you need help on the evening or weekends, you might start here https://988lifeline.org/help-yourself/ -OPC care team"
+            "expression": "Thank you for signing up for the Caring Contacts study at OPC {name}! Can you please respond to let us know you received this message? As a reminder, we're here and will respond when the clinic is open Mon-Fri 8-5. If you need help in the evening or weekends, you might start here https://988lifeline.org/help-yourself/ -OPC care team"
           }
         }
       ]
@@ -151,6 +93,7 @@
           }
         }
       ]
+    },
     {
       "resourceType": "ActivityDefinition",
       "id": "Day14Msg0",
@@ -176,6 +119,7 @@
           }
         }
       ]
+    },
     {
       "resourceType": "ActivityDefinition",
       "id": "Day21Msg0",
@@ -201,6 +145,7 @@
           }
         }
       ]
+    },
     {
       "resourceType": "ActivityDefinition",
       "id": "Day35Msg0",
@@ -304,6 +249,7 @@
           }
         }
       ]
+    },
     {
       "resourceType": "ActivityDefinition",
       "id": "AutumnMsg",

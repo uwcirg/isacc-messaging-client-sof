@@ -14,22 +14,37 @@
       "definitionCanonical": "#Day14Msg0"
     },
     {
-      "definitionCanonical": "#Day21Msg0"
+      "definitionCanonical": "#Day22Msg0"
     },
     {
-      "definitionCanonical": "#Day35Msg0"
+      "definitionCanonical": "#Day32Msg0"
     },
     {
-      "definitionCanonical": "#Day49Msg0"
+      "definitionCanonical": "#Day44Msg0"
     },
     {
-      "definitionCanonical": "#Day63Msg0"
+      "definitionCanonical": "#Day52Msg0"
     },
     {
-      "definitionCanonical": "#Day77Msg0"
+      "definitionCanonical": "#Day59Msg0"
     },
     {
-      "definitionCanonical": "#AutumnMsg"
+      "definitionCanonical": "#Day66Msg0"
+    },
+    {
+      "definitionCanonical": "#Day74Msg0"
+    },
+    {
+      "definitionCanonical": "#Day81Msg0"
+    },
+    {
+      "definitionCanonical": "#Day90Msg0"
+    },
+    {
+      "definitionCanonical": "#VeteransDayMsg"
+    },
+    {
+      "definitionCanonical": "#FallWinterMsg"
     },
     {
       "definitionCanonical": "#BirthdayMsg",
@@ -93,6 +108,7 @@
           }
         }
       ]
+    },
     {
       "resourceType": "ActivityDefinition",
       "id": "Day14Msg0",
@@ -105,7 +121,7 @@
           "period": 15,
           "periodUnit": "d",
           "timeOfDay": [
-            "08:47:00"
+            "14:36:00"
           ]
         }
       },
@@ -114,74 +130,24 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Sending good thoughts and energy your way! -OPC care team"
-          }
-        }
-      ]
-    {
-      "resourceType": "ActivityDefinition",
-      "id": "Day21Msg0",
-      "name": "Day 21 Message 0",
-      "status": "active",
-      "kind": "CommunicationRequest",
-      "timingTiming": {
-        "repeat": {
-          "frequency": 1,
-          "period": 22,
-          "periodUnit": "d",
-          "timeOfDay": [
-            "08:35:00"
-          ]
-        }
-      },
-      "dynamicValue": [
-        {
-          "path": "payload.contentString",
-          "expression": {
-            "language": "text/cql",
-            "expression": "Life can be difficult at times. We are cheering for you {name}! -OPC care team"
-          }
-        }
-      ]
-    {
-      "resourceType": "ActivityDefinition",
-      "id": "Day35Msg0",
-      "name": "Day 35 Message 0",
-      "status": "active",
-      "kind": "CommunicationRequest",
-      "timingTiming": {
-        "repeat": {
-          "frequency": 1,
-          "period": 36,
-          "periodUnit": "d",
-          "timeOfDay": [
-            "09:02:00"
-          ]
-        }
-      },
-      "dynamicValue": [
-        {
-          "path": "payload.contentString",
-          "expression": {
-            "language": "text/cql",
-            "expression": "Did you know that exercise can be helpful for treating depression? If you’re feeling low, even 10 minutes of walking can release those feel-good endorphins. -OPC care team"
+            "expression": "We will be with you all the way. -QRF NineLine Team"
           }
         }
       ]
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Day49Msg0",
-      "name": "Day 49 Message 0",
+      "id": "Day22Msg0",
+      "name": "Day 22 Message 0",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 50,
+          "period": 23,
           "periodUnit": "d",
           "timeOfDay": [
-            "08:40:00"
+            "09:18:00"
           ]
         }
       },
@@ -190,24 +156,24 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "It’s a beautiful day to be alive {name}! Thinking of you today! -OPC care team"
+            "expression": "{name}, just letting you know, we’re not always available but if you need to talk to someone, the National Hotline number is 988 & press 1 and the Veterans Crisis Line number is 838-255. -QRF NineLine Team"
           }
         }
       ]
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Day63Msg0",
-      "name": "Day 63 Message 0",
+      "id": "Day32Msg0",
+      "name": "Day 32 Message 0",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 64,
+          "period": 33,
           "periodUnit": "d",
           "timeOfDay": [
-            "08:53:00"
+            "12:10:00"
           ]
         }
       },
@@ -216,21 +182,203 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "We hope this message finds you well, {name}. Sending positive vibes your way. -OPC care team"
+            "expression": "Hey {name}, we know life can be difficult at times but we are cheering for you! -QRF NineLine Team"
           }
         }
       ]
     },
     {
       "resourceType": "ActivityDefinition",
-      "id": "Day77Msg0",
-      "name": "Day 77 Message 0",
+      "id": "Day44Msg0",
+      "name": "Day 44 Message 0",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 78,
+          "period": 45,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "11:30:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hey {name}, I hope this message finds you in good health! Sending positive vibes your way! -QRF NineLine Team"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day52Msg0",
+      "name": "Day 52 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 53,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "09:54:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hey {name}, thinking of you today! -QRF NineLine Team"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day59Msg0",
+      "name": "Day 59 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 60,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "13:23:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hey {name}, sending good thoughts and energy your way! -QRF NineLine Team"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day66Msg0",
+      "name": "Day 66 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 67,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "15:42:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hello {name}! I hope this finds you in a good place. I believe in you and am glad to connect when you need to. -QRF NineLine Team"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day74Msg0",
+      "name": "Day 74 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 75,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "11:32:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hey {name}, you don’t have to walk alone, if you ever need anything we are here! -QRF NineLine Team"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day81Msg0",
+      "name": "Day 81 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 82,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "16:50:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "{name}, know that I am thinking of you today and that I believe in you. I am with you and support you. –QRF NineLine Team"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day90Msg0",
+      "name": "Day 90 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 91,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "10:15:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Thanks again for being willing to participate in this project. If at some point you’re in need of support, please remember the 24/7 National Crisis line is 988 & press 1 and the Veterans Crisis Line number is 838-255. NineLine is here if you need us @ 253-922-7225 –QRF NineLine Team"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "VeteransDayMsg",
+      "name": "Veterans Day Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 93,
           "periodUnit": "d",
           "timeOfDay": [
             "08:42:00"
@@ -242,23 +390,24 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hey {name}. Sometimes it’s helpful to make a list of things you are thankful for. For example, we are thankful you are participating in this study! Hope you’ll find something to be thankful for today as well. -OPC care team"
+            "expression": "Happy Veteran’s Day. Thank you {name} for volunteering for service. What you’ve done is greatly appreciated. We know that this time can be difficult, if you need someone please reach out @ 253-922-7225. We’re here for you if you need us. -QRF NineLine Team"
           }
         }
       ]
+    },
     {
       "resourceType": "ActivityDefinition",
-      "id": "AutumnMsg",
-      "name": "Autumn Message",
+      "id": "FallWinterMsg",
+      "name": "Fall Winter Message",
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
         "repeat": {
           "frequency": 1,
-          "period": 60,
+          "period": 124,
           "periodUnit": "d",
           "timeOfDay": [
-            "08:37:00"
+            "12:34:00"
           ]
         }
       },
@@ -267,7 +416,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "{name}, welcome to a season of change! Though change can be scary, it can be very beautiful. What positive changes have you seen this season? -OPC care team"
+            "expression": "Hey {name}, just wanted to send you encouragement this holiday season, as the darkness can sometimes negatively impact us. I hope you will be able to take care of yourself and do things that nourish you, physically, mentally and emotionally. If you ever need someone to talk to, get a hold of us at 253-922-7225. Wishing you a warm winter. -QRF NineLine team"
           }
         }
       ]
@@ -290,7 +439,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Happy Birthday {name}! -OPC care team"
+            "expression": "Happy Birthday, {name}! Best wishes to you in this next year of life. –QRF NineLine Team"
           }
         }
       ]
