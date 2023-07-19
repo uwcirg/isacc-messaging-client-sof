@@ -312,7 +312,9 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                     ? value.toDate().toISOString().slice(0, 10)
                     : null;
                   patient.birthDate = inputValue;
-                  this.setState({});
+                  this.setState({
+                    DOBDateValidationError: null
+                  });
                 } else {
                   this.setState({
                     DOBDateValidationError: validationError,
@@ -712,7 +714,9 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                     ? value.toDate().toISOString().slice(0, 10)
                     : null;
                   patient.studyStartDate = inputValue;
-                  this.setState({});
+                  this.setState({
+                    studyStartDateValidationError: null
+                  });
                 } else {
                   this.setState({
                     studyStartDateValidationError: validationError,

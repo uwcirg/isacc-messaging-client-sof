@@ -91,12 +91,16 @@ export default class PlanDefinition implements IPlanDefinition {
                         year = dobNumbers[0];
                     }
                     if (dobNumbers.length >= 2) {
-                        month = dobNumbers[1];
+                        const dobMonth =  dobNumbers[1];
+                        // to make a new Date object, month is 0-index based, Jan = 0, Feb = 1
+                        // ergo, for example if dob month is 2 or 02, which is Febrero, then we need to decrease it by 1,
+                        // same is true if dob month is 1, then we need to decrease it to 0
+                        
+                        month = dobMonth > 0 ? dobMonth-1 : dobMonth;
                     }
                     if (dobNumbers.length >= 3) {
                         day = dobNumbers[2];
                     }
-
                     let birthdays = birthdaysBetweenDates(programStart, programEnd, new Date(year, month, day));
                     birthdays.forEach((d: Date) => messages.push({
                         text: birthdayMessageActivityDefinition.payloadText,
