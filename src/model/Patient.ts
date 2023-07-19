@@ -367,6 +367,36 @@ export default class Patient implements IPatient {
 
     existingPronouns.valueString = value;
   }
+
+  get isTest(): number {
+    let o = this.extension?.filter(
+      (i: IExtension) => i.url === ExtensionUrl.isTestPatientUrl
+    )[0];
+    return o ? o.valueQuantity?.value: 0;
+  }
+
+  set isTest (value: number) {
+    if (!this.extension) {
+      this.extension = [];
+    }
+
+    let existingTestFlag = this.extension?.filter(
+      (i: IExtension) => i.url === ExtensionUrl.isTestPatientUrl
+    )[0];
+
+    if (!existingTestFlag) {
+      existingTestFlag = {
+        url: ExtensionUrl.isTestPatientUrl,
+      };
+      this.extension.push(existingTestFlag);
+    }
+
+    existingTestFlag.valueQuantity = {
+      value : value
+    };
+  }
 }
+
+
 
 

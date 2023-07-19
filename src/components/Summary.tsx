@@ -9,6 +9,7 @@ import {
   Divider,
   FormControl,
   FormControlLabel,
+  FormGroup,
   IconButton,
   InputAdornment,
   InputLabel,
@@ -112,7 +113,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     }).toString();
     getFhirData(client, `/Practitioner?${params}`).then((bundle: Bundle) => {
       console.log("Loaded practitioners", bundle);
-       // @ts-ignore
+      // @ts-ignore
       const patient = this.context.patient;
       if (this.props.editable) {
         if (
@@ -212,29 +213,64 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
       <React.Fragment>
         <Typography variant={"h6"}>Recipient info</Typography>
         {patient && (
-          <TableContainer>
-            <Table sx={{ minWidth: 50 }} size={"small"}>
-              <TableBody>
-                {rows.map((row, index) => (
-                  <TableRow
-                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                    key={`patient_info_row_${index}`}
-                  >
-                    <TableCell component="th" scope="row">
-                      {row.label}
-                    </TableCell>
-                    <TableCell align="left">
-                      <Typography variant="body1" component={"div"}>
-                        {row.value}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <>
+            <TableContainer>
+              <Table sx={{ minWidth: 50 }} size={"small"}>
+                <TableBody>
+                  {rows.map((row, index) => (
+                    <TableRow
+                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                      key={`patient_info_row_${index}`}
+                    >
+                      <TableCell component="th" scope="row">
+                        {row.label}
+                      </TableCell>
+                      <TableCell align="left">
+                        <Typography variant="body1" component={"div"}>
+                          {row.value}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <Divider/>
+            {this._buildIsTestPatientEntry()}
+          </>
         )}
       </React.Fragment>
+    );
+  }
+
+  private _buildIsTestPatientEntry() {
+    // @ts-ignore
+    const patient = this.context.patient;
+    if (!this.props.editable)
+      // @ts-ignore
+      return patient?.isTest ? (
+        <Alert severity="info">This is a test recipient.</Alert>
+      ) : null;
+
+    return (
+      <FormGroup sx={{padding: (theme) => theme.spacing(2)}}>
+        <FormControlLabel
+          control={
+            <Checkbox
+              color="primary"
+              // @ts-ignore
+              checked={patient?.isTest}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                // @ts-ignore
+                this.context.patient.isTest = event.target.checked ? 1 : 0;
+                if (this.props.onChange) this.props.onChange();
+                this.setState({});
+              }}
+            />
+          }
+          label="This is a test recipient"
+        />
+      </FormGroup>
     );
   }
 
@@ -313,7 +349,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                     : null;
                   patient.birthDate = inputValue;
                   this.setState({
-                    DOBDateValidationError: null
+                    DOBDateValidationError: null,
                   });
                 } else {
                   this.setState({
@@ -523,7 +559,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           <ListItem
             key={`contact_item_${index}`}
             sx={{
-              paddingLeft: 0
+              paddingLeft: 0,
             }}
             secondaryAction={
               this.props.editable ? (
@@ -564,7 +600,11 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           {patient.contact?.length > 0 && <Divider></Divider>}
           <ListItem
             alignItems="flex-start"
-            sx={{ marginTop: patient.contact ? 1 : 0, paddingLeft: 0, paddingRight: 0 }}
+            sx={{
+              marginTop: patient.contact ? 1 : 0,
+              paddingLeft: 0,
+              paddingRight: 0,
+            }}
           >
             <ListItemText
               primary={
@@ -715,7 +755,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                     : null;
                   patient.studyStartDate = inputValue;
                   this.setState({
-                    studyStartDateValidationError: null
+                    studyStartDateValidationError: null,
                   });
                 } else {
                   this.setState({
@@ -780,7 +820,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
 
     // @ts-ignore
     this.context.patient.generalPractitioner = this.toReferences([
-      currentPractitioner
+      currentPractitioner,
     ]);
   }
 
@@ -793,8 +833,9 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     if (this.context.careTeam?.id) return;
 
     const isInCareTeam = // @ts-ignore
-      this.context.careTeam?.participant?.find((p: ICareTeam_Participant) =>
-        p.member?.reference?.split("/")[1] === currentPractitioner?.id
+      this.context.careTeam?.participant?.find(
+        (p: ICareTeam_Participant) =>
+          p.member?.reference?.split("/")[1] === currentPractitioner?.id
       );
     if (!isInCareTeam) {
       // @ts-ignore
@@ -846,8 +887,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
               ? (this.state.selectedPractitioners as IPractitioner[])?.filter(
                   (ip) => {
                     return (
-                      (ip as IPractitioner)?.id !==
-                      (value as IPractitioner)?.id
+                      (ip as IPractitioner)?.id !== (value as IPractitioner)?.id
                     );
                   }
                 )
@@ -857,12 +897,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           this.context.careTeam.participant = [
             ...(currentPartipants ?? []),
             ...(value
-              ? [
-                  CareTeam.toParticipant(
-                    "Practitioner",
-                    value as IPractitioner
-                  ),
-                ]
+              ? [CareTeam.toParticipant("Practitioner", value as IPractitioner)]
               : []),
           ];
           this.setState({
@@ -951,9 +986,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             if (this.props.onChange) this.props.onChange();
             this.setState({
               selectedPractitioners:
-                !value || !value.length
-                  ? defaultSelection
-                  : value,
+                !value || !value.length ? defaultSelection : value,
               selectAllPractitioners: false,
             });
             if (!value || !value.length) {
