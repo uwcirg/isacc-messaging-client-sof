@@ -92,7 +92,10 @@ export default class PlanDefinition implements IPlanDefinition {
                     }
                     if (dobNumbers.length >= 2) {
                         const dobMonth =  dobNumbers[1];
-                        // in a Date object, month is 0-index based, 0 = Jan, 1 = Feb
+                        // to make a new Date object, month is 0-index based, Jan = 0, Feb = 1
+                        // ergo, for example if dob month is 2 or 02, which is Febrero, then we need to decrease it by 1,
+                        // same is true if dob month is 1, then we need to decrease it to 0
+                        
                         month = dobMonth > 0 ? dobMonth-1 : dobMonth;
                     }
                     if (dobNumbers.length >= 3) {
