@@ -393,7 +393,3 @@ export default class Patient implements IPatient {
     existingTestFlag.valueString = value;
   }
 }
-
-
-
-
