@@ -415,6 +415,7 @@ export default class MessagingView extends React.Component<
         padding: {
           sm: (theme: any) => theme.spacing(1, 2.5)
         },
+        color: grey[500]
       },
     };
     return (
@@ -916,8 +917,8 @@ export default class MessagingView extends React.Component<
           : "none",
     });
     const legendItem = (key: string) => (
-      <Stack spacing={1} direction={"row"} alignItems={"center"}>
-        <Box sx={legendIconStyle(key)} key={`legend_${key}`}></Box>
+      <Stack spacing={1} direction={"row"} alignItems={"center"} key={`legend_${key}`}>
+        <Box sx={legendIconStyle(key)}></Box>
         <Typography variant="body2">{labels[key]}</Typography>
       </Stack>
     );

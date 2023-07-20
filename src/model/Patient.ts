@@ -251,7 +251,6 @@ export default class Patient implements IPatient {
         coding: [RelationshipCategory.emergencyContact],
       },
     ];
-    console.log("contact to add ", contactToAdd);
     this.contact.push(contactToAdd);
   }
 

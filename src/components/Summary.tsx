@@ -1,6 +1,7 @@
 import {
   Alert,
   Avatar,
+  Box,
   Button,
   Autocomplete,
   Checkbox,
@@ -547,7 +548,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     const emergencyContacts = patient.getEmergencyContacts();
     const Contacts = emergencyContacts?.map((o: any, index: number) => {
       const name = o.name?.text ? (
-        <Typography variant="subtitle2" component={"div"}>
+        <Typography variant="subtitle2" component={"div"} key={`${index}_contact`}>
           {o.name.text}
         </Typography>
       ) : (
@@ -606,95 +607,91 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
               paddingRight: 0,
             }}
           >
-            <ListItemText
-              primary={
-                <TextField
-                  value={this.state.contactToAdd?.name}
-                  label={"Name"}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  margin="dense"
+            <Stack spacing={2} direction={"column"} sx={{ width: "100%" }}>
+              <TextField
+                value={this.state.contactToAdd?.name}
+                label={"Name"}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                margin="dense"
+                size="small"
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                  if (this.props.onChange) this.props.onChange();
+                  this.setState({
+                    contactToAdd: {
+                      ...this.state.contactToAdd,
+                      name: event.target.value,
+                    },
+                  });
+                }}
+                fullWidth
+              ></TextField>
+              <TextField
+                value={this.state.contactToAdd?.phoneNumber}
+                label={"Phone number"}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={{
+                  marginTop: 2,
+                }}
+                margin="dense"
+                size="small"
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                  if (this.props.onChange) this.props.onChange();
+                  this.setState({
+                    contactToAdd: {
+                      ...this.state.contactToAdd,
+                      phoneNumber: event.target.value,
+                    },
+                  });
+                }}
+                fullWidth
+              ></TextField>
+              <TextField
+                value={this.state.contactToAdd?.email}
+                label={"Email"}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={{
+                  marginTop: 2,
+                }}
+                size="small"
+                margin="dense"
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                  if (this.props.onChange) this.props.onChange();
+                  this.setState({
+                    contactToAdd: {
+                      ...this.state.contactToAdd,
+                      email: event.target.value,
+                    },
+                  });
+                }}
+                fullWidth
+              ></TextField>
+              <Box>
+                <Button
+                  startIcon={<AddIcon></AddIcon>}
                   size="small"
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    if (this.props.onChange) this.props.onChange();
+                  variant="outlined"
+                  sx={{ textAlign: "left"}}
+                  onClick={() => {
+                    patient.addEmergencyContact(
+                      this.state.contactToAdd.name,
+                      this.state.contactToAdd.phoneNumber,
+                      this.state.contactToAdd.email
+                    );
                     this.setState({
-                      contactToAdd: {
-                        ...this.state.contactToAdd,
-                        name: event.target.value,
-                      },
+                      contactToAdd: { name: "", phoneNumber: "", email: "" },
                     });
                   }}
-                  fullWidth
-                ></TextField>
-              }
-              secondary={
-                <>
-                  <TextField
-                    value={this.state.contactToAdd?.phoneNumber}
-                    label={"Phone number"}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    sx={{
-                      marginTop: 2,
-                    }}
-                    margin="dense"
-                    size="small"
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                      if (this.props.onChange) this.props.onChange();
-                      this.setState({
-                        contactToAdd: {
-                          ...this.state.contactToAdd,
-                          phoneNumber: event.target.value,
-                        },
-                      });
-                    }}
-                    fullWidth
-                  ></TextField>
-                  <TextField
-                    value={this.state.contactToAdd?.email}
-                    label={"Email"}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    sx={{
-                      marginTop: 2,
-                    }}
-                    size="small"
-                    margin="dense"
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                      if (this.props.onChange) this.props.onChange();
-                      this.setState({
-                        contactToAdd: {
-                          ...this.state.contactToAdd,
-                          email: event.target.value,
-                        },
-                      });
-                    }}
-                    fullWidth
-                  ></TextField>
-                  <Button
-                    startIcon={<AddIcon></AddIcon>}
-                    size="small"
-                    variant="outlined"
-                    sx={{ textAlign: "left", marginTop: 1 }}
-                    onClick={() => {
-                      patient.addEmergencyContact(
-                        this.state.contactToAdd.name,
-                        this.state.contactToAdd.phoneNumber,
-                        this.state.contactToAdd.email
-                      );
-                      this.setState({
-                        contactToAdd: { name: "", phoneNumber: "", email: "" },
-                      });
-                    }}
-                  >
-                    Add
-                  </Button>
-                </>
-              }
-            ></ListItemText>
+                >
+                  Add
+                </Button>
+              </Box>
+            </Stack>
           </ListItem>
         </List>
       </>

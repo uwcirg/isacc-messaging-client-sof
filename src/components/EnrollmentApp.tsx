@@ -112,7 +112,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
         });
     }
 
-    componentWillMount() {
+    componentDidMount() {
         if (!this.state || !this.context) return;
 
         //@ts-ignore
