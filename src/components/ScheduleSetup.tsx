@@ -13,7 +13,6 @@ import {
     Snackbar,
     Stack,
     TextField,
-    TextFieldProps,
     Tooltip,
     Typography
 } from "@mui/material";
@@ -692,7 +691,6 @@ const MessageScheduleList = (props: {
                                     minWidth: "264px",
                                     flexGrow: 1
                                 }}
-                                renderInput={(params: TextFieldProps) => <TextField {...params} />}
                             />
                         </LocalizationProvider>
                     </Grid>
@@ -755,7 +753,7 @@ const MessageScheduleList = (props: {
           </Stack>
         </Stack>
         <Alert severity={"info"}>
-          {"Use {name} to substitute the client's first name"}
+          {"Use {name} to substitute the recipient's first name"}
         </Alert>
 
         <List>
@@ -768,12 +766,16 @@ const MessageScheduleList = (props: {
 
         <Stack
           direction={"row"}
-          justifyContent={"space-between"}
+          justifyContent={"flex-start"}
+          alignItems={"flex-start"}
           sx={{ padding: (theme) => theme.spacing(2) }}
         >
           <Button
             variant="outlined"
             size="large"
+            sx={{
+              minWidth: (theme) => theme.spacing(33)
+            }}
             onClick={() => {
               let newMessage = CommunicationRequest.createNewScheduledMessage(
                 "",
@@ -785,7 +787,7 @@ const MessageScheduleList = (props: {
               props.onMessagePlanChanged(props.messagePlan);
             }}
           >
-            Add message
+            Add new message
           </Button>
         </Stack>
       </>
