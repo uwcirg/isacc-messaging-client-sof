@@ -250,7 +250,9 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
     if (!this.props.editable)
       // @ts-ignore
       return patient?.isTest ? (
-        <Alert severity="info">This is a test recipient.</Alert>
+        <Alert severity="info" sx={{ margin: (theme) => theme.spacing(2, 0) }}>
+          This is a test recipient.
+        </Alert>
       ) : null;
 
     return (
@@ -260,10 +262,10 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             <Checkbox
               color="primary"
               // @ts-ignore
-              checked={patient?.isTest}
+              checked={(patient?.isTest === "true")}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                 // @ts-ignore
-                this.context.patient.isTest = event.target.checked ? 1 : 0;
+                this.context.patient.isTest = event.target.checked ? "true": "";
                 if (this.props.onChange) this.props.onChange();
                 this.setState({});
               }}

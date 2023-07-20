@@ -367,14 +367,14 @@ export default class Patient implements IPatient {
     existingPronouns.valueString = value;
   }
 
-  get isTest(): number {
+  get isTest(): string {
     let o = this.extension?.filter(
       (i: IExtension) => i.url === ExtensionUrl.isTestPatientUrl
     )[0];
-    return o ? o.valueQuantity?.value: 0;
+    return o ? o.valueString: null;
   }
 
-  set isTest (value: number) {
+  set isTest (value: string) {
     if (!this.extension) {
       this.extension = [];
     }
@@ -390,9 +390,7 @@ export default class Patient implements IPatient {
       this.extension.push(existingTestFlag);
     }
 
-    existingTestFlag.valueQuantity = {
-      value : value
-    };
+    existingTestFlag.valueString = value;
   }
 }
 
