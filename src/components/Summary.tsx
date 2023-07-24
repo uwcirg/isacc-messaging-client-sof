@@ -265,7 +265,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
               checked={(patient?.isTest === "true")}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                 // @ts-ignore
-                this.context.patient.isTest = event.target.checked ? "true": "";
+                this.context.patient.isTest = event.target.checked ? "true": "false";
                 if (this.props.onChange) this.props.onChange();
                 this.setState({});
               }}

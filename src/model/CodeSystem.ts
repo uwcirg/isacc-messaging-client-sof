@@ -108,10 +108,10 @@ export const ExtensionUrl = {
     messageThemeUrl: "isacc.app/message-theme",
     studyStartDateUrl: "isacc.app/study-start-date",
     studyStatusUrl: "isacc.app/study-status",
-    pronounsUrl: "http://hl7.org/fhir/StructureDefinition/individual-genderIdentity",
-    isTestPatientUrl: "http://femr.app/is-test-patient"
+    pronounsUrl: "http://hl7.org/fhir/StructureDefinition/individual-genderIdentity"
 }
 
 export const SystemURL = {
-  userIdUrl : "http://isacc.app/user-id"
+  userIdUrl : "http://isacc.app/user-id",
+  isTestPatientUrl: "http://localhost/test-patient"
 }

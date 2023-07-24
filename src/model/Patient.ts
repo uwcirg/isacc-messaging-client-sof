@@ -368,28 +368,26 @@ export default class Patient implements IPatient {
   }
 
   get isTest(): string {
-    let o = this.extension?.filter(
-      (i: IExtension) => i.url === ExtensionUrl.isTestPatientUrl
+    let o = this.identifier?.filter(
+      (i: IIdentifier) => i.system === SystemURL.isTestPatientUrl
     )[0];
-    return o ? o.valueString: null;
+    return o ? o.value : null;
   }
 
   set isTest (value: string) {
-    if (!this.extension) {
-      this.extension = [];
+    if (!this.identifier) {
+      this.identifier = [];
     }
 
-    let existingTestFlag = this.extension?.filter(
-      (i: IExtension) => i.url === ExtensionUrl.isTestPatientUrl
+    let existingIdentifier = this.identifier?.filter(
+      (i: IIdentifier) => i.system === SystemURL.isTestPatientUrl
     )[0];
 
-    if (!existingTestFlag) {
-      existingTestFlag = {
-        url: ExtensionUrl.isTestPatientUrl,
-      };
-      this.extension.push(existingTestFlag);
+    if (!existingIdentifier) {
+      existingIdentifier = { system: SystemURL.isTestPatientUrl };
+      this.identifier.push(existingIdentifier);
     }
 
-    existingTestFlag.valueString = value;
+    existingIdentifier.value = value;
   }
 }
