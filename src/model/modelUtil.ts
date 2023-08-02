@@ -31,7 +31,7 @@ export function unmarkTestPatient(
     url: `Patient/${patientId}/$meta-delete`,
     method: "POST",
     headers: {
-      "content-type": "application/json",
+      "content-type": "application/xml",
     },
     body: `<Parameters xmlns="http://hl7.org/fhir"><parameter><name value="meta"/><valueMeta><security><system value="${SystemURL.testPatientUrl}"/><code value="${Patient.TEST_PATIENT_SECURITY_CODE}"/></security></valueMeta></parameter></Parameters>`,
 });
