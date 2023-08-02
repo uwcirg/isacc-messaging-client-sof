@@ -33,16 +33,6 @@ export function unmarkTestPatient(
     headers: {
       "content-type": "application/xml",
     },
-    body: `<Parameters xmlns="http://hl7.org/fhir">
-          <parameter>
-            <name value="meta"/>
-            <valueMeta>
-              <security>
-                <system value="${SystemURL.testPatientUrl}"/>
-                <code value="${Patient.TEST_PATIENT_SECURITY_CODE}"/>
-              </security>
-            </valueMeta>
-          </parameter>
-        </Parameters>`,
+    body: `<Parameters xmlns="http://hl7.org/fhir"><parameter><name value="meta"/><valueMeta><security><system value="${SystemURL.testPatientUrl}"/><code value="${Patient.TEST_PATIENT_SECURITY_CODE}"/></security></valueMeta></parameter></Parameters>`,
   });
 }
