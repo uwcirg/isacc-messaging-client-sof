@@ -31,8 +31,24 @@ export function unmarkTestPatient(
     url: `Patient/${patientId}/$meta-delete`,
     method: "POST",
     headers: {
-      "content-type": "application/xml",
+      "content-type": "application/json",
     },
-    body: `<Parameters xmlns="http://hl7.org/fhir"><parameter><name value="meta"/><valueMeta><security><system value="${SystemURL.testPatientUrl}"/><code value="${Patient.TEST_PATIENT_SECURITY_CODE}"/></security></valueMeta></parameter></Parameters>`,
-  });
+  //  body: `<Parameters xmlns="http://hl7.org/fhir"><parameter><name value="meta"/><valueMeta><security><system value="${SystemURL.testPatientUrl}"/><code value="${Patient.TEST_PATIENT_SECURITY_CODE}"/></security></valueMeta></parameter></Parameters>`,
+    body: `{
+        "resourceType": "Parameters",
+        "parameter": [
+          {
+            "name": "meta",
+            "valueMeta": {
+              "security": [
+                {
+                  "system": "${SystemURL.testPatientUrl}",
+                  "code": "${Patient.TEST_PATIENT_SECURITY_CODE}"
+                }
+              ]
+            }
+          }
+        ]
+      }`
+});
 }
