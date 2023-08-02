@@ -41,8 +41,7 @@ import PatientNotes from "./PatientNotes";
 import CarePlan from "../model/CarePlan";
 import {Bundle} from "../model/Bundle";
 import { getFhirData } from "../util/isacc_util";
-
-
+import { unmarkTestPatient} from "../model/modelUtil";
 interface ScheduleSetupProps {
 }
 
@@ -455,6 +454,8 @@ export default class ScheduleSetup extends React.Component<
     // @ts-ignore
     let patient: Patient = this.context.patient;
 
+    console.log("patient to be updated ", patient);
+
     if (!client) {
       console.log("No client");
       return;
@@ -476,9 +477,17 @@ export default class ScheduleSetup extends React.Component<
     }
 
     this.checkPhoneNumber().then(
-      (value: any) => {
-        return client.update(patient).then((value: any) => {
+      () => {
+        return client.update(patient).then(() => {
           console.log(`Patient ${patient.id} updated`);
+          // unmark patient as test patient if needed
+          if (!patient.isTest) {
+            unmarkTestPatient(client, patient.id).then(() => {
+              console.log("Successfully unmarked patient as test patient");
+            }).catch((e) => {
+              console.log("Unable to unmark patient as test patient ", e);
+            })
+          }
           this.saveCareTeam().then((result: IResource) => {
             console.log(`CareTeam ${result.id} resources updated.`);
             const currentCarePlan = this.state.carePlan;

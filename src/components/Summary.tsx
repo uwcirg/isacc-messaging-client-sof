@@ -262,10 +262,11 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
             <Checkbox
               color="primary"
               // @ts-ignore
-              checked={(patient?.isTest === "true")}
+              checked={(patient?.isTest)}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                console.log("value ? ", event.target.checked)
                 // @ts-ignore
-                this.context.patient.isTest = event.target.checked ? "true": "false";
+                this.context.patient.isTest = event.target.checked;
                 if (this.props.onChange) this.props.onChange();
                 this.setState({});
               }}
