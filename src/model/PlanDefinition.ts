@@ -132,21 +132,27 @@ export class ActivityDefinition implements IActivityDefinition {
     }
 
     occurrenceTimeFromNow(): Date {
-        if (!this.timingTiming?.repeat) {
-            throw Error("No timing or repeat specified in ActivityDefinition")
+        if (!(this.timingTiming.event || this.timingTiming?.repeat)) {
+            throw Error("No event, timing or repeat specified in ActivityDefinition")
         }
-        if (this.timingTiming.repeat.periodUnit && this.timingTiming.repeat.periodUnit !== 'wk' && this.timingTiming.repeat.periodUnit !== 'd') {
-            throw Error("Unhandled time unit in timingTiming");
+        if (
+          this.timingTiming.repeat?.periodUnit &&
+          this.timingTiming.repeat?.periodUnit !== "wk" &&
+          this.timingTiming.repeat?.periodUnit !== "d"
+        ) {
+          throw Error("Unhandled time unit in timingTiming");
         }
 
         let date = new Date();
-        if (this.timingTiming.repeat.periodUnit === 'wk') {
+        if (this.timingTiming.event && Array.isArray(this.timingTiming.event)) {
+            date = new Date(this.timingTiming.event[0]);
+        } else if (this.timingTiming.repeat.periodUnit === 'wk') {
             date.setDate(date.getDate() + 7 * this.timingTiming.repeat.period);
         } else if (this.timingTiming.repeat.periodUnit === 'd') {
             date.setDate(date.getDate() + this.timingTiming.repeat.period);
         }
 
-        if (!this.timingTiming.repeat.timeOfDay) {
+        if (!this.timingTiming.repeat?.timeOfDay) {
             return date;
         }
 

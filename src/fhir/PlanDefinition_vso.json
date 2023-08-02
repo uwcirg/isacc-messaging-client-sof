@@ -376,11 +376,9 @@
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
-        "schedule": {
-          "event": [
-            "2023-11-11T16:42:00.000Z"
-          ]
-        }
+        "event": [
+          "2023-11-11T16:42:00.000Z"
+        ]
       },
       "dynamicValue": [
         {
@@ -399,11 +397,9 @@
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
-        "schedule": {
-          "event": [
-            "2023-11-22T20:34:00.000Z"
-          ]
-        }
+        "event": [
+          "2023-11-22T20:34:00.000Z"
+        ]
       },
       "dynamicValue": [
         {

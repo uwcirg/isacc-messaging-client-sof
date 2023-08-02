@@ -257,11 +257,9 @@
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
-        "schedule": {
-          "event": [
-            "2023-09-25T15:33:00.000Z"
-          ]
-        }
+        "event": [
+          "2023-09-25T15:33:00.000Z"
+        ]
       },
       "dynamicValue": [
         {
