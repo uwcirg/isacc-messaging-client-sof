@@ -481,7 +481,8 @@ export default class ScheduleSetup extends React.Component<
           // unmark patient as test patient if needed
           if (!patient.isTest) {
             unmarkTestPatient(client, patient.id)
-              .then(() => {
+              .then((result: any) => {
+                console.log("Delete security meta result ", result);
                 console.log("Successfully unmarked patient as test patient");
               })
               .catch((e) => {
