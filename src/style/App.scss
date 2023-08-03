@@ -29,6 +29,9 @@ body {
   .MuiStack-root {
     page-break-inside: avoid;
   }
+  .MuiChip-root {
+    border : 0 !important;
+  }
   .content {
     page-break-inside: avoid;
   }

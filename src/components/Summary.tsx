@@ -236,7 +236,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
                 </TableBody>
               </Table>
             </TableContainer>
-            <Divider/>
+            {this.props.editable && <Divider/>}
             {this._buildIsTestPatientEntry()}
           </>
         )}
