@@ -6,7 +6,7 @@ import Patient from "./Patient";
 import {MessageDraft} from "../components/ScheduleSetup";
 
 
-export function makeCommunicationRequests(patient: Patient, planDefinition: PlanDefinition, messages: MessageDraft[]): CommunicationRequest[] {
+export function makeCommunicationRequests(patient: Patient,  messages: MessageDraft[]): CommunicationRequest[] {
     return messages.map((message) => {
         let patientName = patient.name[0].given[0];
         let str = message.text.replace("{name}", patientName);
