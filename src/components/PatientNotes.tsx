@@ -70,8 +70,8 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
                 </Box>
               ) : (
                 <Box sx={{padding: 1}}>
-                  <Typography variant={"body1"} component="div" sx={{whiteSpace: "pre-wrap"}}>
-                  {carePlan.description}
+                  <Typography variant={"body2"} component="div" sx={{whiteSpace: "pre-wrap"}}>
+                    {carePlan.description ?? "None on file"}
                   </Typography>
                 </Box>
               )}
