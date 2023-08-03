@@ -36,7 +36,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import * as moment from "moment";
 import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
 import { DateTimeValidationError} from '@mui/x-date-pickers/models';
-import {grey, lightBlue, pink, yellow} from "@mui/material/colors";
+import {grey, lightBlue, teal} from "@mui/material/colors";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import {Error, Refresh, Warning} from "@mui/icons-material";
 import {CommunicationRequest} from "../model/CommunicationRequest";
@@ -899,7 +899,8 @@ export default class MessagingView extends React.Component<
     const group2 = keys.filter((item, index) => index > halfwayIndex);
     const labels: any = {
       incoming: "reply from recipient",
-      info: "non-SMS outside communication",
+      nonSMSReceived: "non-SMS received outside communication",
+      nonSMSSent: "non-SMS sent outside communication",
       pending: "pending message",
       system: "sent by system",
       smsByAuthor: "sent by user",
@@ -1117,7 +1118,8 @@ export default class MessagingView extends React.Component<
       incoming,
       autoMessage,
       delivered,
-      isNonSmsMessage,
+      isNonSmsMessage && incoming,
+      isNonSmsMessage && !incoming,
       isComment
     );
     let priority = message.priority;
@@ -1324,19 +1326,21 @@ export default class MessagingView extends React.Component<
   }
 
   private static colorsByType: any = {
-    incoming: grey[300],
-    system: lightBlue[100],
-    smsByAuthor: lightBlue[700],
+    incoming: teal[600],
+    system: "#9fceee",
+    smsByAuthor: lightBlue[800],
     pending: grey[700],
-    info: yellow[300],
-    comment: pink[100],
+    nonSMSReceived: teal[50],
+    nonSMSSent: "#c9e4f7",
+    comment: grey[300],
   };
 
   private static getBubbleStyle(
     incoming: boolean,
     auto: boolean,
     delivered: boolean,
-    info: boolean,
+    nonSMSReceived: boolean,
+    nonSMSSent: boolean,
     comment: boolean
   ): object {
     if (comment)
@@ -1347,9 +1351,17 @@ export default class MessagingView extends React.Component<
         boxShadow: `1px 1px 2px ${grey[700]}`,
         borderBottomRightRadius: "72px 4px",
       };
-    if (info)
+    if (nonSMSReceived)
       return {
-        backgroundColor: MessagingView.colorsByType["info"],
+        backgroundColor: MessagingView.colorsByType["nonSMSReceived"],
+        borderRadius: 0,
+        color: "#000",
+        boxShadow: `1px 1px 2px ${grey[700]}`,
+        borderBottomRightRadius: "72px 4px",
+      };
+    if (nonSMSSent)
+      return {
+        backgroundColor: MessagingView.colorsByType["nonSMSSent"],
         borderRadius: 0,
         color: "#000",
         boxShadow: `1px 1px 2px ${grey[700]}`,
@@ -1365,7 +1377,7 @@ export default class MessagingView extends React.Component<
     if (incoming)
       return {
         backgroundColor: MessagingView.colorsByType["incoming"],
-        color: "#000",
+        color: "#fff",
       };
     if (auto)
       return {

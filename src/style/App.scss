@@ -6,3 +6,38 @@ body {
 #root {
   //padding: 1em;
 }
+@media print {
+  .print-hidden {
+    display: none;
+    height: 0;
+    overflow: hidden;
+    border: 0;
+    box-shadow: none;
+  }
+  header {
+    background: #FFF !important;
+    color: #444 !important;
+    box-shadow: none !important;
+  }
+  button {
+    display: none !important;
+  }
+  .MuiPaper-root {
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+  .MuiStack-root {
+    page-break-inside: avoid;
+  }
+  .content {
+    page-break-inside: avoid;
+  }
+  table {
+    width: auto !important;
+    tr {
+      td {
+        padding: 4px 8px;
+      }
+    }
+  }
+}
