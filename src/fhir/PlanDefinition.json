@@ -29,6 +29,9 @@
       "definitionCanonical": "#Week1Day4Msg"
     },
     {
+      "definitionCanonical": "#AutumnMsg"
+    },
+    {
       "definitionCanonical": "#BirthdayMsg",
       "trigger": [
         {
@@ -243,6 +246,27 @@
           "expression": {
             "language": "text/cql",
             "expression": "{name}, Hope everything is going well.  {userName}"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "AutumnMsg",
+      "name": "Autumn Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "event": [
+          "2023-09-25T15:33:00.000Z"
+        ]
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "{name}, welcome to a season of change! Though change can be scary, it can be very beautiful. What positive changes have you seen this season? - Your care team"
           }
         }
       ]
