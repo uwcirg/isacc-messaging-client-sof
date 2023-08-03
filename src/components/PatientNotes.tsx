@@ -59,7 +59,7 @@ export default class PatientNotes extends React.Component<PatientNotesProps, Pat
                     InputProps={{ sx: { typography: "body1" } }}
                     multiline
                     fullWidth
-                    minRows={4}
+                    minRows={6}
                     value={this.state.updatedPatientNote ?? ""}
                     placeholder={"Enter recipient note"}
                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
