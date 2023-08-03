@@ -558,9 +558,8 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
       );
       const detail = o.telecom?.map((t: IContactPoint) => t.value).join(" / ");
       return (
-        <>
+        <Box key={`contact_item_${index}`}>
           <ListItem
-            key={`contact_item_${index}`}
             sx={{
               paddingLeft: 0,
             }}
@@ -589,7 +588,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
           {patient.contact && index !== patient.contact.length - 1 && (
             <Divider key={`contact_list_divider_${index}`} />
           )}
-        </>
+        </Box>
       );
     });
     if (!this.props.editable) {
@@ -974,6 +973,7 @@ export default class Summary extends React.Component<SummaryProps, SummaryState>
               <Chip
                 label={this.getPractitionerLabel(option as IPractitioner)}
                 {...getTagProps({ index })}
+                key={`tag_${index}`}
                 disabled={
                   (option as IPractitioner)?.id ===
                   (generalPractitioner as IPractitioner)?.id

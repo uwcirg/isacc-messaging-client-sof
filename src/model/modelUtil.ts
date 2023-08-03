@@ -10,7 +10,6 @@ import Client from "fhirclient/lib/Client";
 
 export function makeCommunicationRequests(
   patient: Patient,
-  planDefinition: PlanDefinition,
   messages: MessageDraft[]
 ): CommunicationRequest[] {
   return messages.map((message) => {
