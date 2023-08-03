@@ -10,6 +10,7 @@ import {
   IExtension,
   IHumanName,
   IIdentifier,
+  IMeta,
   INarrative,
   IPatient,
   IPatient_Communication,
@@ -49,6 +50,7 @@ export default class Patient implements IPatient {
   link?: IPatient_Link[];
   managingOrganization?: IReference;
   maritalStatus?: ICodeableConcept;
+  meta?: IMeta;
   modifierExtension?: IExtension[];
   multipleBirthBoolean?: boolean;
   multipleBirthInteger?: number;
@@ -62,6 +64,8 @@ export default class Patient implements IPatient {
     if (!raw) return null;
     return Object.assign(new Patient(), raw);
   }
+  
+  static TEST_PATIENT_SECURITY_CODE = "HTEST";
 
   get smsContactPoint(): string {
     let p = this.telecom?.filter(
@@ -274,7 +278,7 @@ export default class Patient implements IPatient {
       }
     }
   }
-  
+
   getEmergencyContacts(): IPatient_Contact[] {
     return this.contact?.filter((contact: IPatient_Contact) =>
       contact.relationship?.find((relationship: ICodeableConcept) =>
@@ -366,6 +370,36 @@ export default class Patient implements IPatient {
 
     existingPronouns.valueString = value;
   }
+
+  get isTest(): boolean {
+    let o = this.meta?.security?.filter(
+      (i: ICoding) =>
+        i.system === SystemURL.testPatientUrl &&
+        String(i.code).toUpperCase() === Patient.TEST_PATIENT_SECURITY_CODE
+    )[0];
+    return !!o;
+  }
+
+  set isTest(value: boolean) {
+    if (!this.meta) this.meta = {} as IMeta;
+    if (!value) {
+      this.meta.security = null;
+      return;
+    }
+    if (!this.meta.security) {
+      this.meta.security = [];
+    }
+    let existingMetaSecurity = this.meta.security?.filter(
+      (i: ICoding) =>
+        i?.system === SystemURL.testPatientUrl && i?.code === Patient.TEST_PATIENT_SECURITY_CODE
+    )[0];
+
+    if (!existingMetaSecurity) {
+      existingMetaSecurity = {
+        system: SystemURL.testPatientUrl,
+        code: Patient.TEST_PATIENT_SECURITY_CODE,
+      };
+      this.meta.security.push(existingMetaSecurity);
+    }
+  }
 }
-
-

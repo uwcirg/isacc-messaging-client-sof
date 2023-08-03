@@ -41,8 +41,7 @@ import PatientNotes from "./PatientNotes";
 import CarePlan from "../model/CarePlan";
 import {Bundle} from "../model/Bundle";
 import { getFhirData } from "../util/isacc_util";
-
-
+import { unmarkTestPatient} from "../model/modelUtil";
 interface ScheduleSetupProps {
 }
 
@@ -464,7 +463,7 @@ export default class ScheduleSetup extends React.Component<
       console.log("no patient");
       return;
     }
-    this.setState({ savingInProgress: true });
+    this.setState({ savingInProgress: true, showUnsaveChangesTooltip: false });
 
     if (
       this.state.carePlan.communicationRequests.find(
@@ -476,28 +475,51 @@ export default class ScheduleSetup extends React.Component<
     }
 
     this.checkPhoneNumber().then(
-      (value: any) => {
-        return client.update(patient).then((value: any) => {
-          console.log(`Patient ${patient.id} updated`);
-          this.saveCareTeam().then((result: IResource) => {
-            console.log(`CareTeam ${result.id} resources updated.`);
-            const currentCarePlan = this.state.carePlan;
-            if (currentCarePlan) {
-              currentCarePlan.careTeam = [{
-                reference: `CareTeam/${result.id}`
-              }];
-            }
-            this.setState({
-              carePlan: currentCarePlan
+      () => {
+        // @ts-ignore
+        let requests = [client.update(patient)];
+        if (!patient.isTest) {
+          requests.push(unmarkTestPatient(client, patient.id))
+        }
+        return Promise.allSettled(requests).then((results) => {
+          console.log("Saving patient result: ", results);
+          const errorEntry = (
+            results.find(
+              (res) => res.status === "rejected" || !res.value?.resourceType
+            ) as PromiseRejectedResult | undefined
+          )?.reason;
+          if (errorEntry) {
+            console.log("Error updating patient data ", errorEntry);
+            this.showSnackbar(
+              "warning",
+              `Issue encountered updating patient data. See console for detail.`
+            );
+          }
+          this.saveCareTeam()
+            .then((result: IResource) => {
+              console.log(`CareTeam ${result.id} resources updated.`);
+              const currentCarePlan = this.state.carePlan;
+              if (currentCarePlan) {
+                currentCarePlan.careTeam = [
+                  {
+                    reference: `CareTeam/${result.id}`,
+                  },
+                ];
+              }
+              this.setState({
+                carePlan: currentCarePlan,
+              });
+              // update PRO scores
+              this.savePROs();
+              this.saveCommunicationRequests();
+            })
+            .catch((e) => {
+              this.showSnackbar(
+                "error",
+                "Error saving care team.  See console for detail."
+              );
+              console.log("Error saving care team ", e);
             });
-            // update PRO scores
-            this.savePROs();
-            this.saveCommunicationRequests();
-          }).catch((e) => {
-            this.showSnackbar("error", "Error saving care team.  See console for detail.");
-            console.log("Error saving care team ", e);
-          })
-         
         });
       },
       (reason: any) => {

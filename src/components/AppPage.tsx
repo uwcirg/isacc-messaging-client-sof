@@ -17,7 +17,7 @@ type PageTitleProps = {
 }
 
 export const PageTitle: FunctionComponent<React.PropsWithChildren & PageTitleProps> = (props: React.PropsWithChildren<PageTitleProps>) => {
-    return <Box sx={ styles.content }>
+    return <Box sx={ styles.content } className="main">
         <Typography component={"h1"} variant={"h5"} align={"center"} fontWeight={"bold"} className="print-hidden">
             {props.title}
         </Typography>

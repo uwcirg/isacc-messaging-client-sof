@@ -112,5 +112,6 @@ export const ExtensionUrl = {
 }
 
 export const SystemURL = {
-  userIdUrl : "http://isacc.app/user-id"
+  userIdUrl : "http://isacc.app/user-id",
+  testPatientUrl: "http://terminology.hl7.org/CodeSystem/v3-ActReason"
 }

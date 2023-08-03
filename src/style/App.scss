@@ -14,6 +14,9 @@ body {
     border: 0;
     box-shadow: none;
   }
+  .main {
+    padding: 32px 16px 16px !important;
+  }
   header {
     background: #FFF !important;
     color: #444 !important;
@@ -29,6 +32,12 @@ body {
   }
   .MuiStack-root {
     page-break-inside: avoid;
+  }
+  .MuiChip-root {
+    border : 0 !important;
+  }
+  .MuiChip-label {
+    font-size: 1rem !important;
   }
   .content {
     page-break-inside: avoid;
