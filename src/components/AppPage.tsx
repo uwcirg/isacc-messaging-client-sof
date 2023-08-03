@@ -18,7 +18,7 @@ type PageTitleProps = {
 
 export const PageTitle: FunctionComponent<React.PropsWithChildren & PageTitleProps> = (props: React.PropsWithChildren<PageTitleProps>) => {
     return <Box sx={ styles.content }>
-        <Typography component={"h1"} variant={"h5"} align={"center"} fontWeight={"bold"}>
+        <Typography component={"h1"} variant={"h5"} align={"center"} fontWeight={"bold"} className="print-hidden">
             {props.title}
         </Typography>
         <Divider
@@ -29,7 +29,7 @@ export const PageTitle: FunctionComponent<React.PropsWithChildren & PageTitlePro
                 "marginRight": "80px",
                 "height": 2
             }}
-            variant={"middle"}/>
+            variant={"middle"} className="print-hidden"/>
         {props.children}
     </Box>;
 }

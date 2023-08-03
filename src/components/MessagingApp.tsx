@@ -38,16 +38,21 @@ export const MessagingApp = () => {
             </Item>
           </Stack>
         </GridItem>
-        <GridItem xs={12} sm={12} md={6} lg={6} xl={6}>
+        <GridItem xs={12} sm={12} md={6} lg={6} xl={6} className="print-hidden">
           <Item>
             <MessageView />
           </Item>
         </GridItem>
         <GridItem xs={12} sm={12} md={2.5} lg={2.5} xl={3}>
             <Item>
-              <PatientNotes />
-              <br/>
-              <PatientPROs editable={false}></PatientPROs>
+              <Stack direction={"column"} spacing={2}>
+                <div className="content">
+                  <PatientNotes />
+                </div>
+                <div className="content">
+                  <PatientPROs editable={false}></PatientPROs>
+                </div>
+              </Stack>
             </Item>
         </GridItem>
       </Grid>
