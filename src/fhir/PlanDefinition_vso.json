@@ -376,14 +376,9 @@
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
-        "repeat": {
-          "frequency": 1,
-          "period": 93,
-          "periodUnit": "d",
-          "timeOfDay": [
-            "08:42:00"
-          ]
-        }
+        "event": [
+          "2023-11-11T16:42:00.000Z"
+        ]
       },
       "dynamicValue": [
         {
@@ -402,14 +397,9 @@
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
-        "repeat": {
-          "frequency": 1,
-          "period": 124,
-          "periodUnit": "d",
-          "timeOfDay": [
-            "12:34:00"
-          ]
-        }
+        "event": [
+          "2023-11-22T20:34:00.000Z"
+        ]
       },
       "dynamicValue": [
         {

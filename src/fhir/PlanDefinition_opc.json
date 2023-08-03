@@ -257,14 +257,9 @@
       "status": "active",
       "kind": "CommunicationRequest",
       "timingTiming": {
-        "repeat": {
-          "frequency": 1,
-          "period": 60,
-          "periodUnit": "d",
-          "timeOfDay": [
-            "08:37:00"
-          ]
-        }
+        "event": [
+          "2023-09-25T15:33:00.000Z"
+        ]
       },
       "dynamicValue": [
         {
