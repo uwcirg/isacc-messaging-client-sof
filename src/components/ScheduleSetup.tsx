@@ -463,7 +463,7 @@ export default class ScheduleSetup extends React.Component<
       console.log("no patient");
       return;
     }
-    this.setState({ savingInProgress: true });
+    this.setState({ savingInProgress: true, showUnsaveChangesTooltip: false });
 
     if (
       this.state.carePlan.communicationRequests.find(
@@ -476,18 +476,24 @@ export default class ScheduleSetup extends React.Component<
 
     this.checkPhoneNumber().then(
       () => {
-        return client.update(patient).then(() => {
-          console.log(`Patient ${patient.id} updated`);
-          // unmark patient as test patient if needed
-          if (!patient.isTest) {
-            unmarkTestPatient(client, patient.id)
-              .then((result: any) => {
-                console.log("Delete security meta result ", result);
-                console.log("Successfully unmarked patient as test patient");
-              })
-              .catch((e) => {
-                console.log("Unable to unmark patient as test patient ", e);
-              });
+        // @ts-ignore
+        let requests = [client.update(patient)];
+        if (!patient.isTest) {
+          requests.push(unmarkTestPatient(client, patient.id))
+        }
+        return Promise.allSettled(requests).then((results) => {
+          console.log("Saving patient result: ", results);
+          const errorEntry = (
+            results.find(
+              (res) => res.status === "rejected" || !res.value?.resourceType
+            ) as PromiseRejectedResult | undefined
+          )?.reason;
+          if (errorEntry) {
+            console.log("Error updating patient data ", errorEntry);
+            this.showSnackbar(
+              "warning",
+              `Issue encountered updating patient data. See console for detail.`
+            );
           }
           this.saveCareTeam()
             .then((result: IResource) => {
