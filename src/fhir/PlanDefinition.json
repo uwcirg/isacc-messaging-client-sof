@@ -266,7 +266,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "{name}, welcome to a season of change! Though change can be scary, it can be very beautiful. What positive changes have you seen this season? -OPC care team"
+            "expression": "{name}, welcome to a season of change! Though change can be scary, it can be very beautiful. What positive changes have you seen this season? - Your care team"
           }
         }
       ]
