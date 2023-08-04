@@ -9,13 +9,22 @@ body {
 @media print {
   .print-hidden {
     display: none;
-    height: 0;
+    height: 0 !important;
+    width: 0 !important;
+    visibility: hidden;
     overflow: hidden;
+    flex-basis: 0;
     border: 0;
     box-shadow: none;
   }
   .main {
     padding: 32px 16px 16px !important;
+    .MuiGrid-container {
+      display: block;
+      .MuiGrid-item {
+        max-width: 100%;
+      }
+    }
   }
   header {
     background: #FFF !important;
