@@ -173,7 +173,7 @@ export default class ScheduleSetup extends React.Component<
             ).toLocaleString()}`}
           </Alert>
         ) : null}
-        <Grid container spacing={2}>
+        <Grid container spacing={2} className="main-grid-container">
           <Grid item xs={12} sm={12} md={6} alignSelf={"stretch"}>
             <Item>
               <Summary
