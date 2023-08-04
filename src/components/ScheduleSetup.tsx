@@ -39,6 +39,7 @@ import Dialog from "@mui/material/Dialog";
 import Client from "fhirclient/lib/Client";
 import PatientNotes from "./PatientNotes";
 import CarePlan from "../model/CarePlan";
+import { Observation } from "../model/Observation";
 import {Bundle} from "../model/Bundle";
 import { getFhirData } from "../util/isacc_util";
 import { unmarkTestPatient} from "../model/modelUtil";
