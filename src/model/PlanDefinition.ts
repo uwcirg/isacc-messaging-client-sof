@@ -8,7 +8,7 @@ import {
     ITiming,
     PlanDefinitionStatusKind
 } from "@ahryman40k/ts-fhir-types/lib/R4";
-import defaultSchedule from "../resource/default_message_schedule.json"
+import defaultSchedule from "../fhir/PlanDefinition.json"
 import {ITriggerDefinition} from "@ahryman40k/ts-fhir-types/lib/R4/Resource/RTTI_TriggerDefinition";
 import Patient from "./Patient";
 import {birthdaysBetweenDates} from "../util/isacc_util";
@@ -91,12 +91,16 @@ export default class PlanDefinition implements IPlanDefinition {
                         year = dobNumbers[0];
                     }
                     if (dobNumbers.length >= 2) {
-                        month = dobNumbers[1];
+                        const dobMonth =  dobNumbers[1];
+                        // to make a new Date object, month is 0-index based, Jan = 0, Feb = 1
+                        // ergo, for example if dob month is 2 or 02, which is Febrero, then we need to decrease it by 1,
+                        // same is true if dob month is 1, then we need to decrease it to 0
+                        
+                        month = dobMonth > 0 ? dobMonth-1 : dobMonth;
                     }
                     if (dobNumbers.length >= 3) {
                         day = dobNumbers[2];
                     }
-
                     let birthdays = birthdaysBetweenDates(programStart, programEnd, new Date(year, month, day));
                     birthdays.forEach((d: Date) => messages.push({
                         text: birthdayMessageActivityDefinition.payloadText,
@@ -108,7 +112,7 @@ export default class PlanDefinition implements IPlanDefinition {
 
         //TODO: Add holidays
         messages = messages.sort((a, b) => a.scheduledDateTime < b.scheduledDateTime ? -1 : 1);
-        return makeCommunicationRequests(patient, this, messages);
+        return makeCommunicationRequests(patient, messages);
     }
 }
 
@@ -128,21 +132,27 @@ export class ActivityDefinition implements IActivityDefinition {
     }
 
     occurrenceTimeFromNow(): Date {
-        if (!this.timingTiming?.repeat) {
-            throw Error("No timing or repeat specified in ActivityDefinition")
+        if (!(this.timingTiming.event || this.timingTiming?.repeat)) {
+            throw Error("No event, timing or repeat specified in ActivityDefinition")
         }
-        if (this.timingTiming.repeat.periodUnit && this.timingTiming.repeat.periodUnit !== 'wk' && this.timingTiming.repeat.periodUnit !== 'd') {
-            throw Error("Unhandled time unit in timingTiming");
+        if (
+          this.timingTiming.repeat?.periodUnit &&
+          this.timingTiming.repeat?.periodUnit !== "wk" &&
+          this.timingTiming.repeat?.periodUnit !== "d"
+        ) {
+          throw Error("Unhandled time unit in timingTiming");
         }
 
         let date = new Date();
-        if (this.timingTiming.repeat.periodUnit === 'wk') {
+        if (this.timingTiming.event && Array.isArray(this.timingTiming.event)) {
+            date = new Date(this.timingTiming.event[0]);
+        } else if (this.timingTiming.repeat.periodUnit === 'wk') {
             date.setDate(date.getDate() + 7 * this.timingTiming.repeat.period);
         } else if (this.timingTiming.repeat.periodUnit === 'd') {
             date.setDate(date.getDate() + this.timingTiming.repeat.period);
         }
 
-        if (!this.timingTiming.repeat.timeOfDay) {
+        if (!this.timingTiming.repeat?.timeOfDay) {
             return date;
         }
 
@@ -179,7 +189,25 @@ export class ActivityDefinition implements IActivityDefinition {
     }
 }
 
+export async function getMessageScheduleBySite(
+  siteID: string = null
+): Promise<PlanDefinition> {
+  console.log("Site ID ", siteID);
+  if (!siteID) return getDefaultMessageSchedule();
+  const planDefinition = await import(
+    `../fhir/PlanDefinition_${siteID}.json`
+  ).catch((e) => {
+    console.log(
+      `Error occurred. Unable to load project plan definition for ${siteID} Loading the default instead.`,
+      e
+    );
+    return getDefaultMessageSchedule();
+  });
+  return PlanDefinition.from(planDefinition as IPlanDefinition);
+}
+
 export function getDefaultMessageSchedule(): PlanDefinition {
+    console.log("Loading the default plan definition.");
     let raw = defaultSchedule as IPlanDefinition;
     return PlanDefinition.from(raw);
 }

@@ -16,10 +16,11 @@ export class Coding implements ICoding {
     version?: string;
 
 
-    static make(system: string, code: string) {
+    static make(system: string, code: string, display: string =  null) {
         let coding = new Coding();
         coding.system = system;
         coding.code = code;
+        if (display) coding.display = display;
         return coding;
     }
 
@@ -79,7 +80,7 @@ export const IsaccMessageCategory = {
 };
 
 export const RelationshipCategory = {
-    emergencyContact: Coding.make("http://hl7.org/fhir/ValueSet/patient-contactrelationship", "C")
+    emergencyContact: Coding.make("http://hl7.org/fhir/ValueSet/patient-contactrelationship", "C", "Emergency Contact")
 }
 
 export const Medium = {
@@ -89,12 +90,28 @@ export const Medium = {
   )
 };
 
-export const CSSAnswerCategories = {
-    low: Coding.make("http://loinc.org", "LA9194-7"),
-    medium: Coding.make("http://loinc.org", "LA6751-7"),
-    high: Coding.make("http://loinc.org", "LA9193-9")
+export const PHQ9SeverityCategories : any = {
+  low: Coding.make("http://loinc.org", "LA9194-7", "low"),
+  medium: Coding.make("http://loinc.org", "LA6751-7", "medium"),
+  high: Coding.make("http://loinc.org", "LA9193-9", "high"),
+  unknown: Coding.make("http://loinc.org", "LA4489-6", "unknown"),
+}
+
+export const CSSAnswerCategories : any = {
+  low: Coding.make("http://loinc.org", "LA9194-7", "low"),
+  medium: Coding.make("http://loinc.org", "LA6751-7", "medium"),
+  high: Coding.make("http://loinc.org", "LA9193-9", "high"),
+  unknown: Coding.make("http://loinc.org", "LA4489-6", "unknown"),
 }
 
 export const ExtensionUrl = {
-    messageThemeUrl: "isacc.app/message-theme"
+    messageThemeUrl: "isacc.app/message-theme",
+    studyStartDateUrl: "isacc.app/study-start-date",
+    studyStatusUrl: "isacc.app/study-status",
+    pronounsUrl: "http://hl7.org/fhir/StructureDefinition/individual-genderIdentity"
+}
+
+export const SystemURL = {
+  userIdUrl : "http://isacc.app/user-id",
+  testPatientUrl: "http://terminology.hl7.org/CodeSystem/v3-ActReason"
 }

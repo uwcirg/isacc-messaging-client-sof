@@ -6,3 +6,57 @@ body {
 #root {
   //padding: 1em;
 }
+@media print {
+  .print-hidden {
+    display: none;
+    height: 0 !important;
+    width: 0 !important;
+    visibility: hidden;
+    overflow: hidden;
+    flex-basis: 0;
+    border: 0;
+    box-shadow: none;
+  }
+  .main {
+    padding: 32px 16px 16px !important;
+    .MuiGrid-container {
+      display: block;
+      .MuiGrid-item {
+        max-width: 100%;
+      }
+    }
+  }
+  header {
+    background: #FFF !important;
+    color: #444 !important;
+    box-shadow: none !important;
+  }
+  button,
+  hr {
+    display: none !important;
+  }
+  .MuiPaper-root {
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+  .MuiStack-root {
+    page-break-inside: avoid;
+  }
+  .MuiChip-root {
+    border : 0 !important;
+  }
+  .MuiChip-label {
+    font-size: 1rem !important;
+  }
+  .content {
+    page-break-inside: avoid;
+  }
+  table {
+    width: auto !important;
+    tr {
+      td {
+        padding: 4px 8px;
+      }
+    }
+  }
+}

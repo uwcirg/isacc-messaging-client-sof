@@ -5,14 +5,10 @@ import {FhirClientContext, FhirClientContextType} from "../FhirClientContext";
 import Client from "fhirclient/lib/Client";
 import {CommunicationRequest} from "../model/CommunicationRequest";
 import {makeCarePlan} from "../model/modelUtil";
-import {Alert, Button, CircularProgress} from "@mui/material";
+import {Alert, AlertTitle, Button, CircularProgress, Stack, Typography} from "@mui/material";
 import CarePlan from "../model/CarePlan";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogActions from "@mui/material/DialogActions";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import {IBundle_Entry, ICommunicationRequest} from "@ahryman40k/ts-fhir-types/lib/R4";
-import {getDefaultMessageSchedule} from "../model/PlanDefinition";
 import {getFhirData, getUserName} from "../util/isacc_util";
 import Patient from "../model/Patient";
 import {Bundle} from "../model/Bundle";
@@ -41,7 +37,8 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
         //@ts-ignore
         let client: Client = this.context.client;
 
-        let planDefinition = getDefaultMessageSchedule();
+        //@ts-ignore
+        let ctxPlanDefinition = this.context.planDefinition;
 
         let replacements: { [key: string]: string } = {};
         let name = getUserName(client);
@@ -51,8 +48,8 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
             replacements['{userName}'] = "Caring Contacts Team";
         }
 
-        const messages: CommunicationRequest[] = planDefinition.createMessageList(patient, replacements);
-        const carePlan = makeCarePlan(planDefinition, patient, messages);
+        const messages: CommunicationRequest[] = ctxPlanDefinition.createMessageList(patient, replacements);
+        const carePlan = makeCarePlan(ctxPlanDefinition, patient, messages);
 
         return carePlan;
     }
@@ -115,7 +112,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
         });
     }
 
-    componentWillMount() {
+    componentDidMount() {
         if (!this.state || !this.context) return;
 
         //@ts-ignore
@@ -160,8 +157,10 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
         }).toString();
         getFhirData(client,`CommunicationRequest?${params}`).then((bundle: Bundle) => {
             if (bundle.type === "searchset") {
-                if (!bundle.entry) return [];
-
+                if (!bundle.entry) {
+                    this.setState({editMode: true});
+                    return [];
+                }
                 let crs: CommunicationRequest[] = bundle.entry.map((e: IBundle_Entry) => {
                     if (e.resource.resourceType !== "CommunicationRequest") {
                         this.setState({error: "Unexpected resource type returned"});
@@ -202,21 +201,27 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
 
         // @ts-ignore
         let existingCarePlan: CarePlan = this.context.currentCarePlan;
-        let creationDate = existingCarePlan?.created
-        let alertMessage = `The recipient already has a CarePlan. Would you like to edit this CarePlan or revoke it and create a new one?`;
-        if (creationDate) {
-            alertMessage = `The recipient already has a CarePlan (created ${new Date(creationDate)}).\nWould you like to edit this CarePlan or revoke it and create a new one?`;
-        }
+        let creationDate = existingCarePlan?.created;
+        const alertTitle = `The recipient already has a CarePlan. ${creationDate ? "( created on " + (new Date(creationDate)).toLocaleString() + " )" : ""}`;
+        let alertMessage = `Would you like to edit this CarePlan or revoke it and create a new one?`;
 
-        return <DialogContent>
-            <DialogContentText><Alert severity="warning" sx={{whiteSpace: "pre-line"}}>{alertMessage}</Alert></DialogContentText>
-            <DialogActions>
-                <Button
-                    onClick={edit} variant="contained">Edit</Button>
-                <Button
-                    onClick={createNew} variant="outlined">Revoke and create new</Button>
-            </DialogActions>
-        </DialogContent>;
+        return (
+          <Stack direction={"column"} spacing={2}>
+            <Alert severity="warning" sx={{ whiteSpace: "pre-line" }}>
+                <AlertTitle>{alertTitle}</AlertTitle>
+                <Typography variant="body1" component="div">{alertMessage}</Typography>
+            </Alert>
+            <Stack direction={"row"} spacing={1} justifyContent={"flex-end"}>
+              <Button onClick={edit} variant="contained">
+                Edit
+              </Button>
+              <Button onClick={createNew} variant="outlined">
+                Revoke and create new
+              </Button>
+            </Stack>
+            {this.state.error && <Alert severity="error">{this.state.error}</Alert>}
+          </Stack>
+        );
 
     }
 }

@@ -1,22 +1,25 @@
 import * as React from "react";
 import {
-    Box,
+    AlertTitle,
     Button,
+    Container,
     Chip,
     CircularProgress,
     Grid,
     IconButton,
     List,
     ListItem,
+    Paper,
     Popover,
     Snackbar,
     Stack,
     TextField,
-    TextFieldProps,
+    Tooltip,
     Typography
 } from "@mui/material";
 import {styled} from "@mui/material/styles";
-import ClearIcon from '@mui/icons-material/Clear';
+import ClearIcon from "@mui/icons-material/Clear";
+import WarningIcon from "@mui/icons-material/WarningAmberOutlined";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import moment from "moment";
@@ -26,8 +29,9 @@ import {IBundle_Entry, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {CommunicationRequest} from "../model/CommunicationRequest";
 import Alert from "@mui/material/Alert";
 import Patient from "../model/Patient";
+import PatientPROs from "./PatientPROs";
 import Summary from "./Summary";
-import PlanDefinition, {getDefaultMessageSchedule} from "../model/PlanDefinition";
+import PlanDefinition from "../model/PlanDefinition";
 import {getEnv} from "../util/util";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
@@ -36,11 +40,18 @@ import Dialog from "@mui/material/Dialog";
 import Client from "fhirclient/lib/Client";
 import PatientNotes from "./PatientNotes";
 import CarePlan from "../model/CarePlan";
+import { Observation } from "../model/Observation";
 import {Bundle} from "../model/Bundle";
 import { getFhirData } from "../util/isacc_util";
-
-
+import { unmarkTestPatient} from "../model/modelUtil";
 interface ScheduleSetupProps {
+}
+
+type UnsavedStates = {
+  patient: boolean,
+  careplan: boolean,
+  communications: boolean,
+  pro: boolean
 }
 
 type ScheduleSetupState = {
@@ -49,6 +60,8 @@ type ScheduleSetupState = {
     alertSeverity: "error" | "warning" | "info" | "success";
     alertText: string;
     savingInProgress: boolean;
+    unsavedStates: UnsavedStates;
+    showUnsaveChangesTooltip: boolean;
     deleteMessageId: number;
     showDeleteWarning: boolean;
     deletePopoverAnchorEl: HTMLButtonElement;
@@ -59,10 +72,19 @@ export type MessageDraft = {
     scheduledDateTime: Date
 }
 
+const defaultUnsavedStates = {
+  patient: false,
+  careplan: false,
+  communications: false,
+  pro: false
+}
 
 const styles = {
     patientNotesField: {
-        margin: 2
+        marginTop: 1,
+        marginLeft: 0,
+        marginRight: 0,
+        marginBottom: 0
     }
 };
 
@@ -84,17 +106,62 @@ export default class ScheduleSetup extends React.Component<
       alertText: null,
       alertSeverity: null,
       savingInProgress: false,
+      unsavedStates: defaultUnsavedStates,
+      showUnsaveChangesTooltip: false,
       showDeleteWarning: false,
       deleteMessageId: null,
       deletePopoverAnchorEl: null,
     };
-    this.planDefinition = getDefaultMessageSchedule();
+    // This binding is necessary to make `this` work in the callback
+    this.alertUser = this.alertUser.bind(this);
   }
 
   componentDidMount() {
+    // @ts-ignore
+    this.planDefinition = this.context.planDefinition;
     //@ts-ignore
     let carePlan: CarePlan = this.context.currentCarePlan;
     this.setState({ carePlan: carePlan });
+    window.addEventListener("beforeunload", this.alertUser);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("beforeunload", this.alertUser);
+  }
+
+  hasUnsavedChanges() {
+    return Object.entries(this.state.unsavedStates).find((item) => item[1]);
+  }
+
+  handleUnsaveChanges(key: string, changed: boolean = true) {
+    if (changed && !this.hasUnsavedChanges()) {
+      // flash tooltip to warn user first time
+      this.setState(
+        {
+          showUnsaveChangesTooltip: true,
+        },
+        () => {
+          setTimeout(() => {
+            this.setState({
+              showUnsaveChangesTooltip: false,
+            });
+          }, 5000);
+        }
+      );
+    }
+    this.setState({
+      unsavedStates: {
+        ...this.state.unsavedStates,
+        [key]: changed,
+      },
+    });
+  }
+
+  alertUser(event: BeforeUnloadEvent) {
+    if (!this.hasUnsavedChanges()) return;
+    event.preventDefault();
+    event.returnValue = "";
+    return;
   }
 
   render(): React.ReactNode {
@@ -107,24 +174,42 @@ export default class ScheduleSetup extends React.Component<
     let editing = this.state.carePlan.id != null;
 
     return (
-      <>
+      <Container maxWidth={"lg"}>
         {editing ? (
           <Alert severity={"info"}>
-            {`You are editing an existing CarePlan (CarePlan/${
-              this.state.carePlan.id
-            }, created ${new Date(this.state.carePlan.created)})`}
+            <AlertTitle>You are editing an existing CarePlan.</AlertTitle>
+            {`CarePlan/${this.state.carePlan.id}, created on ${new Date(
+              this.state.carePlan.created
+            ).toLocaleString()}`}
           </Alert>
         ) : null}
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} alignSelf={"stretch"}>
+        <Grid container spacing={2} className="main-grid-container">
+          <Grid item xs={12} sm={12} md={6} alignSelf={"stretch"}>
             <Item>
-              <Summary editable={true} />
+              <Summary
+                editable={true}
+                onChange={() => this.handleUnsaveChanges("patient")}
+              />
             </Item>
           </Grid>
-          <Grid item xs={12} sm={6} alignSelf={"stretch"}>
+          <Grid
+            item
+            xs={12}
+            sm={12}
+            md={6}
+            alignSelf={"stretch"}
+            sx={{ display: "flex", flexDirection: "column" }}
+          >
             <Item>
               {editing ? (
-                <PatientNotes />
+                <PatientNotes
+                  onChange={() => {
+                    this.handleUnsaveChanges("careplan");
+                  }}
+                  onSave={() => {
+                    this.handleUnsaveChanges("careplan", false);
+                  }}
+                />
               ) : (
                 <>
                   <Typography variant={"h6"}>{"Recipient note"}</Typography>
@@ -136,16 +221,29 @@ export default class ScheduleSetup extends React.Component<
                     }}
                     fullWidth
                     multiline
+                    minRows={5}
                     value={this.state.carePlan.description ?? ""}
                     placeholder={"Recipient note"}
                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                       const cp = this.state.carePlan;
                       cp.description = event.target.value;
-                      this.setState({ carePlan: cp });
+                      this.handleUnsaveChanges("careplan");
                     }}
                   />
                 </>
               )}
+            </Item>
+            <Item>
+              <PatientPROs
+                fieldsOnly={!editing}
+                editable={editing}
+                onChange={() => {
+                  this.handleUnsaveChanges("pro");
+                }}
+                onSave={() => {
+                  this.handleUnsaveChanges("pro", false);
+                }}
+              ></PatientPROs>
             </Item>
           </Grid>
           <Grid item xs={12}>
@@ -153,10 +251,11 @@ export default class ScheduleSetup extends React.Component<
               <MessageScheduleList
                 messagePlan={this.state.carePlan}
                 onMessagePlanChanged={(carePlan: CarePlan) => {
-                  this.setState({ carePlan: carePlan });
+                  this.setState({
+                    carePlan: carePlan,
+                  });
+                  this.handleUnsaveChanges("communication");
                 }}
-                saveSchedule={() => this.saveSchedule()}
-                patient={patient}
                 onDeleteMessage={(
                   messageIndex: number,
                   anchorElement: HTMLButtonElement
@@ -167,13 +266,136 @@ export default class ScheduleSetup extends React.Component<
                     deletePopoverAnchorEl: anchorElement,
                   });
                 }}
+                saveSchedule={() => this.saveSchedule()}
+                patient={patient}
               />
             </Item>
           </Grid>
         </Grid>
-        {this.getDeleteWarningPopover()}
         {this.getCloseSchedulePlannerAlert()}
-      </>
+        {this.getDeleteWarningPopover()}
+        {this.renderSaveFooter()}
+      </Container>
+    );
+  }
+
+  renderSaveFooter() {
+    return (
+      <Paper
+        sx={{
+          position: "fixed",
+          bottom: 0,
+          right: 0,
+          left: 0,
+          overflow: "hidden",
+          backgroundColor: "#FFF",
+          zIndex: 10,
+          width: "100%",
+          padding: (theme) => theme.spacing(2, 0),
+          textAlign: "center",
+        }}
+        elevation={6}
+      >
+        <Stack
+          spacing={2}
+          direction="row"
+          alignItems={"center"}
+          justifyContent={"center"}
+        >
+          {this.hasUnsavedChanges() && (
+            <Tooltip
+              arrow
+              color="warning"
+              title="Hey, you have made changes. Make sure to click the DONE button if you want to save them."
+              enterTouchDelay={0}
+              open={this.state.showUnsaveChangesTooltip}
+              slotProps={{
+                tooltip: {
+                  sx: {
+                    backgroundColor: (theme) => theme.palette.warning.dark,
+                    fontSize: "0.95rem",
+                    padding: (theme) => theme.spacing(1),
+                  },
+                },
+                arrow: {
+                  sx: {
+                    color: (theme) => theme.palette.warning.dark,
+                  },
+                },
+              }}
+            >
+              <WarningIcon fontSize="large" color="warning"></WarningIcon>
+            </Tooltip>
+          )}
+
+          <Button
+            variant="contained"
+            onClick={() => this.saveSchedule()}
+            size="large"
+            sx={{ minWidth: 240 }}
+          >
+            Done
+          </Button>
+        </Stack>
+      </Paper>
+    );
+  }
+
+  private getDeleteWarningPopover() {
+    const handleClose = () =>
+      this.setState({
+        deletePopoverAnchorEl: null,
+        showDeleteWarning: false,
+        deleteMessageId: null,
+      });
+    return (
+      <Popover
+        open={this.state.showDeleteWarning}
+        anchorEl={this.state.deletePopoverAnchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "left",
+        }}
+      >
+        <Alert
+          severity="warning"
+          sx={{
+            p: 2,
+            whiteSpace: "pre-wrap",
+            margin: (theme) => theme.spacing(1, 1, 0),
+            maxWidth: (theme) => theme.spacing(36)
+          }}
+        >
+          <AlertTitle>You are about to delete a scheduled Caring Contact.</AlertTitle>
+          {"Are you sure?"}
+        </Alert>
+        <Stack
+          spacing={1}
+          direction={"row"}
+          justifyContent={"center"}
+          sx={{ marginBottom: 1, marginTop: 1 }}
+        >
+          <Button size="small" variant="contained" onClick={handleClose}>
+            No
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => {
+              this.state.carePlan.removeActiveCommunicationRequest(
+                this.state.deleteMessageId
+              );
+              this.setState({
+                carePlan: this.state.carePlan,
+              });
+              handleClose();
+            }}
+          >
+            Yes
+          </Button>
+        </Stack>
+      </Popover>
     );
   }
 
@@ -286,6 +508,7 @@ export default class ScheduleSetup extends React.Component<
                 // exclude current patient, workaround for above FIXME
                 reject(
                   `Phone number is already associated with: ${patients
+                    .filter((p: Patient) => p.id !== patient.id)
                     .map(
                       (p: Patient) => `${p.fullNameDisplay} (${p.reference})`
                     )
@@ -320,7 +543,7 @@ export default class ScheduleSetup extends React.Component<
       console.log("no patient");
       return;
     }
-    this.setState({ savingInProgress: true });
+    this.setState({ savingInProgress: true, showUnsaveChangesTooltip: false });
 
     if (
       this.state.carePlan.communicationRequests.find(
@@ -332,16 +555,71 @@ export default class ScheduleSetup extends React.Component<
     }
 
     this.checkPhoneNumber().then(
-      (value: any) => {
-        return client.update(patient).then((value: any) => {
-          console.log(`Patient ${patient.id} updated`);
-          this.saveCommunicationRequests();
+      () => {
+        // @ts-ignore
+        let requests = [client.update(patient)];
+        if (!patient.isTest) {
+          requests.push(unmarkTestPatient(client, patient.id));
+        }
+        return Promise.allSettled(requests).then((results) => {
+          console.log("Saving patient result: ", results);
+          const errorEntry = (
+            results.find(
+              (res) => res.status === "rejected" || !res.value?.resourceType
+            ) as PromiseRejectedResult | undefined
+          )?.reason;
+          if (errorEntry) {
+            console.log("Error updating patient data ", errorEntry);
+            this.showSnackbar(
+              "warning",
+              `Issue encountered updating patient data. See console for detail.`
+            );
+          }
+          this.saveCareTeam()
+            .then((result: IResource) => {
+              console.log(`CareTeam ${result.id} resources updated.`);
+              const currentCarePlan = this.state.carePlan;
+              if (currentCarePlan) {
+                currentCarePlan.careTeam = [
+                  {
+                    reference: `CareTeam/${result.id}`,
+                  },
+                ];
+              }
+              this.setState({
+                carePlan: currentCarePlan,
+              });
+              // update PRO scores
+              this.savePROs();
+              this.saveCommunicationRequests();
+            })
+            .catch((e) => {
+              this.showSnackbar(
+                "error",
+                "Error saving care team.  See console for detail."
+              );
+              console.log("Error saving care team ", e);
+            });
         });
       },
       (reason: any) => {
         this.showSnackbar("error", reason);
       }
     );
+  }
+
+  private saveCareTeam(): Promise<any> {
+    // @ts-ignore
+    const client = this.context.client;
+    // @ts-ignore
+    const careTeam = this.context.careTeam;
+    let ct;
+    if (careTeam.id) {
+      ct = client.update(careTeam);
+    } else {
+      ct = client.create(careTeam);
+    }
+    return ct;
   }
 
   private saveCommunicationRequests() {
@@ -371,6 +649,7 @@ export default class ScheduleSetup extends React.Component<
             (cr) => cr.resourceType === "CommunicationRequest"
           )
         );
+
         // create resource on server
         let p;
         if (this.state.carePlan.id) {
@@ -384,6 +663,7 @@ export default class ScheduleSetup extends React.Component<
             let updatePromises = communicationRequests.map(
               (c: CommunicationRequest) => {
                 c.basedOn = [{ reference: `CarePlan/${savedCarePlan.id}` }];
+                c.setNote("scheduled message");
                 return client
                   .update(c)
                   .then((value: any) => CommunicationRequest.from(value));
@@ -406,8 +686,54 @@ export default class ScheduleSetup extends React.Component<
     );
   }
 
+  private savePROs() {
+    // @ts-ignore
+    const mostRecentPhq9 = this.context.mostRecentPhq9;
+    // @ts-ignore
+    const mostRecentCss = this.context.mostRecentCss;
+
+    // @ts-ignore
+    const client = this.context.client;
+    const requests = [];
+    if (mostRecentPhq9) {
+      let phq9Request;
+      if (mostRecentPhq9.id) {
+        phq9Request = client.update(mostRecentPhq9);
+      } else {
+        phq9Request = client.create(mostRecentPhq9);
+      }
+      requests.push(phq9Request);
+    }
+    if (mostRecentCss) {
+      let cssRequest;
+      if (mostRecentCss.id) {
+        cssRequest = client.update(mostRecentCss);
+      } else {
+        cssRequest = client.create(mostRecentCss);
+      }
+      requests.push(cssRequest);
+    }
+
+    if (!requests.length) {
+      return;
+    }
+
+    Promise.all(requests)
+      .then((results) => {
+        console.log("Save observations ", results);
+        // @ts-ignore
+        this.context.mostRecentPhq9 = Observation.from(results[0]);
+        // @ts-ignore
+        this.context.mostRecentCss = Observation.from(results[1]);
+      })
+      .catch((e) => {
+        console.log("Error saving observations ", e);
+      });
+  }
+
   private onSaved(value: IResource) {
     console.log("resource saved:", value);
+    this.setState({ unsavedStates: defaultUnsavedStates });
     this.showSnackbar("success", "Schedule created successfully");
   }
 
@@ -415,86 +741,35 @@ export default class ScheduleSetup extends React.Component<
     console.log("resource rejected:", reason);
     this.showSnackbar("error", "Schedule could not be created");
   }
-
-  private getDeleteWarningPopover() {
-    const handleClose = () =>
-      this.setState({
-        deletePopoverAnchorEl: null,
-        showDeleteWarning: false,
-        deleteMessageId: null,
-      });
-    return (
-      <Popover
-        open={this.state.showDeleteWarning}
-        anchorEl={this.state.deletePopoverAnchorEl}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "left",
-        }}
-      >
-        <Alert
-          severity="warning"
-          sx={{
-            p: 2,
-            whiteSpace: "pre-wrap",
-            margin: (theme) => theme.spacing(1, 1, 0),
-          }}
-        >
-          {"You are about to delete a scheduled Caring Contact.\nAre you sure?"}
-        </Alert>
-        <Stack
-          spacing={1}
-          direction={"row"}
-          justifyContent={"center"}
-          sx={{ marginBottom: 1, marginTop: 1 }}
-        >
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => {
-              this.state.carePlan.removeActiveCommunicationRequest(
-                this.state.deleteMessageId
-              );
-              this.setState({
-                carePlan: this.state.carePlan,
-              });
-              handleClose();
-            }}
-          >
-            Yes
-          </Button>
-          <Button size="small" variant="contained" onClick={handleClose}>
-            No
-          </Button>
-        </Stack>
-      </Popover>
-    );
-  }
 }
 
-const Item = styled(Box)(({ theme }) => ({
+const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: "#fff",
     ...theme.typography.body1,
-    padding: theme.spacing(2),
+    padding: theme.spacing(2, 3),
+    margin: theme.spacing(1, 0),
     flexGrow: 1,
+    minHeight: 240
 }));
 
 
 const MessageScheduleList = (props: {
     messagePlan: CarePlan,
     patient: Patient,
+    onDeleteMessage: (messageIndex: number, anchorElement: HTMLButtonElement) => void,
     onMessagePlanChanged: (carePlan: CarePlan) => void,
     saveSchedule: () => void,
-    onDeleteMessage: (messageIndex: number, anchorElement: HTMLButtonElement) => void,
 }) => {
 
     const buildMessageItem = (message: CommunicationRequest, index: number) => {
         return (
           <ListItem
-            key={index}
+            key={`message_${index}`}
             sx={{
               width: "100%",
+              "& .MuiListItemSecondaryAction-root": {
+                right: 0.5,
+              },
             }}
             secondaryAction={
               message.status === "completed" ? (
@@ -503,7 +778,10 @@ const MessageScheduleList = (props: {
                 <IconButton
                   hidden={message.status === "completed"}
                   onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
-                    if (!message?.getText()) {
+                    if (
+                      !message?.getText() ||
+                      message.displayNote().includes("new")
+                    ) {
                       removeMessage(index);
                       return;
                     }
@@ -544,9 +822,6 @@ const MessageScheduleList = (props: {
                       minWidth: "264px",
                       flexGrow: 1,
                     }}
-                    renderInput={(params: TextFieldProps) => (
-                      <TextField {...params} />
-                    )}
                   />
                 </LocalizationProvider>
               </Grid>
@@ -616,7 +891,7 @@ const MessageScheduleList = (props: {
           </Stack>
         </Stack>
         <Alert severity={"info"}>
-          {"Use {name} to substitute the client's first name"}
+          {"Use {name} to substitute the recipient's first name"}
         </Alert>
 
         <List>
@@ -629,31 +904,29 @@ const MessageScheduleList = (props: {
 
         <Stack
           direction={"row"}
-          justifyContent={"space-between"}
-          sx={{ padding: (theme) => theme.spacing(1, 2) }}
+          justifyContent={"flex-start"}
+          alignItems={"flex-start"}
+          sx={{ padding: (theme) => theme.spacing(2) }}
         >
           <Button
             variant="outlined"
+            size="large"
+            sx={{
+              minWidth: (theme) => theme.spacing(33)
+            }}
             onClick={() => {
               let newMessage = CommunicationRequest.createNewScheduledMessage(
                 "",
                 props.patient,
                 props.messagePlan,
-                new Date()
+                new Date(),
+                "new scheduled message"
               );
               props.messagePlan.addCommunicationRequest(newMessage);
               props.onMessagePlanChanged(props.messagePlan);
             }}
           >
-            Add message
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => props.saveSchedule()}
-            size="large"
-            sx={{ minWidth: 130 }}
-          >
-            Done
+            Add new message
           </Button>
         </Stack>
       </>

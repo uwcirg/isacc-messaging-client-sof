@@ -1,4 +1,5 @@
 import {
+    IAnnotation,
     ICodeableConcept,
     ICommunicationRequest,
     ICommunicationRequest_Payload,
@@ -7,6 +8,7 @@ import {
 import {Coding, IsaccMessageCategory, Medium} from "./CodeSystem";
 import Patient from "./Patient";
 import CarePlan from "./CarePlan";
+import Practitioner from "./Practitioner";
 
 export class CommunicationRequest implements ICommunicationRequest {
     resourceType: "CommunicationRequest";
@@ -15,9 +17,11 @@ export class CommunicationRequest implements ICommunicationRequest {
     payload: ICommunicationRequest_Payload[];
     recipient: IReference[];
     status: string;
+    sender?: IReference;
     medium: ICodeableConcept[];
     category: ICodeableConcept[];
     basedOn: IReference[];
+    note?: IAnnotation[];
 
     get reference(): string {
         return `${this.resourceType}/${this.id}`;
@@ -35,16 +39,17 @@ export class CommunicationRequest implements ICommunicationRequest {
         this.category = [{coding: [IsaccMessageCategory.isaccScheduledMessage]}]
     }
 
-    static createNewScheduledMessage(messageContent: string, patient: Patient, carePlan: CarePlan, occurrenceDateTime: Date): CommunicationRequest {
+    static createNewScheduledMessage(messageContent: string, patient: Patient, carePlan: CarePlan, occurrenceDateTime: Date, note: string = ""): CommunicationRequest {
         let c = this.createNewOutgoingMessage(messageContent, patient, carePlan, IsaccMessageCategory.isaccScheduledMessage);
         c.setOccurrenceDate(occurrenceDateTime);
+        if (note) c.setNote(note);
         return c;
     }
-    static createNewManualOutgoingMessage(messageContent: string, patient: Patient, carePlan: CarePlan) {
-        return this.createNewOutgoingMessage(messageContent, patient, carePlan, IsaccMessageCategory.isaccManuallySentMessage);
+    static createNewManualOutgoingMessage(messageContent: string, patient: Patient, carePlan: CarePlan, sender: Patient | Practitioner = null, note : string = "") {
+        return this.createNewOutgoingMessage(messageContent, patient, carePlan, IsaccMessageCategory.isaccManuallySentMessage, sender, note);
     }
 
-    static createNewOutgoingMessage(messageContent: string, patient: Patient, carePlan: CarePlan, messageType: Coding): CommunicationRequest {
+    static createNewOutgoingMessage(messageContent: string, patient: Patient, carePlan: CarePlan, messageType: Coding, sender: Patient | Practitioner = null, note: string =  ""): CommunicationRequest {
         if (!messageType) {
             messageType = IsaccMessageCategory.isaccManuallySentMessage;
         }
@@ -57,6 +62,8 @@ export class CommunicationRequest implements ICommunicationRequest {
         c.medium = [Medium.sms];
         c.setOccurrenceDate(new Date());
         c.recipient = [{reference: patient.reference}];
+        if (sender) c.sender = {reference : sender.reference};
+        if (note) c.setNote(note);
         c.setText(messageContent);
         return c;
     }
@@ -80,4 +87,23 @@ export class CommunicationRequest implements ICommunicationRequest {
     setText(text: string) {
         this.payload = [{contentString: text}];
     }
+
+    displayNote() {
+        if (!this.note) return "";
+        return this.note.map((n: IAnnotation) => {
+            return n.text
+        }).join("\n");
+    }
+    
+    setNote(note: string) {
+        let n = new Annotation();
+        n.text = note;
+        this.note = [n];
+    }
+}
+
+class Annotation implements IAnnotation {
+    text: string;
+    // other props
+
 }
