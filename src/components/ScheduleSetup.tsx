@@ -357,18 +357,23 @@ export default class ScheduleSetup extends React.Component<
           vertical: "bottom",
           horizontal: "left",
         }}
+        PaperProps={{
+          style: {
+            marginTop: "-4px",
+            maxWidth: "360px"
+          }
+        }}
       >
         <Alert
           severity="warning"
           sx={{
-            p: 2,
+            p: 1,
             whiteSpace: "pre-wrap",
             margin: (theme) => theme.spacing(1, 1, 0),
-            maxWidth: (theme) => theme.spacing(36)
           }}
         >
           <AlertTitle>You are about to delete a scheduled Caring Contact.</AlertTitle>
-          {"Are you sure?"}
+          <Typography variant="body1" component="div">{"Are you sure?"}</Typography>
         </Alert>
         <Stack
           spacing={1}
