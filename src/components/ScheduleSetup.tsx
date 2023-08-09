@@ -145,7 +145,7 @@ export default class ScheduleSetup extends React.Component<
             this.setState({
               showUnsaveChangesTooltip: false,
             });
-          }, 5000);
+          }, 3000);
         }
       );
     }
@@ -389,6 +389,7 @@ export default class ScheduleSetup extends React.Component<
               this.setState({
                 carePlan: this.state.carePlan,
               });
+              this.handleUnsaveChanges("communication");
               handleClose();
             }}
           >
@@ -783,6 +784,7 @@ const MessageScheduleList = (props: {
                       message.displayNote().includes("new")
                     ) {
                       removeMessage(index);
+                      props.onMessagePlanChanged(props.messagePlan);
                       return;
                     }
                     if (props.onDeleteMessage)
