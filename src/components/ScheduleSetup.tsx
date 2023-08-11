@@ -360,8 +360,8 @@ export default class ScheduleSetup extends React.Component<
         PaperProps={{
           style: {
             marginTop: "-4px",
-            maxWidth: "360px"
-          }
+            maxWidth: "360px",
+          },
         }}
       >
         <Alert
@@ -372,21 +372,31 @@ export default class ScheduleSetup extends React.Component<
             margin: (theme) => theme.spacing(1, 1, 0),
           }}
         >
-          <AlertTitle>You are about to delete a scheduled Caring Contact.</AlertTitle>
-          <Typography variant="body1" component="div">{"Are you sure?"}</Typography>
+          <AlertTitle>
+            You are about to delete a scheduled Caring Contact.
+          </AlertTitle>
+          <Typography variant="body1" component="div">
+            {"Are you sure?"}
+          </Typography>
         </Alert>
         <Stack
           spacing={1}
           direction={"row"}
           justifyContent={"center"}
-          sx={{ marginBottom: 1, marginTop: 1 }}
+          sx={{ marginBottom: 1, marginTop: 1, pl: 1, pr: 1 }}
         >
-          <Button size="small" variant="contained" onClick={handleClose}>
+          <Button
+            size="medium"
+            variant="contained"
+            onClick={handleClose}
+            sx={{ flex: 1 }}
+          >
             No
           </Button>
           <Button
             variant="outlined"
-            size="small"
+            size="medium"
+            sx={{ flex: 1 }}
             onClick={() => {
               this.state.carePlan.removeActiveCommunicationRequest(
                 this.state.deleteMessageId
