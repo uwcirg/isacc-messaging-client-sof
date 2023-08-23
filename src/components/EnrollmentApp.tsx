@@ -9,7 +9,7 @@ import {Alert, AlertTitle, Button, CircularProgress, Stack, Typography} from "@m
 import CarePlan from "../model/CarePlan";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import {IBundle_Entry, ICommunicationRequest} from "@ahryman40k/ts-fhir-types/lib/R4";
-import {getFhirData, getUserName} from "../util/isacc_util";
+import {getFhirData} from "../util/isacc_util";
 import Patient from "../model/Patient";
 import {Bundle} from "../model/Bundle";
 
@@ -35,18 +35,18 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
         //@ts-ignore
         let patient: Patient = this.context.patient;
         //@ts-ignore
-        let client: Client = this.context.client;
+        //let client: Client = this.context.client;
 
         //@ts-ignore
         let ctxPlanDefinition = this.context.planDefinition;
 
         let replacements: { [key: string]: string } = {};
-        let name = getUserName(client);
-        if (name) {
-            replacements['{userName}'] = name;
-        } else {
-            replacements['{userName}'] = "Caring Contacts Team";
-        }
+        // let name = getUserName(client);
+        // if (name) {
+        //     replacements['{userName}'] = name;
+        // } else {
+        //     replacements['{userName}'] = "Caring Contacts Team";
+        // }
 
         const messages: CommunicationRequest[] = ctxPlanDefinition.createMessageList(patient, replacements);
         const carePlan = makeCarePlan(ctxPlanDefinition, patient, messages);

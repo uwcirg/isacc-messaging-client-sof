@@ -13,11 +13,11 @@ export function makeCommunicationRequests(
   messages: MessageDraft[]
 ): CommunicationRequest[] {
   return messages.map((message) => {
-    let patientName = patient.name[0].given[0];
-    let str = message.text.replace("{name}", patientName);
+    //let patientName = patient.name[0].given[0];
+    //let str = message.text.replace("{name}", patientName);
 
     return CommunicationRequest.createNewScheduledMessage(
-      str,
+      message.text,
       patient,
       null,
       message.scheduledDateTime
