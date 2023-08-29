@@ -35,19 +35,10 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
         //@ts-ignore
         let patient: Patient = this.context.patient;
         //@ts-ignore
-        //let client: Client = this.context.client;
-
-        //@ts-ignore
         let ctxPlanDefinition = this.context.planDefinition;
 
         let replacements: { [key: string]: string } = {};
-        // let name = getUserName(client);
-        // if (name) {
-        //     replacements['{userName}'] = name;
-        // } else {
-        //     replacements['{userName}'] = "Caring Contacts Team";
-        // }
-
+    
         const messages: CommunicationRequest[] = ctxPlanDefinition.createMessageList(patient, replacements);
         const carePlan = makeCarePlan(ctxPlanDefinition, patient, messages);
 
