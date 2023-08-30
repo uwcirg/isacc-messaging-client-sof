@@ -775,8 +775,13 @@ const MessageScheduleList = (props: {
             />
           </Stack>
         </Stack>
-        <Alert severity={"info"}>
-          {"Use {name} to substitute the recipient's first name"}
+        <Alert
+          severity={"info"}
+        >
+          <div dangerouslySetInnerHTML={{
+            __html:
+              "{name} will be substituted by the recipient's first name or preferred name if available.<br/>{userName} will be substituted by the author's first name.",
+          }}></div>
         </Alert>
 
         <List>
@@ -797,7 +802,7 @@ const MessageScheduleList = (props: {
             variant="outlined"
             size="large"
             sx={{
-              minWidth: (theme) => theme.spacing(33)
+              minWidth: (theme) => theme.spacing(33),
             }}
             onClick={() => {
               let newMessage = CommunicationRequest.createNewScheduledMessage(
