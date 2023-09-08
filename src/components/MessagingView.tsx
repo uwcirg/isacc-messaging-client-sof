@@ -219,7 +219,7 @@ export default class MessagingView extends React.Component<
       },
       (reason: any) => {
         console.log(
-          "Unable to get communication requests for patient. ",
+          "Unable to load CommunicationRequest resources for the patient. ",
           reason
         );
       }
