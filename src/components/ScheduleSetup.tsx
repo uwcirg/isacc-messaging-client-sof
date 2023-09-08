@@ -618,9 +618,10 @@ export default class ScheduleSetup extends React.Component<
                 activeScheduledCommunicationRequests.length
                     ? activeScheduledCommunicationRequests[0]?.occurrenceDateTime
                     : null;
-                console.log("this careplan", this.state.carePlan)
-                // @ts-ignore
-                client.update(patient).then(() => this.onSaved(savedCarePlan));
+                if (patient.nextScheduledMessageDateTime) {
+                  // @ts-ignore
+                  client.update(patient).then(() => this.onSaved(savedCarePlan));
+                } else this.onSaved(savedCarePlan);
               }
             );
           },

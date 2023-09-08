@@ -443,7 +443,6 @@ export default class MessagingView extends React.Component<
     const patient: Patient = context.patient;
     const matchedCR = this.state.communicationRequests?.find(
       (cr: CommunicationRequest) => {
-        console.log("date time ", cr.occurrenceDateTime);
         const crDate = new Date(cr.occurrenceDateTime);
         const patientDate = new Date(patient.nextScheduledMessageDateTime);
         return (
@@ -462,7 +461,7 @@ export default class MessagingView extends React.Component<
       <Box sx={{ marginTop: (theme) => theme.spacing(1.5) }}>
         <Alert severity="info">
           <AlertTitle>Next scheduled outgoing message</AlertTitle>
-          <Stack spacing={2} direction={"column"} alignItems={"flex-start"}>
+          <Stack spacing={1} direction={"column"} alignItems={"flex-start"}>
             <Box>
               <Typography variant="body2" component="div">
                 {MessagingView.displayDateTime(
