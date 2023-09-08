@@ -546,6 +546,8 @@ export default class ScheduleSetup extends React.Component<
   private saveCommunicationRequests() {
     // @ts-ignore
     let client: Client = this.context.client;
+    // @ts-ignore
+    const patient: Patient = this.context.patient;
 
     let promises = this.state.carePlan.communicationRequests.map(
       (c: CommunicationRequest) => {
@@ -580,7 +582,6 @@ export default class ScheduleSetup extends React.Component<
         }
         p.then(
           (savedCarePlan: IResource) => {
-            this.onSaved(savedCarePlan);
             let updatePromises = communicationRequests.map(
               (c: CommunicationRequest) => {
                 c.basedOn = [{ reference: `CarePlan/${savedCarePlan.id}` }];
@@ -596,6 +597,30 @@ export default class ScheduleSetup extends React.Component<
                     console.log("CommunicationRequest updated:", v);
                   }
                 );
+
+                const activeScheduledCommunicationRequests = updatedCommunicationRequests
+                  .filter(
+                    (ucr : CommunicationRequest) =>
+                      ucr.status === "active" &&
+                      CommunicationRequest.isScheduledOutgoingMessage(ucr)
+                  )
+                  .sort((a, b) => {
+                    let d1 = a.occurrenceDateTime;
+                    let d2 = b.occurrenceDateTime;
+                    const t1 = d1 ? new Date(d1).getTime() : 0;
+                    const t2 = d2 ? new Date(d2).getTime() : 0;
+                    return t1 - t2;
+                  });
+
+                // console.log("next ", activeCommunicationRequests[0].occurrenceDateTime)
+                // add next scheduled message date/time extension
+                patient.nextScheduledMessageDateTime =
+                activeScheduledCommunicationRequests.length
+                    ? activeScheduledCommunicationRequests[0]?.occurrenceDateTime
+                    : null;
+                console.log("this careplan", this.state.carePlan)
+                // @ts-ignore
+                client.update(patient).then(() => this.onSaved(savedCarePlan));
               }
             );
           },

@@ -17,8 +17,18 @@ export function birthdaysBetweenDates(programStart: Date, programEnd: Date, birt
     return birthdays;
 }
 
+export function getDashboardURL() {
+  return getEnv("REACT_APP_DASHBOARD_URL");
+}
+
 export function getPatientListURL() {
-    return getEnv("REACT_APP_DASHBOARD_URL") + "/clear_session";
+  return getDashboardURL() + "/clear_session";
+}
+
+type ClientType = "ENROLLMENT" | "MESSAGING";
+export function getClientAppURL(clientId: ClientType, patientId: string) {
+  //client id is either MESSAGING or ENROLLMENT
+  return getDashboardURL() + `/target?sof_client_id=${clientId}&patient=${patientId}`;
 }
 
 export function getUserName(client: Client) {

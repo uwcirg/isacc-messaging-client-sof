@@ -104,7 +104,7 @@ export default class CarePlan implements ICarePlan {
     }
 
     getActiveCommunicationRequests() {
-        return this.communicationRequests.filter(
+        return this.communicationRequests?.filter(
             (message: CommunicationRequest) => message.status !== "revoked"
         )
     }

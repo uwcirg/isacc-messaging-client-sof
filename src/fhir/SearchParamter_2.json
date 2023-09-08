@@ -1,0 +1,14 @@
+{
+    "resourceType": "SearchParameter",
+    "url": "http://isacc.app/search-param-date-time-of-next-outgoing-message",
+    "name": "SearchParamDateTimeOfNextOutgoingMessage",
+    "status": "active",
+    "description": "Search by date/time of the next scheduled message",
+    "code": "date-time-of-next-outgoing-message",
+    "base": [
+      "Patient"
+    ],
+    "type": "date",
+    "expression": "Patient.extension('http://isacc.app/date-time-of-next-outgoing-message').value"
+  }
+  

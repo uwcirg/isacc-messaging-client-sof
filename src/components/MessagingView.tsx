@@ -3,9 +3,12 @@ import * as React from "react";
 import {FhirClientContext, FhirClientContextType} from "../FhirClientContext";
 
 import Communication from "../model/Communication";
+import Patient from "../model/Patient";
+import {CommunicationRequest} from "../model/CommunicationRequest";
 import {IBundle_Entry, ICodeableConcept, ICoding, IReference, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
 import {
     Alert,
+    AlertTitle,
     Box,
     Button,
     Chip,
@@ -28,6 +31,7 @@ import {
     TextFieldProps,
     Typography,
 } from "@mui/material";
+import {ArrowBackIos} from "@mui/icons-material";
 import LoadingButton from "@mui/lab/LoadingButton";
 import EditIcon from "@mui/icons-material/Edit";
 import InfoIcon from "@mui/icons-material/Info";
@@ -39,11 +43,10 @@ import { DateTimeValidationError} from '@mui/x-date-pickers/models';
 import {grey, lightBlue, teal} from "@mui/material/colors";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import {Error, Refresh, Warning} from "@mui/icons-material";
-import {CommunicationRequest} from "../model/CommunicationRequest";
 import Client from "fhirclient/lib/Client";
 import {Bundle} from "../model/Bundle";
 import {getEnv} from "../util/util";
-import {getFhirData, getUserName } from "../util/isacc_util";
+import {getClientAppURL, getFhirData, getUserName } from "../util/isacc_util";
 
 type MessageType = "sms" | "outside communication" | "comment";
 type MessageStatus = "sent" | "received";
@@ -72,6 +75,7 @@ export default class MessagingView extends React.Component<
     activeMessage: Message;
     error: any;
     communications: Communication[];
+    communicationRequests: CommunicationRequest[];
     temporaryCommunications: Communication[];
     messagesLoading: boolean;
     saveLoading: boolean;
@@ -98,6 +102,7 @@ export default class MessagingView extends React.Component<
       activeMessage: defaultMessage,
       error: null,
       communications: null,
+      communicationRequests: null,
       temporaryCommunications: [],
       messagesLoading: false,
       saveLoading: false,
@@ -116,6 +121,7 @@ export default class MessagingView extends React.Component<
     if (!this.state.communications) {
       this.loadCommunications();
     }
+    this.loadCommunicationRequests();
     this.interval = setInterval(() => {
       console.log("Timer triggered");
       this.loadCommunications();
@@ -139,32 +145,32 @@ export default class MessagingView extends React.Component<
     let context: FhirClientContextType = this.context;
     this.setState({ messagesLoading: true });
 
-    const carePlanIds = context.allCarePlans?.map(item => item.id)
+    const carePlanIds = context.allCarePlans?.map((item) => item.id);
 
     this.getCommunications(context.client, carePlanIds, url)
       .then(
         (result: Communication[]) => {
-            const uniqueResults = (result ?? []).filter((item) => {
-              const currentSet = this.state.communications ?? [];
-              return !currentSet.find((o) => o.id === item.id);
-            });
-            const allResults = [
-              ...(this.state.communications ?? []),
-              ...uniqueResults,
-            ];
-            let temporaryCommunications =
-              this.state.temporaryCommunications.filter((tc: Communication) => {
-                return !allResults?.find((c: Communication) => {
-                  return c.basedOn?.find((b: IReference) => {
-                    return b.reference?.split("/")[1] === tc.id;
-                  });
+          const uniqueResults = (result ?? []).filter((item) => {
+            const currentSet = this.state.communications ?? [];
+            return !currentSet.find((o) => o.id === item.id);
+          });
+          const allResults = [
+            ...(this.state.communications ?? []),
+            ...uniqueResults,
+          ];
+          let temporaryCommunications =
+            this.state.temporaryCommunications.filter((tc: Communication) => {
+              return !allResults?.find((c: Communication) => {
+                return c.basedOn?.find((b: IReference) => {
+                  return b.reference?.split("/")[1] === tc.id;
                 });
               });
-            this.setState({
-              communications: allResults,
-              messagesLoading: false,
-              temporaryCommunications: temporaryCommunications,
             });
+          this.setState({
+            communications: allResults,
+            messagesLoading: false,
+            temporaryCommunications: temporaryCommunications,
+          });
         },
         (reason: any) =>
           this.setState({ error: reason, messagesLoading: false })
@@ -173,6 +179,51 @@ export default class MessagingView extends React.Component<
         console.log("Error fetching Communications", e);
         this.setState({ error: e, messagesLoading: false });
       });
+  }
+
+  loadCommunicationRequests() {
+    // @ts-ignore
+    let client: Client = this.context.client;
+    //@ts-ignore
+    let existingCarePlan: CarePlan = this.context.currentCarePlan;
+    //@ts-ignore
+    let patient: Patient = this.context.patient;
+
+    let params = new URLSearchParams({
+      recipient: `Patient/${patient.id}`,
+      category: IsaccMessageCategory.isaccScheduledMessage.code,
+      status: "active",
+      "based-on": existingCarePlan.reference,
+      _sort: "occurrence",
+      _count: "1000",
+    }).toString();
+    const requestURL = `/CommunicationRequest?${params}`;
+    let communicationRequests: CommunicationRequest[] = [];
+    getFhirData(client, requestURL).then(
+      (bundle: Bundle) => {
+        if (bundle.type === "searchset") {
+          if (bundle.entry) {
+            communicationRequests = bundle.entry.map((e: IBundle_Entry) => {
+              if (e.resource.resourceType !== "CommunicationRequest") {
+                return null;
+              } else {
+                console.log("Communication loaded:", e);
+                return CommunicationRequest.from(e.resource);
+              }
+            });
+            this.setState({
+              communicationRequests: communicationRequests,
+            });
+          }
+        }
+      },
+      (reason: any) => {
+        console.log(
+          "Unable to get communication requests for patient. ",
+          reason
+        );
+      }
+    );
   }
 
   async getCommunications(
@@ -184,48 +235,48 @@ export default class MessagingView extends React.Component<
     // Communication?part-of=CarePlan/${id1}[,CarePlan/${id2}]
     // get communications for all care plans for the patient
     let params = new URLSearchParams({
-        "part-of": carePlanIds?.map(item =>`CarePlan/${item}`).join(","),
-        _count: "200"
-      }).toString();
-    const requestURL = url ? url : `/Communication?${params}`
+      "part-of": carePlanIds?.map((item) => `CarePlan/${item}`).join(","),
+      _count: "200",
+    }).toString();
+    const requestURL = url ? url : `/Communication?${params}`;
     return await getFhirData(client, requestURL, signal).then(
-        (bundle: Bundle) => {
-          if (bundle.type === "searchset") {
-            if (!bundle.entry) return [];
-            let nextPageURL:string = null;
-            if (bundle.link && bundle.link.length > 0) {
-              const arrNextURL = bundle.link.filter(
-                (item) => item.relation === "next"
-              );
-              nextPageURL = arrNextURL.length > 0 ? arrNextURL[0].url : null;
-            }
-            let communications: Communication[] = bundle.entry.map(
-              (e: IBundle_Entry) => {
-                if (e.resource.resourceType !== "Communication") {
-                  this.setState({ error: "Unexpected resource type returned" });
-                  return null;
-                } else {
-                  console.log("Communication loaded:", e);
-                  return Communication.from(e.resource);
-                }
-              }
+      (bundle: Bundle) => {
+        if (bundle.type === "searchset") {
+          if (!bundle.entry) return [];
+          let nextPageURL: string = null;
+          if (bundle.link && bundle.link.length > 0) {
+            const arrNextURL = bundle.link.filter(
+              (item) => item.relation === "next"
             );
-            if (nextPageURL !== this.state.nextPageURL) {
-                this.setState({
-                    nextPageURL: nextPageURL
-                });
-            }
-            return communications;
-          } else {
-            this.setState({ error: "Unexpected bundle type returned" });
-            return null;
+            nextPageURL = arrNextURL.length > 0 ? arrNextURL[0].url : null;
           }
-        },
-        (reason: any) => {
-          this.setState({ error: reason.toString() });
+          let communications: Communication[] = bundle.entry.map(
+            (e: IBundle_Entry) => {
+              if (e.resource.resourceType !== "Communication") {
+                this.setState({ error: "Unexpected resource type returned" });
+                return null;
+              } else {
+                console.log("Communication loaded:", e);
+                return Communication.from(e.resource);
+              }
+            }
+          );
+          if (nextPageURL !== this.state.nextPageURL) {
+            this.setState({
+              nextPageURL: nextPageURL,
+            });
+          }
+          return communications;
+        } else {
+          this.setState({ error: "Unexpected bundle type returned" });
           return null;
         }
-      );
+      },
+      (reason: any) => {
+        this.setState({ error: reason.toString() });
+        return null;
+      }
+    );
   }
 
   render(): React.ReactNode {
@@ -371,7 +422,7 @@ export default class MessagingView extends React.Component<
               </Alert>
             </Snackbar>
           </Box>
-
+          {this._buildNextScheduledMessageDisplay()}
           {this.state.error && (
             <Alert severity="error" sx={{ marginTop: 2 }}>
               {typeof this.state.error === "string"
@@ -385,11 +436,57 @@ export default class MessagingView extends React.Component<
     );
   }
 
+  private _buildNextScheduledMessageDisplay(): React.ReactNode {
+    // @ts-ignore
+    const context: FhirClientContextType = this.context;
+    // @ts-ignore
+    const patient: Patient = context.patient;
+    const matchedCR = this.state.communicationRequests?.find(
+      (cr: CommunicationRequest) => {
+        console.log("date time ", cr.occurrenceDateTime);
+        const crDate = new Date(cr.occurrenceDateTime);
+        const patientDate = new Date(patient.nextScheduledMessageDateTime);
+        return (
+          CommunicationRequest.isScheduledOutgoingMessage(cr) &&
+          cr.status === "active" &&
+          crDate.getFullYear() === patientDate.getFullYear() &&
+          crDate.getMonth() === patientDate.getMonth() &&
+          crDate.getDate() === patientDate.getDate() &&
+          crDate.getHours() === patientDate.getHours() &&
+          crDate.getSeconds() === patientDate.getSeconds()
+        );
+      }
+    );
+    if (!matchedCR) return null;
+    return (
+      <Box sx={{ marginTop: (theme) => theme.spacing(1.5) }}>
+        <Alert severity="info">
+          <AlertTitle>Next scheduled outgoing message</AlertTitle>
+          <Stack spacing={2} direction={"column"} alignItems={"flex-start"}>
+            <Box>
+              <Typography variant="body2" component="div">
+                {MessagingView.displayDateTime(
+                  patient.nextScheduledMessageDateTime
+                )}
+              </Typography>
+              <Typography variant="body2" component="div">
+                {matchedCR.getText()}
+              </Typography>
+            </Box>
+            <Button size="small" href={getClientAppURL("ENROLLMENT", patient?.id)}>
+              <ArrowBackIos fontSize="small"></ArrowBackIos>Edit in enrollment
+            </Button>
+          </Stack>
+        </Alert>
+      </Box>
+    );
+  }
+
   private _buildMessageTypeSelector(): React.ReactNode {
     const tabRootStyleProps = {
       margin: {
         xs: "8px auto 0",
-        sm: "8px 0 0"
+        sm: "8px 0 0",
       },
       marginTop: 1,
       minHeight: "40px",
@@ -413,9 +510,9 @@ export default class MessagingView extends React.Component<
     const tabProps = {
       sx: {
         padding: {
-          sm: (theme: any) => theme.spacing(1, 2.5)
+          sm: (theme: any) => theme.spacing(1, 2.5),
         },
-        color: grey[500]
+        color: grey[500],
       },
     };
     return (
@@ -427,7 +524,11 @@ export default class MessagingView extends React.Component<
           value={this.state.activeMessage?.type}
           onChange={(event: React.SyntheticEvent, value: MessageType) => {
             this.setState({
-              activeMessage: { ...defaultMessage, type: value, date: new Date().toISOString()},
+              activeMessage: {
+                ...defaultMessage,
+                type: value,
+                date: new Date().toISOString(),
+              },
             });
           }}
           textColor="primary"
@@ -488,7 +589,9 @@ export default class MessagingView extends React.Component<
           <Button
             variant="contained"
             onClick={() => this.saveSMSMessage()}
-            disabled={!this._hasMessageContent(this.state.activeMessage?.content)}
+            disabled={
+              !this._hasMessageContent(this.state.activeMessage?.content)
+            }
           >
             Send
           </Button>
@@ -685,16 +788,19 @@ export default class MessagingView extends React.Component<
     const dateFieldName = targetEntry?.sent ? "sent" : "received";
     const editDate = targetEntry ? targetEntry[dateFieldName] : null;
     const maxDate = new Date();
-    maxDate.setDate(maxDate.getDate() + 360*100);
-    const handleClose = (event:React.ChangeEvent, reason:string=null) => {
-      if (reason && reason === "backdropClick") 
-        return;
-      this.setState({
-        isEditing: false,
-        editDateTimeValidationError: null,
-      }, () => this.setState({
-        editEntry: null
-      }));
+    maxDate.setDate(maxDate.getDate() + 360 * 100);
+    const handleClose = (event: React.ChangeEvent, reason: string = null) => {
+      if (reason && reason === "backdropClick") return;
+      this.setState(
+        {
+          isEditing: false,
+          editDateTimeValidationError: null,
+        },
+        () =>
+          this.setState({
+            editEntry: null,
+          })
+      );
     };
     return (
       <Dialog
@@ -918,7 +1024,12 @@ export default class MessagingView extends React.Component<
           : "none",
     });
     const legendItem = (key: string) => (
-      <Stack spacing={1} direction={"row"} alignItems={"center"} key={`legend_${key}`}>
+      <Stack
+        spacing={1}
+        direction={"row"}
+        alignItems={"center"}
+        key={`legend_${key}`}
+      >
         <Box sx={legendIconStyle(key)}></Box>
         <Typography variant="body2">{labels[key]}</Typography>
       </Stack>
@@ -1141,7 +1252,11 @@ export default class MessagingView extends React.Component<
             incoming
               ? "reply (from recipient)"
               : message.sent
-              ? (autoMessage ? "scheduled Caring Contact message" : note ? note : "response (from author)")
+              ? autoMessage
+                ? "scheduled Caring Contact message"
+                : note
+                ? note
+                : "response (from author)"
               : ""
           }`,
         ]
@@ -1389,17 +1504,17 @@ export default class MessagingView extends React.Component<
       color: "#fff",
     };
   }
-  private _hasMessageContent(content : string): boolean {
+  private _hasMessageContent(content: string): boolean {
     if (!content) return false;
-    return !! String(content).trim();
+    return !!String(content).trim();
   }
 
-  private _hasMessageDate(date : Date | string, error : boolean): boolean {
+  private _hasMessageDate(date: Date | string, error: boolean): boolean {
     if (error) return false;
     return MessagingView.isValidDate(date);
   }
 
-  private _getDateTiemValidationErrorMessage(error: string) : string {
+  private _getDateTiemValidationErrorMessage(error: string): string {
     if (!error) return "";
     switch (error) {
       case "disableFuture": {
@@ -1436,7 +1551,8 @@ export default class MessagingView extends React.Component<
   }
   private static isValidDate(dateString: string | Date): boolean {
     if (!dateString) return false;
-    const dateVal = dateString instanceof Date ?  dateString : new Date(dateString);
+    const dateVal =
+      dateString instanceof Date ? dateString : new Date(dateString);
     return dateVal instanceof Date && !isNaN(dateVal.getTime());
   }
 }
