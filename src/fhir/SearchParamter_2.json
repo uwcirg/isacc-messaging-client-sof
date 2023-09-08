@@ -11,4 +11,3 @@
     "type": "date",
     "expression": "Patient.extension('http://isacc.app/date-time-of-next-outgoing-message').value"
   }
-  
