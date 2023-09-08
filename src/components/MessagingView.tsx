@@ -445,6 +445,7 @@ export default class MessagingView extends React.Component<
       (cr: CommunicationRequest) => {
         const crDate = new Date(cr.occurrenceDateTime);
         const patientDate = new Date(patient.nextScheduledMessageDateTime);
+        if (isNaN(crDate.getTime()) || isNaN(patientDate.getTime())) return false;
         return (
           CommunicationRequest.isScheduledOutgoingMessage(cr) &&
           cr.status === "active" &&
