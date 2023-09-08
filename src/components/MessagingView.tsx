@@ -441,22 +441,23 @@ export default class MessagingView extends React.Component<
     const context: FhirClientContextType = this.context;
     // @ts-ignore
     const patient: Patient = context.patient;
-    const matchedCR = this.state.communicationRequests?.find(
-      (cr: CommunicationRequest) => {
-        const crDate = new Date(cr.occurrenceDateTime);
-        const patientDate = new Date(patient.nextScheduledMessageDateTime);
-        if (isNaN(crDate.getTime()) || isNaN(patientDate.getTime())) return false;
-        return (
-          CommunicationRequest.isScheduledOutgoingMessage(cr) &&
-          cr.status === "active" &&
-          crDate.getFullYear() === patientDate.getFullYear() &&
-          crDate.getMonth() === patientDate.getMonth() &&
-          crDate.getDate() === patientDate.getDate() &&
-          crDate.getHours() === patientDate.getHours() &&
-          crDate.getSeconds() === patientDate.getSeconds()
-        );
-      }
-    );
+    const matchedCR = patient.nextScheduledMessageDateTime
+      ? this.state.communicationRequests?.find((cr: CommunicationRequest) => {
+          const crDate = new Date(cr.occurrenceDateTime);
+          const patientDate = new Date(patient.nextScheduledMessageDateTime);
+          if (isNaN(crDate.getTime()) || isNaN(patientDate.getTime()))
+            return false;
+          return (
+            CommunicationRequest.isScheduledOutgoingMessage(cr) &&
+            cr.status === "active" &&
+            crDate.getFullYear() === patientDate.getFullYear() &&
+            crDate.getMonth() === patientDate.getMonth() &&
+            crDate.getDate() === patientDate.getDate() &&
+            crDate.getHours() === patientDate.getHours() &&
+            crDate.getSeconds() === patientDate.getSeconds()
+          );
+        })
+      : null;
     if (!matchedCR) return null;
     return (
       <Box sx={{ marginTop: (theme) => theme.spacing(1.5) }}>
