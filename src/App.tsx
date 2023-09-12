@@ -24,7 +24,8 @@ export default class App extends React.Component<any, any> {
                                 <EnrollmentApp/> :
                                 <MessagingApp/>
                         }
-                        <SizeIndicator/>
+                        {/* indicator document body size, uncomment for debugging */}
+                        {/* <SizeIndicator/> */}
                     </FhirClientProvider>
                 </LocalizationProvider>
             </ThemeProvider>
