@@ -302,6 +302,12 @@ export default class ScheduleSetup extends React.Component<
                     }
                 }
               }}
+              onMouseEnter={() => this.setState({
+                showUnsaveChangesTooltip: true
+              })}
+              onMouseLeave={() => this.setState({
+                showUnsaveChangesTooltip: false
+              })}
             >
               <WarningIcon fontSize="large" color="warning"></WarningIcon>
             </Tooltip>
@@ -811,8 +817,7 @@ const MessageScheduleList = (props: {
         </Alert>
 
         <List>
-          {props.messagePlan
-            .getActiveCommunicationRequests()
+          {props.messagePlan.getActiveCommunicationRequests()
             .map((message: CommunicationRequest, index: number) =>
               buildMessageItem(message, index)
             )}
@@ -822,7 +827,7 @@ const MessageScheduleList = (props: {
           direction={"row"}
           justifyContent={"flex-start"}
           alignItems={"flex-start"}
-          sx={{ padding: (theme) => theme.spacing(2) }}
+          sx={{ padding: (theme) => theme.spacing(2), marginBottom: (theme) => theme.spacing(10) }}
         >
           <Button
             variant="outlined"
@@ -839,6 +844,7 @@ const MessageScheduleList = (props: {
               );
               props.messagePlan.addCommunicationRequest(newMessage);
               props.onMessagePlanChanged(props.messagePlan);
+              setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 200);
             }}
           >
             Add new message
