@@ -379,18 +379,15 @@ export default class Patient implements IPatient {
   }
 
   set nextScheduledMessageDateTime(value: string) {
-    if (!this.extension) {
-      this.extension = [];
-    }
-
     if (!value) {
       return;
     }
-
+    if (!this.extension) {
+      this.extension = [];
+    }
     let existingDateTime = this.extension?.filter(
       (i: IExtension) => i.url === ExtensionUrl.nextScheduledgMessageDateTimeUrl
     )[0];
-
     if (!existingDateTime) {
       existingDateTime = {
         url: ExtensionUrl.nextScheduledgMessageDateTimeUrl,

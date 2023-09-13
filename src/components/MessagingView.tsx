@@ -75,7 +75,7 @@ export default class MessagingView extends React.Component<
     activeMessage: Message;
     error: any;
     communications: Communication[];
-    communicationRequests: CommunicationRequest[];
+    scheduledCommunicationRequests: CommunicationRequest[];
     temporaryCommunications: Communication[];
     messagesLoading: boolean;
     saveLoading: boolean;
@@ -102,7 +102,7 @@ export default class MessagingView extends React.Component<
       activeMessage: defaultMessage,
       error: null,
       communications: null,
-      communicationRequests: null,
+      scheduledCommunicationRequests: null,
       temporaryCommunications: [],
       messagesLoading: false,
       saveLoading: false,
@@ -121,10 +121,13 @@ export default class MessagingView extends React.Component<
     if (!this.state.communications) {
       this.loadCommunications();
     }
-    this.loadCommunicationRequests();
+    if (!this.state.scheduledCommunicationRequests) {
+      this.loadNextScheduledCommunicationRequests();
+    }
     this.interval = setInterval(() => {
       console.log("Timer triggered");
       this.loadCommunications();
+      this.loadNextScheduledCommunicationRequests();
     }, 60000);
 
     window.addEventListener("DOMContentLoaded", () => {
@@ -181,7 +184,7 @@ export default class MessagingView extends React.Component<
       });
   }
 
-  loadCommunicationRequests() {
+  loadNextScheduledCommunicationRequests() {
     // @ts-ignore
     let client: Client = this.context.client;
     //@ts-ignore
@@ -189,13 +192,21 @@ export default class MessagingView extends React.Component<
     //@ts-ignore
     let patient: Patient = this.context.patient;
 
+    const today = new Date();
+    const todayDateString = [
+      today.toLocaleString("default", { year: "numeric" }),
+      today.toLocaleString("default", { month: "2-digit" }),
+      today.toLocaleString("default", { day: "2-digit" }),
+    ].join("-");
+
     let params = new URLSearchParams({
       recipient: `Patient/${patient.id}`,
       category: IsaccMessageCategory.isaccScheduledMessage.code,
       status: "active",
       "based-on": existingCarePlan.reference,
       _sort: "occurrence",
-      _count: "1000",
+      occurrence: `ge${todayDateString}`,
+      _count: "100",
     }).toString();
     const requestURL = `/CommunicationRequest?${params}`;
     let communicationRequests: CommunicationRequest[] = [];
@@ -207,12 +218,12 @@ export default class MessagingView extends React.Component<
               if (e.resource.resourceType !== "CommunicationRequest") {
                 return null;
               } else {
-                console.log("Communication loaded:", e);
+                console.log("CommunicationRequests loaded:", e);
                 return CommunicationRequest.from(e.resource);
               }
             });
             this.setState({
-              communicationRequests: communicationRequests,
+              scheduledCommunicationRequests: communicationRequests,
             });
           }
         }
@@ -442,19 +453,19 @@ export default class MessagingView extends React.Component<
     // @ts-ignore
     const patient: Patient = context.patient;
     const matchedCR = patient?.nextScheduledMessageDateTime
-      ? this.state.communicationRequests?.find((cr: CommunicationRequest) => {
+      ? this.state.scheduledCommunicationRequests?.find((cr: CommunicationRequest) => {
           const crDate = new Date(cr.occurrenceDateTime);
-          const patientDate = new Date(patient?.nextScheduledMessageDateTime);
-          if (isNaN(crDate.getTime()) || isNaN(patientDate.getTime()))
+          const patientExtensionDate = new Date(patient?.nextScheduledMessageDateTime);
+          if (isNaN(crDate.getTime()) || isNaN(patientExtensionDate.getTime()))
             return false;
           return (
             CommunicationRequest.isScheduledOutgoingMessage(cr) &&
             cr.status === "active" &&
-            crDate.getFullYear() === patientDate.getFullYear() &&
-            crDate.getMonth() === patientDate.getMonth() &&
-            crDate.getDate() === patientDate.getDate() &&
-            crDate.getHours() === patientDate.getHours() &&
-            crDate.getSeconds() === patientDate.getSeconds()
+            crDate.getFullYear() === patientExtensionDate.getFullYear() &&
+            crDate.getMonth() === patientExtensionDate.getMonth() &&
+            crDate.getDate() === patientExtensionDate.getDate() &&
+            crDate.getHours() === patientExtensionDate.getHours() &&
+            crDate.getSeconds() === patientExtensionDate.getSeconds()
           );
         })
       : null;
