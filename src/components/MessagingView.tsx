@@ -475,8 +475,8 @@ export default class MessagingView extends React.Component<
         <Alert severity="info">
           <AlertTitle>Next scheduled outgoing message</AlertTitle>
           <Stack spacing={1} direction={"column"} alignItems={"flex-start"}>
-            <Box>
-              <Typography variant="body2" component="div">
+            <Box sx={{ marginTop: 0.5, marginBottom: 1 }}>
+              <Typography variant="subtitle2" component="div">
                 {MessagingView.displayDateTime(
                   patient.nextScheduledMessageDateTime
                 )}
@@ -485,7 +485,11 @@ export default class MessagingView extends React.Component<
                 {matchedCR.getText()}
               </Typography>
             </Box>
-            <Button size="small" href={getClientAppURL("ENROLLMENT", patient?.id)}>
+            <Button
+              size="small"
+              href={getClientAppURL("ENROLLMENT", patient?.id)}
+              variant="outlined"
+            >
               <ArrowBackIos fontSize="small"></ArrowBackIos>Edit in enrollment
             </Button>
           </Stack>
