@@ -7,7 +7,7 @@ import {MessagingApp} from "./components/MessagingApp";
 import {fetchEnvData, getEnv} from "./util/util";
 import {theme} from "./theme";
 import {ThemeProvider} from '@mui/material/styles';
-import SizeIndicator from "./components/SizeIndicator";
+//import SizeIndicator from "./components/SizeIndicator";
 import EnrollmentApp from "./components/EnrollmentApp";
 
 fetchEnvData();
