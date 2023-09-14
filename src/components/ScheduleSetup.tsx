@@ -24,7 +24,8 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import moment from "moment";
 import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
 import {FhirClientContext} from "../FhirClientContext";
-import {IBundle_Entry, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
+import {IBundle_Entry, ICommunicationRequest, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
+import {IsaccMessageCategory} from "../model/CodeSystem";
 import {CommunicationRequest} from "../model/CommunicationRequest";
 import Alert from "@mui/material/Alert";
 import Patient from "../model/Patient";
@@ -61,6 +62,7 @@ type ScheduleSetupState = {
     savingInProgress: boolean;
     unsavedStates: UnsavedStates;
     showUnsaveChangesTooltip: boolean;
+    saveNotes: string[];
 }
 
 export type MessageDraft = {
@@ -104,6 +106,7 @@ export default class ScheduleSetup extends React.Component<
       savingInProgress: false,
       unsavedStates: defaultUnsavedStates,
       showUnsaveChangesTooltip: false,
+      saveNotes: null
     };
     // This binding is necessary to make `this` work in the callback
     this.alertUser = this.alertUser.bind(this);
@@ -290,17 +293,17 @@ export default class ScheduleSetup extends React.Component<
               open={this.state.showUnsaveChangesTooltip}
               slotProps={{
                 tooltip: {
-                    sx: {
-                        backgroundColor: (theme) => theme.palette.warning.dark,
-                        fontSize: "0.95rem",
-                        padding: (theme) => theme.spacing(1)
-                    }
+                  sx: {
+                    backgroundColor: (theme) => theme.palette.warning.dark,
+                    fontSize: "0.95rem",
+                    padding: (theme) => theme.spacing(1),
+                  },
                 },
                 arrow: {
-                    sx: {
-                        color: (theme) => theme.palette.warning.dark
-                    }
-                }
+                  sx: {
+                    color: (theme) => theme.palette.warning.dark,
+                  },
+                },
               }}
               onMouseEnter={() => this.setState({
                 showUnsaveChangesTooltip: true
@@ -309,7 +312,20 @@ export default class ScheduleSetup extends React.Component<
                 showUnsaveChangesTooltip: false
               })}
             >
-              <WarningIcon fontSize="large" color="warning"></WarningIcon>
+              <WarningIcon
+                fontSize="large"
+                color="warning"
+                onMouseEnter={() =>
+                  this.setState({
+                    showUnsaveChangesTooltip: true,
+                  })
+                }
+                onMouseLeave={() =>
+                  this.setState({
+                    showUnsaveChangesTooltip: false,
+                  })
+                }
+              ></WarningIcon>
             </Tooltip>
           )}
 
@@ -340,7 +356,12 @@ export default class ScheduleSetup extends React.Component<
 
   private getCloseSchedulePlannerAlert() {
     let clearSessionLink = getEnv("REACT_APP_DASHBOARD_URL") + "/clear_session";
-    let onClose = () => this.setState({ showCloseSchedulePlannerAlert: false });
+    let onClose = (event: React.SyntheticEvent<any, Event>, reason: string) => {
+      if (reason && reason === "backdropClick") {
+        return;
+      }
+      this.setState({ showCloseSchedulePlannerAlert: false });
+    }
 
     if (this.state.savingInProgress) {
       return (
@@ -360,15 +381,47 @@ export default class ScheduleSetup extends React.Component<
           onClose={onClose}
         >
           <DialogContent>
-            <DialogContentText>{this.state.alertText}</DialogContentText>
-            <DialogActions>
-              <Button
-                onClick={onClose}
-                href={clearSessionLink}
-                variant="contained"
+            <DialogContentText>
+              <Stack
+                spacing={1}
+                direction={"column"}
+                sx={{ maxHeight: "600px", overflowY: "auto" }}
               >
-                Close schedule planner
-              </Button>
+                <Alert severity="success">
+                  {this.state.alertText}
+                </Alert>
+                {this.state.saveNotes && (
+                  <Alert severity="warning">
+                    <AlertTitle sx={{marginBottom: 0}}>Please note</AlertTitle>
+                    {this.state.saveNotes.map((note, index) => (
+                      <div
+                        dangerouslySetInnerHTML={{ __html: note }}
+                        key={`saveNote_${index}`}
+                      ></div>
+                    ))}
+                  </Alert>
+                )}
+              </Stack>
+            </DialogContentText>
+            <DialogActions>
+              <Stack spacing={1} direction="row">
+                {/* @ts-ignore */}
+                <Button
+                  onClick={onClose}
+                  href={clearSessionLink}
+                  variant="contained"
+                  color="primary"
+                >
+                  Close schedule planner
+                </Button>
+                <Button
+                  onClick={() => window.location.reload()}
+                  variant="outlined"
+                >
+                  {" "}
+                  Edit Again
+                </Button>
+              </Stack>
             </DialogActions>
           </DialogContent>
         </Dialog>
@@ -378,9 +431,11 @@ export default class ScheduleSetup extends React.Component<
       <Snackbar
         open={this.state.showCloseSchedulePlannerAlert}
         autoHideDuration={6000}
+        // @ts-ignore
         onClose={onClose}
       >
         <Alert
+          // @ts-ignore
           onClose={onClose}
           action={
             <Button href={clearSessionLink}>Close schedule planner</Button>
@@ -549,93 +604,145 @@ export default class ScheduleSetup extends React.Component<
      return ct;
   }
 
+  private async getCompletedCommunicationRequests() : Promise<any> {
+     // @ts-ignore
+     const client = this.context.client;
+     // @ts-ignore
+     const patient = this.context.patient;
+    let params = new URLSearchParams({
+        "recipient": `Patient/${patient.id}`,
+        "category": IsaccMessageCategory.isaccScheduledMessage.code,
+        "status": "completed",
+        "based-on": this.state.carePlan.reference,
+        "_count": "100"
+    }).toString();
+
+    return getFhirData(client, `CommunicationRequest?${params}`);
+  }
+
   private saveCommunicationRequests() {
     // @ts-ignore
     let client: Client = this.context.client;
     // @ts-ignore
     const patient: Patient = this.context.patient;
 
-    let promises = this.state.carePlan.communicationRequests.map(
-      (c: CommunicationRequest) => {
-        let p;
-        if (c.id) {
-          p = client.update(c);
-        } else {
-          p = client.create(c);
-        }
-        return p.then((value: any) => CommunicationRequest.from(value));
+    this.getCompletedCommunicationRequests().then((bundle: Bundle) => {
+      let completedCRs: CommunicationRequest[] = [];
+      if (bundle.type === "searchset" && bundle.entry) {
+        completedCRs = bundle.entry.map(
+          (e: IBundle_Entry) => {
+            if (e.resource.resourceType === "CommunicationRequest") {
+              return CommunicationRequest.from(
+                e.resource as ICommunicationRequest
+              );
+            } else {
+              return null;
+            }
+          }
+        );
       }
-    );
-
-    Promise.all(promises).then(
-      (communicationRequests: CommunicationRequest[]) => {
-        communicationRequests.forEach((v: CommunicationRequest) => {
-          console.log("resource saved:", v);
+      let promises = this.state.carePlan.communicationRequests
+        .filter((c: CommunicationRequest) => {
+          if (c.status !== "active") return true;
+          // for a current active CommunicationRequest
+          // check for matching CommunicationRequest that has been completed, i.e. sent (status === 'completed')
+          const matchedCompletedCr = completedCRs.find(
+            (o: CommunicationRequest) => c?.id && o?.id === c.id
+          );
+          if (matchedCompletedCr) {
+            console.log(
+              "A message has been sent for CommunicationRequest ",
+              c
+            );
+            this.setState({
+              saveNotes: [
+                ...(this.state.saveNotes ?? []),
+                `You can no longer edit the following message, as it was sent by the system on <b>${new Date(c.occurrenceDateTime).toLocaleString()}</b>:<br/>${c.getText()}`,
+              ],
+            });
+          }
+          return !matchedCompletedCr;
+        })
+        .map((c: CommunicationRequest) => {
+          let p;
+          if (c.id) {
+            p = client.update(c);
+          } else {
+            p = client.create(c);
+          }
+          return p.then((value: any) => CommunicationRequest.from(value));
         });
-        // update CarePlan with the newly created CommunicationRequests
-        this.state.carePlan.setCommunicationRequests(
-          communicationRequests.filter(
-            (cr) => cr.resourceType === "CommunicationRequest"
-          )
-        );
+      Promise.all(promises).then(
+        (communicationRequests: CommunicationRequest[]) => {
+          communicationRequests.forEach((v: CommunicationRequest) => {
+            console.log("resource saved:", v);
+          });
+          // update CarePlan with the newly created CommunicationRequests
+          this.state.carePlan.setCommunicationRequests(
+            communicationRequests.filter(
+              (cr) => cr.resourceType === "CommunicationRequest"
+            )
+          );
+  
+          // create resource on server
+          let p;
+          if (this.state.carePlan.id) {
+            p = client.update(this.state.carePlan);
+          } else {
+            p = client.create(this.state.carePlan);
+          }
+          p.then(
+            (savedCarePlan: IResource) => {
+              let updatePromises = communicationRequests.map(
+                (c: CommunicationRequest) => {
+                  c.basedOn = [{ reference: `CarePlan/${savedCarePlan.id}` }];
+                  return client
+                    .update(c)
+                    .then((value: any) => CommunicationRequest.from(value));
+                }
+              );
+              Promise.all(updatePromises).then(
+                (updatedCommunicationRequests: CommunicationRequest[]) => {
+                  updatedCommunicationRequests.forEach(
+                    (v: CommunicationRequest) => {
+                      console.log("CommunicationRequest updated:", v);
+                    }
+                  );
+                  const activeScheduledCommunicationRequests = updatedCommunicationRequests
+                    .filter(
+                      (ucr : CommunicationRequest) =>
+                        ucr.status === "active" &&
+                        CommunicationRequest.isScheduledOutgoingMessage(ucr)
+                    )
+                    .sort((a, b) => {
+                      let d1 = a.occurrenceDateTime;
+                      let d2 = b.occurrenceDateTime;
+                      const t1 = d1 ? new Date(d1).getTime() : 0;
+                      const t2 = d2 ? new Date(d2).getTime() : 0;
+                      return t1 - t2;
+                    });
 
-        // create resource on server
-        let p;
-        if (this.state.carePlan.id) {
-          p = client.update(this.state.carePlan);
-        } else {
-          p = client.create(this.state.carePlan);
-        }
-        p.then(
-          (savedCarePlan: IResource) => {
-            let updatePromises = communicationRequests.map(
-              (c: CommunicationRequest) => {
-                c.basedOn = [{ reference: `CarePlan/${savedCarePlan.id}` }];
-                return client
-                  .update(c)
-                  .then((value: any) => CommunicationRequest.from(value));
-              }
-            );
-            Promise.all(updatePromises).then(
-              (updatedCommunicationRequests: CommunicationRequest[]) => {
-                updatedCommunicationRequests.forEach(
-                  (v: CommunicationRequest) => {
-                    console.log("CommunicationRequest updated:", v);
-                  }
-                );
-
-                const activeScheduledCommunicationRequests = updatedCommunicationRequests
-                  .filter(
-                    (ucr : CommunicationRequest) =>
-                      ucr.status === "active" &&
-                      CommunicationRequest.isScheduledOutgoingMessage(ucr)
-                  )
-                  .sort((a, b) => {
-                    let d1 = a.occurrenceDateTime;
-                    let d2 = b.occurrenceDateTime;
-                    const t1 = d1 ? new Date(d1).getTime() : 0;
-                    const t2 = d2 ? new Date(d2).getTime() : 0;
-                    return t1 - t2;
-                  });
-
-                // console.log("next ", activeCommunicationRequests[0].occurrenceDateTime)
-                // add next scheduled message date/time extension
-                patient.nextScheduledMessageDateTime =
-                activeScheduledCommunicationRequests.length
-                    ? activeScheduledCommunicationRequests[0]?.occurrenceDateTime
-                    : null;
-                if (patient.nextScheduledMessageDateTime) {
-                  // @ts-ignore
-                  client.update(patient).then(() => this.onSaved(savedCarePlan));
-                } else this.onSaved(savedCarePlan);
-              }
-            );
-          },
-          (reason: any) => this.onRejected(reason)
-        );
-      },
-      this.onRejected
-    );
+                  // console.log("next ", activeCommunicationRequests[0].occurrenceDateTime)
+                  // add next scheduled message date/time extension
+                  patient.nextScheduledMessageDateTime =
+                  activeScheduledCommunicationRequests.length
+                      ? activeScheduledCommunicationRequests[0]?.occurrenceDateTime
+                      : null;
+                  if (patient.nextScheduledMessageDateTime) {
+                    // @ts-ignore
+                    client.update(patient).then(() => this.onSaved(savedCarePlan));
+                  } else this.onSaved(savedCarePlan);
+                }
+              );
+            },
+            (reason: any) => this.onRejected(reason)
+          );
+        },
+        this.onRejected
+      );
+      
+    })
+  
   }
 
   private savePROs() {
@@ -745,7 +852,7 @@ const MessageScheduleList = (props: {
                                     width: "100%",
                                     minWidth: "264px",
                                     flexGrow: 1
-                                }}
+                                }} 
                             />
                         </LocalizationProvider>
                     </Grid>
