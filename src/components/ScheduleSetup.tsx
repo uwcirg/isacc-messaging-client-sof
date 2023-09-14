@@ -649,7 +649,7 @@ export default class ScheduleSetup extends React.Component<
             this.setState({
               saveNotes: [
                 ...(this.state.saveNotes ?? []),
-                `The message dated <b>${new Date(c.occurrenceDateTime).toLocaleString()}</b> -- ${c.getText()} -- had been sent by the system while you were editing it.<br/><i>This message is not saved</i>.`,
+                `You can no longer edit the following message, as it was sent by the system on <b>${new Date(c.occurrenceDateTime).toLocaleString()}</b>:<br/>${c.getText()}`,
               ],
             });
           }
