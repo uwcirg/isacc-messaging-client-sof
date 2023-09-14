@@ -386,7 +386,7 @@ export default class ScheduleSetup extends React.Component<
                 </Alert>
                 {this.state.saveNotes && (
                   <Alert severity="warning">
-                    <AlertTitle>Please note</AlertTitle>
+                    <AlertTitle sx={{marginBottom: 0}}>Please note</AlertTitle>
                     {this.state.saveNotes.map((note, index) => (
                       <div
                         dangerouslySetInnerHTML={{ __html: note }}
