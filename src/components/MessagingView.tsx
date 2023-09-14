@@ -465,7 +465,8 @@ export default class MessagingView extends React.Component<
             crDate.getMonth() === patientExtensionDate.getMonth() &&
             crDate.getDate() === patientExtensionDate.getDate() &&
             crDate.getHours() === patientExtensionDate.getHours() &&
-            crDate.getSeconds() === patientExtensionDate.getSeconds()
+            crDate.getSeconds() === patientExtensionDate.getSeconds() &&
+            crDate.getTime() >= (new Date()).getTime()
           );
         })
       : null;
