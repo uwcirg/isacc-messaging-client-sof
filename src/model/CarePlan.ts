@@ -104,7 +104,7 @@ export default class CarePlan implements ICarePlan {
     }
 
     getActiveCommunicationRequests() {
-        return this.communicationRequests.filter(
+        return this.communicationRequests?.filter(
             (message: CommunicationRequest) => message.status !== "revoked"
         )
     }
@@ -125,7 +125,9 @@ export default class CarePlan implements ICarePlan {
             this.updateActivityAttr();
         } else {
             requests.splice(index, 1);
-            this.setCommunicationRequests(requests);
+            this.communicationRequests = requests;
+            this.updateActivityAttr();
+            //this.setCommunicationRequests(requests);
         }
     }
 }
