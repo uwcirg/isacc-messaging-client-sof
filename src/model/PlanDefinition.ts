@@ -61,6 +61,8 @@ export default class PlanDefinition implements IPlanDefinition {
                         }
                     }
                     let date = activityDef.occurrenceTimeFromNow();
+                    // check if hard-coded date is in the past
+                    if (activityDef?.timingTiming?.event && (new Date(date)).getTime() < (new Date()).getTime()) return null;
                     return {
                         text: contentString,
                         scheduledDateTime: date
