@@ -108,7 +108,8 @@ export const ExtensionUrl = {
     messageThemeUrl: "isacc.app/message-theme",
     studyStartDateUrl: "isacc.app/study-start-date",
     studyStatusUrl: "isacc.app/study-status",
-    pronounsUrl: "http://hl7.org/fhir/StructureDefinition/individual-genderIdentity"
+    pronounsUrl: "http://hl7.org/fhir/StructureDefinition/individual-genderIdentity",
+    nextScheduledgMessageDateTimeUrl: "http://isacc.app/date-time-of-next-outgoing-message",
 }
 
 export const SystemURL = {

@@ -371,6 +371,33 @@ export default class Patient implements IPatient {
     existingPronouns.valueString = value;
   }
 
+  get nextScheduledMessageDateTime(): string {
+    let o = this.extension?.filter(
+      (i: IExtension) => i.url === ExtensionUrl.nextScheduledgMessageDateTimeUrl
+    )[0];
+    return o ? o.valueDateTime : null;
+  }
+
+  set nextScheduledMessageDateTime(value: string) {
+    if (!value) {
+      return;
+    }
+    if (!this.extension) {
+      this.extension = [];
+    }
+    let existingDateTime = this.extension?.filter(
+      (i: IExtension) => i.url === ExtensionUrl.nextScheduledgMessageDateTimeUrl
+    )[0];
+    if (!existingDateTime) {
+      existingDateTime = {
+        url: ExtensionUrl.nextScheduledgMessageDateTimeUrl,
+      };
+      this.extension.push(existingDateTime);
+    }
+    existingDateTime.valueDateTime = value;
+  }
+
+
   get isTest(): boolean {
     let o = this.meta?.security?.filter(
       (i: ICoding) =>
