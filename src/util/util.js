@@ -63,6 +63,11 @@ export function getEnvs() {
     };
 }
 
+/*
+ * check is passed dateString is in the past
+ * @param dateString in string
+ * @return boolean
+ */
 export function dateInPast (dateString) {
     const dateToCompare = new Date(dateString);
     dateToCompare.setSeconds(0);
@@ -70,6 +75,6 @@ export function dateInPast (dateString) {
     const today = new Date();
     today.setSeconds(0);
     today.setMilliseconds(0);
-    return  dateToCompare < today;
+    return dateToCompare < today;
 }
 export const queryPatientIdKey = 'launch_queryPatientId';
