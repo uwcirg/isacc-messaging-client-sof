@@ -834,7 +834,8 @@ const MessageScheduleList = (props: {
 
     const buildMessageItem = (message: CommunicationRequest, index: number) => {
         const isInPast = dateInPast(message.occurrenceDateTime);
-        const shouldDisable = message.status === "completed";
+        const messageCompleted = message.status === "completed";
+        const shouldShowPastWarning = !messageCompleted && isInPast;
         return (
           <ListItem
             key={`message_${index}`}
@@ -877,7 +878,7 @@ const MessageScheduleList = (props: {
                     // @ts-ignore
                     value={moment(message.occurrenceDateTime)}
                     format="ddd, MM/DD/YYYY hh:mm A" // example output display: Thu, 03/09/2023 09:34 AM
-                    disabled={shouldDisable}
+                    disabled={messageCompleted}
                     onChange={(newValue: Date | null) => {
                       message.setOccurrenceDate(newValue);
                       props.onMessagePlanChanged(props.messagePlan);
@@ -906,7 +907,7 @@ const MessageScheduleList = (props: {
                   />
                 </LocalizationProvider>
                 {/* display warning if the message date/time is in the past */}
-                {isInPast && (
+                {shouldShowPastWarning && (
                   <Alert
                     severity="warning"
                     variant="outlined"
@@ -939,7 +940,7 @@ const MessageScheduleList = (props: {
                   multiline
                   value={message.getText() ?? ""}
                   placeholder={"Enter message"}
-                  disabled={shouldDisable}
+                  disabled={messageCompleted}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                     message.setText(event.target.value);
                     props.onMessagePlanChanged(props.messagePlan);
