@@ -645,6 +645,7 @@ export default class ScheduleSetup extends React.Component<
       }
       let promises = this.state.carePlan.communicationRequests
         .filter((c: CommunicationRequest) => {
+          // do not create CR for message that does not have a active status or date/time is in the past
           if (c.status !== "active") return false;
           if (dateInPast(c.occurrenceDateTime)) return false;
           // for a current active CommunicationRequest
@@ -895,6 +896,7 @@ const MessageScheduleList = (props: {
                     }}
                   />
                 </LocalizationProvider>
+                {/* display warning if the message date/time is in the past */}
                 {isInPast && (
                   <Alert
                     severity="warning"
