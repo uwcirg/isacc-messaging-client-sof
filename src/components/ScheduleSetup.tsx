@@ -645,9 +645,18 @@ export default class ScheduleSetup extends React.Component<
       }
       let promises = this.state.carePlan.communicationRequests
         .filter((c: CommunicationRequest) => {
-          // do not create CR for message that does not have a active status or date/time is in the past
+          // do not create CR for message that does not have a active status
           if (c.status !== "active") return false;
-          if (dateInPast(c.occurrenceDateTime)) return false;
+          // date time in the past
+          if (dateInPast(c.occurrenceDateTime)) {
+              if (c.id) {
+                // CR already exists, update its status to "revoked" so it won't be sent
+                c.status = "revoked";
+              } else {
+                // if a new message, don't create CR for it
+                return false;
+              }
+          }
           // for a current active CommunicationRequest
           // check for matching CommunicationRequest that has been completed, i.e. sent (status === 'completed')
           const matchedCompletedCr = completedCRs.find(
