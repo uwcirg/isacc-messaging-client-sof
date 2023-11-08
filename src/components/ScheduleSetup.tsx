@@ -914,7 +914,7 @@ const MessageScheduleList = (props: {
                     sx={{
                       border: 0,
                       wordWrap: "break-word",
-                      maxWidth: 200,
+                      maxWidth: 240,
                       padding: 0,
                       alignItems: "center",
                     }}
@@ -1019,11 +1019,12 @@ const MessageScheduleList = (props: {
               minWidth: (theme) => theme.spacing(33),
             }}
             onClick={() => {
+              const today = new Date((new Date()).getTime() + 5 * 60000);
               let newMessage = CommunicationRequest.createNewScheduledMessage(
                 "",
                 props.patient,
                 props.messagePlan,
-                new Date()
+                today
               );
               props.messagePlan.addCommunicationRequest(newMessage);
               props.onMessagePlanChanged(props.messagePlan);
