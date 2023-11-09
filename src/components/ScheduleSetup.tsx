@@ -1019,7 +1019,7 @@ const MessageScheduleList = (props: {
               minWidth: (theme) => theme.spacing(33),
             }}
             onClick={() => {
-              const today = new Date((new Date()).getTime() + 5 * 60000);
+              const today = new Date((new Date()).getTime() + 60 * 1 * 60000);
               let newMessage = CommunicationRequest.createNewScheduledMessage(
                 "",
                 props.patient,
