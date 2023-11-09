@@ -453,22 +453,29 @@ export default class MessagingView extends React.Component<
     // @ts-ignore
     const patient: Patient = context.patient;
     const matchedCR = patient?.nextScheduledMessageDateTime
-      ? this.state.scheduledCommunicationRequests?.find((cr: CommunicationRequest) => {
-          const crDate = new Date(cr.occurrenceDateTime);
-          const patientExtensionDate = new Date(patient?.nextScheduledMessageDateTime);
-          if (isNaN(crDate.getTime()) || isNaN(patientExtensionDate.getTime()))
-            return false;
-          return (
-            CommunicationRequest.isScheduledOutgoingMessage(cr) &&
-            cr.status === "active" &&
-            crDate.getFullYear() === patientExtensionDate.getFullYear() &&
-            crDate.getMonth() === patientExtensionDate.getMonth() &&
-            crDate.getDate() === patientExtensionDate.getDate() &&
-            crDate.getHours() === patientExtensionDate.getHours() &&
-            crDate.getSeconds() === patientExtensionDate.getSeconds() &&
-            crDate.getTime() >= (new Date()).getTime()
-          );
-        })
+      ? this.state.scheduledCommunicationRequests?.find(
+          (cr: CommunicationRequest) => {
+            const crDate = new Date(cr.occurrenceDateTime);
+            const patientExtensionDate = new Date(
+              patient?.nextScheduledMessageDateTime
+            );
+            if (
+              isNaN(crDate.getTime()) ||
+              isNaN(patientExtensionDate.getTime())
+            )
+              return false;
+            return (
+              CommunicationRequest.isScheduledOutgoingMessage(cr) &&
+              cr.status === "active" &&
+              crDate.getFullYear() === patientExtensionDate.getFullYear() &&
+              crDate.getMonth() === patientExtensionDate.getMonth() &&
+              crDate.getDate() === patientExtensionDate.getDate() &&
+              crDate.getHours() === patientExtensionDate.getHours() &&
+              crDate.getSeconds() === patientExtensionDate.getSeconds() &&
+              crDate.getTime() >= new Date().getTime()
+            );
+          }
+        )
       : null;
     if (!matchedCR) return null;
     return (
@@ -924,6 +931,7 @@ export default class MessagingView extends React.Component<
               client
                 .update(targetEntry)
                 .then(() => {
+                  this.handleLastUnfollowedDateTime(targetEntry);
                   const existingEntryIndex =
                     this.state.communications?.findIndex(
                       (item) => item.id === targetEntry.id
@@ -1075,18 +1083,48 @@ export default class MessagingView extends React.Component<
     );
   }
 
+  private handleLastUnfollowedDateTime(communication: Communication) {
+    // @ts-ignore
+    const context: FhirClientContextType = this.context;
+    const patient: Patient = context.patient;
+    const isOutsideCommunication = !!communication.category?.find(
+      (c: ICodeableConcept) =>
+        c.coding.find((coding: ICoding) =>
+          IsaccMessageCategory.isaccNonSMSMessage.equals(coding)
+        )
+    );
+    // if an outside communication is sent to the recipient
+    if (isOutsideCommunication && communication.sent) {
+      const existingLastUnfollowedMessageDateTime =
+        patient.lastUnfollowedMessageDateTime;
+      // if date/time of outside communication > existing last unfollowed message date/time
+      // means the provider has responded to the recipient's last message
+      if (
+        existingLastUnfollowedMessageDateTime &&
+        new Date(communication.sent) >
+          new Date(existingLastUnfollowedMessageDateTime)
+      ) {
+        // set to a future date, this is so that `Time Since Reply` can be sorted
+        patient.lastUnfollowedMessageDateTime = Patient.UNSET_LAST_UNFOLLOWED_DATETIME;
+        const client = context.client;
+        if (client) {
+          // @ts-ignore
+          client.update(patient);
+        }
+      }
+    }
+  }
+
   private saveNonSMSMessage() {
     // @ts-ignore
     let context: FhirClientContextType = this.context;
     this.setState({ saveLoading: true });
+    const messageType = this.state.activeMessage?.type;
+    const messageStatus = this.state.activeMessage?.status;
     const sentDate =
-      this.state.activeMessage?.status === "sent"
-        ? this.state.activeMessage.date
-        : null;
+      messageStatus === "sent" ? this.state.activeMessage.date : null;
     const receivedDate =
-      this.state.activeMessage?.status === "received"
-        ? this.state.activeMessage.date
-        : null;
+      messageStatus === "received" ? this.state.activeMessage.date : null;
     const currentPractitioner = context.practitioner;
     const userName = getUserName(context.client);
     const practitionerName = currentPractitioner
@@ -1100,7 +1138,7 @@ export default class MessagingView extends React.Component<
       : userName
       ? `entered by ${userName}`
       : "staff-entered";
-    const noteAboutCommunication = `${this.state.activeMessage?.type}, ${enteredByText}`;
+    const noteAboutCommunication = `${messageType}, ${enteredByText}`;
     // new communication
     // TODO implement sender, requires Practitioner resource set for the user
     const newCommunication = Communication.create(
@@ -1109,7 +1147,7 @@ export default class MessagingView extends React.Component<
       context.currentCarePlan,
       sentDate,
       receivedDate,
-      this.state.activeMessage?.type === "comment"
+      messageType === "comment"
         ? IsaccMessageCategory.isaccComment
         : IsaccMessageCategory.isaccNonSMSMessage,
       noteAboutCommunication,
@@ -1117,11 +1155,11 @@ export default class MessagingView extends React.Component<
     );
     this._save(newCommunication, (savedResult: IResource) => {
       console.log("Saved new communication:", savedResult);
-      const currentMessageType = this.state.activeMessage.type;
+      this.handleLastUnfollowedDateTime(newCommunication);
       this.setState({
         activeMessage: {
           ...defaultMessage,
-          type: currentMessageType,
+          type: messageType,
         },
         error: null,
       });
