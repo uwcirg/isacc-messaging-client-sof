@@ -44,6 +44,8 @@ import { Observation } from "../model/Observation";
 import {Bundle} from "../model/Bundle";
 import { getFhirData } from "../util/isacc_util";
 import { unmarkTestPatient} from "../model/modelUtil";
+import { dateInPast } from "../util/util";
+
 interface ScheduleSetupProps {
 }
 
@@ -643,7 +645,18 @@ export default class ScheduleSetup extends React.Component<
       }
       let promises = this.state.carePlan.communicationRequests
         .filter((c: CommunicationRequest) => {
-          if (c.status !== "active") return true;
+          // do not create CR for message that does not have a active status
+          if (c.status !== "active") return false;
+          // date time in the past
+          if (dateInPast(c.occurrenceDateTime)) {
+              if (c.id) {
+                // CR already exists, update its status to "revoked" so it won't be sent
+                c.status = "revoked";
+              } else {
+                // if a new message, don't create CR for it
+                return false;
+              }
+          }
           // for a current active CommunicationRequest
           // check for matching CommunicationRequest that has been completed, i.e. sent (status === 'completed')
           const matchedCompletedCr = completedCRs.find(
@@ -820,59 +833,122 @@ const MessageScheduleList = (props: {
 }) => {
 
     const buildMessageItem = (message: CommunicationRequest, index: number) => {
+        const isInPast = dateInPast(message.occurrenceDateTime);
+        const messageCompleted = message.status === "completed";
+        const shouldShowPastWarning = !messageCompleted && isInPast;
         return (
-            <ListItem key={`message_${index}`} sx={{
-                width: '100%',
-                "& .MuiListItemSecondaryAction-root": {
-                    right: 0.5
-                }
-            }} secondaryAction={
-                message.status === "completed" ? <></> :
-                    <IconButton hidden={message.status === "completed"} onClick={() => {
-                        removeMessage(index);
-                    }}>
-                        <ClearIcon/>
-                    </IconButton>
-            }>
-                <Grid container direction={"row"} flexDirection={"row"} spacing={2}
-                      sx={{paddingTop: 2}}>
-                    <Grid item>
-                        <LocalizationProvider dateAdapter={AdapterMoment}>
-                            <DateTimePicker
-                                label={message.status === "completed" ? "Delivered Date & Time" : "Scheduled Date & Time"}
-                                // @ts-ignore
-                                value={moment(message.occurrenceDateTime)}
-                                format="ddd, MM/DD/YYYY hh:mm A" // example output display: Thu, 03/09/2023 09:34 AM
-                                disabled={message.status === "completed"}
-                                onChange={(newValue: Date | null) => {
-                                    message.setOccurrenceDate(newValue);
-                                    props.onMessagePlanChanged(props.messagePlan);
-                                }}
-                                sx={{
-                                    width: "100%",
-                                    minWidth: "264px",
-                                    flexGrow: 1
-                                }} 
-                            />
-                        </LocalizationProvider>
-                    </Grid>
-                    <Grid item flexGrow={1}>
-                        <TextField
-                            error={message.getText().length === 0}
-                            helperText={message.getText().length === 0 ? "Enter a message" : ""}
-                            label={message.status === "completed" ? "Delivered Message" : "Scheduled Message"}
-                            fullWidth
-                            multiline
-                            value={message.getText() ?? ""}
-                            placeholder={"Enter message"}
-                            disabled={message.status === "completed"}
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                                message.setText(event.target.value);
-                                props.onMessagePlanChanged(props.messagePlan);
-                            }}/>
-                    </Grid>
-                </Grid>
-            </ListItem>
+          <ListItem
+            key={`message_${index}`}
+            sx={{
+              width: "100%",
+              "& .MuiListItemSecondaryAction-root": {
+                right: 0.5,
+              },
+            }}
+            secondaryAction={
+              message.status === "completed" ? (
+                <></>
+              ) : (
+                <IconButton
+                  hidden={message.status === "completed"}
+                  onClick={() => {
+                    removeMessage(index);
+                  }}
+                >
+                  <ClearIcon />
+                </IconButton>
+              )
+            }
+          >
+            <Grid
+              container
+              direction={"row"}
+              flexDirection={"row"}
+              spacing={2}
+              sx={{ paddingTop: 2 }}
+            >
+              <Grid item>
+                <LocalizationProvider dateAdapter={AdapterMoment}>
+                  <DateTimePicker
+                    label={
+                      message.status === "completed"
+                        ? "Delivered Date & Time"
+                        : "Scheduled Date & Time"
+                    }
+                    // @ts-ignore
+                    value={moment(message.occurrenceDateTime)}
+                    format="ddd, MM/DD/YYYY hh:mm A" // example output display: Thu, 03/09/2023 09:34 AM
+                    disabled={messageCompleted}
+                    onChange={(newValue: Date | null) => {
+                      message.setOccurrenceDate(newValue);
+                      props.onMessagePlanChanged(props.messagePlan);
+                    }}
+                    slotProps={{
+                      textField: {
+                        //@ts-ignore
+                        onChange: (value: moment.Moment, validationContext) => {
+                          const inputValue = value ? value.toDate() : null;
+                          if (!inputValue) return;
+                          const validationError =
+                            validationContext?.validationError;
+                          if (!validationError) {
+                            const newValue = new Date(inputValue);
+                            message.setOccurrenceDate(newValue);
+                            props.onMessagePlanChanged(props.messagePlan);
+                          }
+                        },
+                      },
+                    }}
+                    sx={{
+                      width: "100%",
+                      minWidth: "264px",
+                      flexGrow: 1,
+                    }}
+                  />
+                </LocalizationProvider>
+                {/* display warning if the message date/time is in the past */}
+                {shouldShowPastWarning && (
+                  <Alert
+                    severity="warning"
+                    variant="outlined"
+                    sx={{
+                      border: 0,
+                      wordWrap: "break-word",
+                      maxWidth: 240,
+                      padding: 0,
+                      alignItems: "center",
+                    }}
+                  >
+                    <Typography variant="body2">
+                      Date & time in the past. Message will not be sent.
+                    </Typography>
+                  </Alert>
+                )}
+              </Grid>
+              <Grid item flexGrow={1}>
+                <TextField
+                  error={message.getText().length === 0}
+                  helperText={
+                    message.getText().length === 0 ? "Enter a message" : ""
+                  }
+                  label={
+                    message.status === "completed"
+                      ? "Delivered Message"
+                      : "Scheduled Message"
+                  }
+                  fullWidth
+                  multiline
+                  value={message.getText() ?? ""}
+                  placeholder={"Enter message"}
+                  disabled={messageCompleted}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    message.setText(event.target.value);
+                    props.onMessagePlanChanged(props.messagePlan);
+                  }}
+                />
+              </Grid>
+            </Grid>
+          </ListItem>
         );
     }
 
@@ -943,11 +1019,12 @@ const MessageScheduleList = (props: {
               minWidth: (theme) => theme.spacing(33),
             }}
             onClick={() => {
+              const today = new Date((new Date()).getTime() + 60 * 1 * 60000);
               let newMessage = CommunicationRequest.createNewScheduledMessage(
                 "",
                 props.patient,
                 props.messagePlan,
-                new Date()
+                today
               );
               props.messagePlan.addCommunicationRequest(newMessage);
               props.onMessagePlanChanged(props.messagePlan);
