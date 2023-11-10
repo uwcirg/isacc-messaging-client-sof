@@ -66,6 +66,7 @@ export default class Patient implements IPatient {
   }
   
   static TEST_PATIENT_SECURITY_CODE = "HTEST";
+  static UNSET_LAST_UNFOLLOWED_DATETIME = "2025-01-01T00:00:00Z";
 
   get smsContactPoint(): string {
     let p = this.telecom?.filter(
@@ -391,6 +392,32 @@ export default class Patient implements IPatient {
     if (!existingDateTime) {
       existingDateTime = {
         url: ExtensionUrl.nextScheduledgMessageDateTimeUrl,
+      };
+      this.extension.push(existingDateTime);
+    }
+    existingDateTime.valueDateTime = value;
+  }
+
+  get lastUnfollowedMessageDateTime(): string {
+    let o = this.extension?.filter(
+      (i: IExtension) => i.url === ExtensionUrl.lastUnfollowedMessageDateTimeUrl
+    )[0];
+    return o ? o.valueDateTime : null;
+  }
+
+  set lastUnfollowedMessageDateTime(value: string) {
+    if (!value) {
+      return;
+    }
+    if (!this.extension) {
+      this.extension = [];
+    }
+    let existingDateTime = this.extension?.filter(
+      (i: IExtension) => i.url === ExtensionUrl.lastUnfollowedMessageDateTimeUrl
+    )[0];
+    if (!existingDateTime) {
+      existingDateTime = {
+        url: ExtensionUrl.lastUnfollowedMessageDateTimeUrl,
       };
       this.extension.push(existingDateTime);
     }

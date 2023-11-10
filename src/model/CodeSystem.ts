@@ -110,6 +110,7 @@ export const ExtensionUrl = {
     studyStatusUrl: "isacc.app/study-status",
     pronounsUrl: "http://hl7.org/fhir/StructureDefinition/individual-genderIdentity",
     nextScheduledgMessageDateTimeUrl: "http://isacc.app/date-time-of-next-outgoing-message",
+    lastUnfollowedMessageDateTimeUrl: "http://isacc.app/time-of-last-unfollowedup-message"
 }
 
 export const SystemURL = {
