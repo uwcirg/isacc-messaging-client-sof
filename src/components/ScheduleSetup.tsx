@@ -588,6 +588,7 @@ export default class ScheduleSetup extends React.Component<
       },
       (reason: any) => {
         this.showSnackbar("error", reason);
+        setTimeout(() => window.scrollTo(0, 0), 0);
       }
     );
   }
