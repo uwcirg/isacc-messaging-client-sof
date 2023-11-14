@@ -646,7 +646,7 @@ export default class ScheduleSetup extends React.Component<
       let promises = this.state.carePlan.communicationRequests
         .filter((c: CommunicationRequest) => {
           // do not create CR for message that does not have a active status
-          if (c.status !== "active") return false;
+          if (c.status !== "active") return true;
           // date time in the past
           if (dateInPast(c.occurrenceDateTime)) {
               if (c.id) {
