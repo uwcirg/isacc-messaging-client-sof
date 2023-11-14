@@ -67,6 +67,7 @@ export default class Patient implements IPatient {
   
   static TEST_PATIENT_SECURITY_CODE = "HTEST";
   static UNSET_LAST_UNFOLLOWED_DATETIME = "2025-01-01T00:00:00Z";
+  static DEEP_PAST_NEXT_MESSAGE_DATETIME = "1975-01-01T00:00:00Z";
 
   get smsContactPoint(): string {
     let p = this.telecom?.filter(
@@ -380,15 +381,6 @@ export default class Patient implements IPatient {
   }
 
   set nextScheduledMessageDateTime(value: string) {
-    if (!value) {
-      if (this.extension) {
-        // if next scheduled message date time is null then removed the extension
-        this.extension = this.extension?.filter(
-          (i: IExtension) => i.url !== ExtensionUrl.nextScheduledgMessageDateTimeUrl
-        );
-      }
-      return;
-    }
     if (!this.extension) {
       this.extension = [];
     }
@@ -401,7 +393,8 @@ export default class Patient implements IPatient {
       };
       this.extension.push(existingDateTime);
     }
-    existingDateTime.valueDateTime = value;
+    // for sorting purpose the value cannot be empty, so update it to date/time in deep past if value is null
+    existingDateTime.valueDateTime = value??Patient.DEEP_PAST_NEXT_MESSAGE_DATETIME;
   }
 
   get lastUnfollowedMessageDateTime(): string {
