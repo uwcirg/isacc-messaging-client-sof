@@ -588,6 +588,7 @@ export default class ScheduleSetup extends React.Component<
       },
       (reason: any) => {
         this.showSnackbar("error", reason);
+        setTimeout(() => window.scrollTo(0, 0), 0);
       }
     );
   }
@@ -721,30 +722,39 @@ export default class ScheduleSetup extends React.Component<
                       console.log("CommunicationRequest updated:", v);
                     }
                   );
-                  const activeScheduledCommunicationRequests = updatedCommunicationRequests
-                    .filter(
-                      (ucr : CommunicationRequest) =>
-                        ucr.status === "active" &&
-                        CommunicationRequest.isScheduledOutgoingMessage(ucr)
-                    )
-                    .sort((a, b) => {
-                      let d1 = a.occurrenceDateTime;
-                      let d2 = b.occurrenceDateTime;
-                      const t1 = d1 ? new Date(d1).getTime() : 0;
-                      const t2 = d2 ? new Date(d2).getTime() : 0;
-                      return t1 - t2;
-                    });
+                  const activeScheduledCommunicationRequests =
+                    updatedCommunicationRequests
+                      .filter(
+                        (ucr: CommunicationRequest) =>
+                          ucr.status === "active" &&
+                          CommunicationRequest.isScheduledOutgoingMessage(ucr)
+                      )
+                      .sort((a, b) => {
+                        let d1 = a.occurrenceDateTime;
+                        let d2 = b.occurrenceDateTime;
+                        const t1 = d1 ? new Date(d1).getTime() : 0;
+                        const t2 = d2 ? new Date(d2).getTime() : 0;
+                        return t1 - t2;
+                      });
 
                   // console.log("next ", activeCommunicationRequests[0].occurrenceDateTime)
                   // add next scheduled message date/time extension
                   patient.nextScheduledMessageDateTime =
-                  activeScheduledCommunicationRequests.length
-                      ? activeScheduledCommunicationRequests[0]?.occurrenceDateTime
-                      : null;
-                  if (patient.nextScheduledMessageDateTime) {
+                    activeScheduledCommunicationRequests.length
+                      ? activeScheduledCommunicationRequests[0]
+                          ?.occurrenceDateTime
+                      : null; // set next scheduled message date/time to null if there is no active communicationRequest
+                  client
                     // @ts-ignore
-                    client.update(patient).then(() => this.onSaved(savedCarePlan));
-                  } else this.onSaved(savedCarePlan);
+                    .update(patient)
+                    .then(() => this.onSaved(savedCarePlan))
+                    .catch((e) => {
+                      this.showSnackbar(
+                        "warning",
+                        `Issue encountered updating patient's next scheduled message date/time. See console for detail.`
+                      );
+                      this.onSaved(savedCarePlan)
+                    });
                 }
               );
             },
