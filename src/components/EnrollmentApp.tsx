@@ -148,8 +148,13 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
         }).toString();
         getFhirData(client,`CommunicationRequest?${params}`).then((bundle: Bundle) => {
             if (bundle.type === "searchset") {
-                if (!bundle.entry) {
-                    this.setState({editMode: true});
+                if (!bundle?.entry) {
+                    if (existingCarePlan) {
+                        // set communication requests for current care plan to empty array
+                        existingCarePlan.setCommunicationRequests([]);
+                    }
+                    context.currentCarePlan = existingCarePlan;
+                    this.setState({activeCarePlan: existingCarePlan, editMode: true});
                     return [];
                 }
                 let crs: CommunicationRequest[] = bundle.entry.map((e: IBundle_Entry) => {
