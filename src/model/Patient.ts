@@ -381,6 +381,12 @@ export default class Patient implements IPatient {
 
   set nextScheduledMessageDateTime(value: string) {
     if (!value) {
+      if (this.extension) {
+        // if next scheduled message date time is null then removed the extension
+        this.extension = this.extension?.filter(
+          (i: IExtension) => i.url !== ExtensionUrl.nextScheduledgMessageDateTimeUrl
+        );
+      }
       return;
     }
     if (!this.extension) {
