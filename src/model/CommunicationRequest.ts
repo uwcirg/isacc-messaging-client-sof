@@ -61,7 +61,7 @@ export class CommunicationRequest implements ICommunicationRequest {
     sender: Patient | Practitioner = null,
     note: string = ""
   ) {
-    return this.createNewOutgoingMessage(
+    let c = this.createNewOutgoingMessage(
       messageContent,
       patient,
       carePlan,
@@ -69,6 +69,7 @@ export class CommunicationRequest implements ICommunicationRequest {
       sender,
       note
     );
+    return c
   }
 
   static createNewOutgoingMessage(

@@ -46,14 +46,18 @@ export default function FhirClientProvider(props: Props): JSX.Element {
       console.log("Using stored patient id ", queryPatientId);
       return getFhirData(client, "/Patient/" + queryPatientId).then(
         (value: any) => {
-          return Patient.from(value);
+          let patient: Patient = Patient.from(value)
+          let active_patient: Patient = patient.active === true ? patient : undefined;
+          return active_patient;
         }
       );
     }
     // Get the Patient resource
     return await client.patient.read().then((value: any) => {
-      return Patient.from(value);
-    });
+      let patient: Patient = Patient.from(value)
+      let active_patient: Patient = patient.active === true ? patient : undefined;
+      return active_patient;
+});
   }
 
   async function getPractitioner(
