@@ -64,9 +64,9 @@ export default class Patient implements IPatient {
     if (!raw) return null;
     return Object.assign(new Patient(), raw);
   }
-  
+
   static TEST_PATIENT_SECURITY_CODE = "HTEST";
-  static UNSET_LAST_UNFOLLOWED_DATETIME = "2025-01-01T00:00:00Z";
+  static UNSET_LAST_UNFOLLOWED_DATETIME = "2035-01-01T00:00:00Z";
   static DEEP_PAST_NEXT_MESSAGE_DATETIME = "1975-01-01T00:00:00Z";
 
   get smsContactPoint(): string {
@@ -374,34 +374,50 @@ export default class Patient implements IPatient {
   }
 
   get nextScheduledMessageDateTime(): string {
-    let o = this.extension?.filter(
+    const targetExtensions = this.extension?.filter(
       (i: IExtension) => i.url === ExtensionUrl.nextScheduledgMessageDateTimeUrl
-    )[0];
-    return o ? o.valueDateTime : null;
+    );
+    if (!targetExtensions || !targetExtensions.length) return null;
+    // in case there are multiple next scheduled message date/time extensions
+    // sort extensions so latest date/time is the first and return that
+    targetExtensions.sort(
+      (a, b) =>
+        new Date(b.valueDateTime).getTime() -
+        new Date(a.valueDateTime).getTime()
+    );
+    return targetExtensions[0].valueDateTime;
   }
 
   set nextScheduledMessageDateTime(value: string) {
+    if (!value) {
+      return;
+    }
     if (!this.extension) {
       this.extension = [];
     }
-    let existingDateTime = this.extension?.filter(
-      (i: IExtension) => i.url === ExtensionUrl.nextScheduledgMessageDateTimeUrl
-    )[0];
-    if (!existingDateTime) {
-      existingDateTime = {
-        url: ExtensionUrl.nextScheduledgMessageDateTimeUrl,
-      };
-      this.extension.push(existingDateTime);
-    }
-    // for sorting purpose the value cannot be empty, so update it to date/time in deep past if value is null
-    existingDateTime.valueDateTime = value??Patient.DEEP_PAST_NEXT_MESSAGE_DATETIME;
+    const updatedExtensions: IExtension[] = this.extension.filter(
+      (i: IExtension) => i.url !== ExtensionUrl.nextScheduledgMessageDateTimeUrl
+    );
+    this.extension = updatedExtensions;
+    this.extension.push({
+      url: ExtensionUrl.nextScheduledgMessageDateTimeUrl,
+      valueDateTime: value,
+    });
   }
 
   get lastUnfollowedMessageDateTime(): string {
-    let o = this.extension?.filter(
+    let targetExtensions = this.extension?.filter(
       (i: IExtension) => i.url === ExtensionUrl.lastUnfollowedMessageDateTimeUrl
-    )[0];
-    return o ? o.valueDateTime : null;
+    );
+    if (!targetExtensions || !targetExtensions.length) return null;
+    // in case there are multiple last unfollowed message date/time extensions
+    // sort extensions so latest date/time is the first and return that
+    targetExtensions.sort(
+      (a, b) =>
+        new Date(b.valueDateTime).getTime() -
+        new Date(a.valueDateTime).getTime()
+    );
+    return targetExtensions[0].valueDateTime;
   }
 
   set lastUnfollowedMessageDateTime(value: string) {
@@ -411,18 +427,15 @@ export default class Patient implements IPatient {
     if (!this.extension) {
       this.extension = [];
     }
-    let existingDateTime = this.extension?.filter(
-      (i: IExtension) => i.url === ExtensionUrl.lastUnfollowedMessageDateTimeUrl
-    )[0];
-    if (!existingDateTime) {
-      existingDateTime = {
-        url: ExtensionUrl.lastUnfollowedMessageDateTimeUrl,
-      };
-      this.extension.push(existingDateTime);
-    }
-    existingDateTime.valueDateTime = value;
+    let updatedExtensions: IExtension[] = this.extension?.filter(
+      (i: IExtension) => i.url !== ExtensionUrl.lastUnfollowedMessageDateTimeUrl
+    );
+    this.extension = updatedExtensions;
+    this.extension.push({
+      url: ExtensionUrl.lastUnfollowedMessageDateTimeUrl,
+      valueDateTime: value,
+    });
   }
-
 
   get isTest(): boolean {
     let o = this.meta?.security?.filter(
@@ -444,7 +457,8 @@ export default class Patient implements IPatient {
     }
     let existingMetaSecurity = this.meta.security?.filter(
       (i: ICoding) =>
-        i?.system === SystemURL.testPatientUrl && i?.code === Patient.TEST_PATIENT_SECURITY_CODE
+        i?.system === SystemURL.testPatientUrl &&
+        i?.code === Patient.TEST_PATIENT_SECURITY_CODE
     )[0];
 
     if (!existingMetaSecurity) {
