@@ -32,7 +32,7 @@ export default class Patient implements IPatient {
   _language?: IElement;
   _multipleBirthBoolean?: IElement;
   _multipleBirthInteger?: IElement;
-  active?: boolean;
+  active?: string;
   address?: IAddress[];
   birthDate?: string;
   communication?: IPatient_Communication[];

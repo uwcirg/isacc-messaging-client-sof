@@ -463,7 +463,7 @@ export default class ScheduleSetup extends React.Component<
       );
     }
 
-    if (!patient.active) {
+    if (patient.active != "true") {
       return new Promise((resolve, reject) =>
         reject("The patient is not active.")
       );
