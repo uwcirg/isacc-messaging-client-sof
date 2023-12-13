@@ -47,7 +47,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
       return getFhirData(client, "/Patient/" + queryPatientId).then(
         (value: any) => {
           let patient: Patient = Patient.from(value)
-          let active_patient: Patient = patient.active == "true" ? patient : undefined;
+          let active_patient: Patient = patient.active == true ? patient : undefined;
           return active_patient;
         }
       );
@@ -55,7 +55,7 @@ export default function FhirClientProvider(props: Props): JSX.Element {
     // Get the Patient resource
     return await client.patient.read().then((value: any) => {
       let patient: Patient = Patient.from(value)
-      let active_patient: Patient = patient.active == "true" ? patient : undefined;
+      let active_patient: Patient = patient.active == true ? patient : undefined;
       return active_patient;
 });
   }
