@@ -1,7 +1,7 @@
 {
   "resourceType": "PlanDefinition",
-  "id": "PlanDefinition_opc",
-  "title": "Caring Contacts PlanDefinition for OPC",
+  "id": "PlanDefinition_cove",
+  "title": "Caring Contacts PlanDefinition for COVE",
   "status": "active",
   "action": [
     {
