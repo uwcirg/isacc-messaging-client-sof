@@ -1,68 +1,74 @@
 import * as React from "react";
 
-import {FhirClientContext, FhirClientContextType} from "../FhirClientContext";
+import { FhirClientContext, FhirClientContextType } from "../FhirClientContext";
 
 import Communication from "../model/Communication";
 import Patient from "../model/Patient";
-import {CommunicationRequest} from "../model/CommunicationRequest";
-import {IBundle_Entry, ICodeableConcept, ICoding, IReference, IResource} from "@ahryman40k/ts-fhir-types/lib/R4";
+import { CommunicationRequest } from "../model/CommunicationRequest";
 import {
-    Alert,
-    AlertTitle,
-    Box,
-    Button,
-    Chip,
-    CircularProgress,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    FormControlLabel,
-    Grid,
-    IconButton,
-    List,
-    Radio,
-    RadioGroup,
-    Snackbar,
-    Stack,
-    Tab,
-    Tabs,
-    TextField,
-    TextFieldProps,
-    Typography,
+  IBundle_Entry,
+  ICodeableConcept,
+  ICoding,
+  IReference,
+  IResource,
+} from "@ahryman40k/ts-fhir-types/lib/R4";
+import {
+  Alert,
+  AlertTitle,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  List,
+  Radio,
+  RadioGroup,
+  Snackbar,
+  Stack,
+  Tab,
+  Tabs,
+  TextField,
+  TextFieldProps,
+  Typography,
 } from "@mui/material";
-import {ArrowBackIos} from "@mui/icons-material";
+import { ArrowBackIos } from "@mui/icons-material";
 import LoadingButton from "@mui/lab/LoadingButton";
 import EditIcon from "@mui/icons-material/Edit";
 import InfoIcon from "@mui/icons-material/Info";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import * as moment from "moment";
-import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
-import { DateTimeValidationError} from '@mui/x-date-pickers/models';
-import {grey, lightBlue, teal} from "@mui/material/colors";
-import {IsaccMessageCategory} from "../model/CodeSystem";
-import {Error, Refresh, Warning} from "@mui/icons-material";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { DateTimeValidationError } from "@mui/x-date-pickers/models";
+import { grey, lightBlue, teal, deepPurple } from "@mui/material/colors";
+import { IsaccMessageCategory } from "../model/CodeSystem";
+import { Error, Refresh, Warning } from "@mui/icons-material";
 import Client from "fhirclient/lib/Client";
-import {Bundle} from "../model/Bundle";
-import {getEnv} from "../util/util";
-import {getClientAppURL, getFhirData, getUserName } from "../util/isacc_util";
+import { Bundle } from "../model/Bundle";
+import { getEnv, getTimeAgoDisplay, isFutureDate } from "../util/util";
+import { getClientAppURL, getFhirData, getUserName } from "../util/isacc_util";
 
 type MessageType = "sms" | "outside communication" | "comment";
 type MessageStatus = "sent" | "received";
 
 interface Message {
-    date: string,
-    content: string,
-    type: MessageType,
-    status: MessageStatus
+  date: string;
+  content: string;
+  type: MessageType;
+  status: MessageStatus;
 }
 
 const defaultMessage: Message = {
-    date: new Date().toISOString(),
-    content: "",
-    type: "sms",
-    status: "sent"
+  date: new Date().toISOString(),
+  content: "",
+  type: "sms",
+  status: "sent",
 };
 
 const abortController = new AbortController();
@@ -433,6 +439,7 @@ export default class MessagingView extends React.Component<
               </Alert>
             </Snackbar>
           </Box>
+          {this._buildUnrespondedMessageDisplay()}
           {this._buildNextScheduledMessageDisplay()}
           {this.state.error && (
             <Alert severity="error" sx={{ marginTop: 2 }}>
@@ -482,8 +489,13 @@ export default class MessagingView extends React.Component<
       <Box sx={{ marginTop: (theme) => theme.spacing(1.5) }}>
         <Alert severity="info">
           <AlertTitle>Next scheduled outgoing message</AlertTitle>
-          <Stack spacing={1} direction={"column"} alignItems={"flex-start"}>
-            <Box sx={{ marginTop: 0.5, marginBottom: 1 }}>
+          <Stack
+            spacing={1}
+            direction={"column"}
+            alignItems={"flex-start"}
+            sx={{ gap: 0.5 }}
+          >
+            <Box>
               <Typography variant="subtitle2" component="div">
                 {MessagingView.displayDateTime(
                   patient.nextScheduledMessageDateTime
@@ -499,6 +511,64 @@ export default class MessagingView extends React.Component<
               variant="outlined"
             >
               <ArrowBackIos fontSize="small"></ArrowBackIos>Edit in enrollment
+            </Button>
+          </Stack>
+        </Alert>
+      </Box>
+    );
+  }
+
+  private _buildUnrespondedMessageDisplay(): React.ReactNode {
+    // @ts-ignore
+    const context: FhirClientContextType = this.context;
+    // @ts-ignore
+    const patient: Patient = context.patient;
+    if (
+      !patient.lastUnfollowedMessageDateTime ||
+      isFutureDate(new Date(patient.lastUnfollowedMessageDateTime))
+    ) {
+      return null;
+    }
+    return (
+      <Box sx={{ marginTop: (theme) => theme.spacing(1.5) }}>
+        <Alert
+          severity="info"
+          sx={{
+            backgroundColor: "#F2EEFE",
+            color: deepPurple[900],
+            "& .MuiAlert-icon": {
+              color: deepPurple[900],
+            },
+          }}
+        >
+          <AlertTitle>Un-responded message</AlertTitle>
+          <Stack
+            spacing={1}
+            direction={"column"}
+            alignItems={"flex-start"}
+            sx={{ gap: 0.5 }}
+          >
+            <Box>
+              <Typography variant="subtitle2" component="div">
+                Time since reply:{" "}
+                {getTimeAgoDisplay(
+                  new Date(patient.lastUnfollowedMessageDateTime)
+                )}
+              </Typography>
+              <Typography variant="body2" component="div">
+                <strong>To clear this alert</strong>: respond with a{" "}
+                <strong>manual message</strong>, record an{" "}
+                <strong>outside communication</strong>, or use the{" "}
+                <strong>button</strong> below for messages that don't need a
+                response.
+              </Typography>
+            </Box>
+            <Button
+              size="small"
+              onClick={() => this.unsetLastUnfollowedDateTime()}
+              variant="outlined"
+            >
+              Mark message as read/resolved
             </Button>
           </Stack>
         </Alert>
@@ -931,7 +1001,7 @@ export default class MessagingView extends React.Component<
               client
                 .update(targetEntry)
                 .then(() => {
-                  this.handleLastUnfollowedDateTime(targetEntry);
+                  this.handleLastUnfollowedDateTimeByCommunication(targetEntry);
                   const existingEntryIndex =
                     this.state.communications?.findIndex(
                       (item) => item.id === targetEntry.id
@@ -1083,7 +1153,9 @@ export default class MessagingView extends React.Component<
     );
   }
 
-  private handleLastUnfollowedDateTime(communication: Communication) {
+  private handleLastUnfollowedDateTimeByCommunication(
+    communication: Communication
+  ) {
     // @ts-ignore
     const context: FhirClientContextType = this.context;
     const patient: Patient = context.patient;
@@ -1104,14 +1176,22 @@ export default class MessagingView extends React.Component<
         new Date(communication.sent) >
           new Date(existingLastUnfollowedMessageDateTime)
       ) {
-        // set to a future date, this is so that `Time Since Reply` can be sorted
-        patient.lastUnfollowedMessageDateTime = Patient.UNSET_LAST_UNFOLLOWED_DATETIME;
-        const client = context.client;
-        if (client) {
-          // @ts-ignore
-          client.update(patient);
-        }
+        this.unsetLastUnfollowedDateTime();
       }
+    }
+  }
+
+  private unsetLastUnfollowedDateTime() {
+    // @ts-ignore
+    const context: FhirClientContextType = this.context;
+    const patient: Patient = context.patient;
+    // set to a future date, this is so that `Time Since Reply` can be sorted
+    patient.lastUnfollowedMessageDateTime =
+      Patient.UNSET_LAST_UNFOLLOWED_DATETIME;
+    const client = context.client;
+    if (client) {
+      // @ts-ignore
+      client.update(patient).then(() => this.setState({}));
     }
   }
 
@@ -1155,7 +1235,7 @@ export default class MessagingView extends React.Component<
     );
     this._save(newCommunication, (savedResult: IResource) => {
       console.log("Saved new communication:", savedResult);
-      this.handleLastUnfollowedDateTime(newCommunication);
+      this.handleLastUnfollowedDateTimeByCommunication(newCommunication);
       this.setState({
         activeMessage: {
           ...defaultMessage,
