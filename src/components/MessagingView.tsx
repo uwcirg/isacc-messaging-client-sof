@@ -1190,8 +1190,20 @@ export default class MessagingView extends React.Component<
       Patient.UNSET_LAST_UNFOLLOWED_DATETIME;
     const client = context.client;
     if (client) {
-      // @ts-ignore
-      client.update(patient).then(() => this.setState({}));
+      client
+        // @ts-ignore
+        .update(patient)
+        .then(() => this.setState({}))
+        .catch((e) => {
+          console.log(
+            "Error occurred unsetting unresponded message date/time ",
+            e
+          );
+          this.setState({
+            error:
+              "Unable to unset unresponded message date/time.  See console for detail.",
+          });
+        });
     }
   }
 
