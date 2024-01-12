@@ -463,12 +463,6 @@ export default class ScheduleSetup extends React.Component<
       );
     }
 
-    if (patient.active != true) {
-      return new Promise((resolve, reject) =>
-        reject("The patient is not active.")
-      );
-    }
-
     let params = new URLSearchParams({
       telecom: `${patient.smsContactPoint}`,
       // FIXME
@@ -494,7 +488,7 @@ export default class ScheduleSetup extends React.Component<
                   }
                 }
               );
-              if ((patients.find((o) => o.id !== patient.id && o.active == true))) {
+              if ((patients.find((o:Patient) => o.id !== patient.id && o.isActive()))) {
                 // exclude current patient, workaround for above FIXME
                 reject(
                   `Phone number is already associated with: ${patients
