@@ -1,0 +1,438 @@
+{
+  "resourceType": "PlanDefinition",
+  "id": "PlanDefinition_cove",
+  "title": "Caring Contacts PlanDefinition for COVE",
+  "status": "active",
+  "action": [
+    {
+      "definitionCanonical": "#Day14Msg0"
+    },
+    {
+      "definitionCanonical": "#Day14Msg1"
+    },
+    {
+      "definitionCanonical": "#Day43Msg0"
+    },
+    {
+      "definitionCanonical": "#Day67Msg0"
+    },
+    {
+      "definitionCanonical": "#Day101Msg0"
+    },
+    {
+      "definitionCanonical": "#Day125Msg0"
+    },
+    {
+      "definitionCanonical": "#Day162Msg0"
+    },
+    {
+      "definitionCanonical": "#Day220Msg0"
+    },
+    {
+      "definitionCanonical": "#Day265Msg0"
+    },
+    {
+      "definitionCanonical": "#Day317Msg0"
+    },
+    {
+      "definitionCanonical": "#Day371Msg0"
+    },
+    {
+      "definitionCanonical": "#Day371Msg1"
+    },
+    {
+      "definitionCanonical": "#NewYearsMsg"
+    },
+    {
+      "definitionCanonical": "#VeteransDayMsg"
+    },
+    {
+      "definitionCanonical": "#BirthdayMsg",
+      "trigger": [
+        {
+          "type": "named-event",
+          "name": "birthday"
+        }
+      ]
+    }
+  ],
+  "contained": [
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day14Msg0",
+      "name": "Day 14 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 14,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "18:05:00"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hi {name}, I just wanted to thank you for participating in this program. It takes a lot of courage to share your story and we appreciate that you did. You are not alone on this journey. I am here to support you, and just want to let you know that my team and I are available Mon to Fri 9-5 PT, so I won’t see messages sent outside of those hours right away.  Please feel welcome (but never pressured) to reply or share anything on your mind. I'm so glad we have this chance to connect!  -Riley"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day14Msg1",
+      "name": "Day 14 Message 1",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 14,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "18:05:45"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "If you need immediate help, don't forget about the 24/7 National Hotline - 988 & press 1, or you can text the Veterans Crisis Line @ 838-255, or check our website: wefacethefight.org"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day43Msg0",
+      "name": "Day 43 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 43,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "10:19:25"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hey, this is Riley just checking in. I hope you are doing okay! Feel free to let me know how things are going if it helps."
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day67Msg0",
+      "name": "Day 67 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 67,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "12:49:35"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "I try to look for something positive each day. Even though that some days I have to look a little harder. Hope you can find something positive in each day as well 😊"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day101Msg0",
+      "name": "Day 101 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 101,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "15:06:27"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Just wanted to remind you that you can start over, each morning. Setbacks happen! There will always be a new day on the horizon. 🌅"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day125Msg0",
+      "name": "Day 125 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 125,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "09:16:01"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hey {name}, sending good thoughts and energy your way! ☀️✨ I care about how you’re doing. If you ever find yourself struggling, feel free to text me -Riley"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day162Msg0",
+      "name": "Day 162 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 162,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "13:39:35"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "I have a quote for you: \"The greatest glory in living lies not in never falling, but in rising every time we fall.\" (Nelson Mandela) Hope you are finding ways to keep getting back up! 🌱"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day220Msg0",
+      "name": "Day 220 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 220,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "14:04:58"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hey {name}, I know some days can be hard but we are cheering for you! 🎉"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day265Msg0",
+      "name": "Day 265 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 265,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "15:57:38"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Hi {name}, we hope this message finds you in a good place.  Wherever you are today, you are valued, and you are enough. 🙌 If you’d like to chat about how things are going, I’d be happy to hear from you. -Riley"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day317Msg0",
+      "name": "Day 317 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 317,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "14:37:59"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Thinking of you, {name} 🙂 I'm not always available but if you need to talk to someone, the National Hotline number is 988 & press 1 and the Veterans Crisis Line number is 838-255. -Riley"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day371Msg0",
+      "name": "Day 371 Message 0",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 371,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "15:33:48"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Can you believe a year has gone by and I'm sending my last message from this program? I have truly enjoyed being in touch over the past year, {name} and remember that resources are always out there at wefacethefight.org. Know that I’m rooting for you! 💪"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "Day371Msg1",
+      "name": "Day 371 Message 1",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "frequency": 1,
+          "period": 371,
+          "periodUnit": "d",
+          "timeOfDay": [
+            "15:34:20"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Your final research survey should be headed your way in the next few days - we would appreciate your candid feedback about this program on the survey. -Riley"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "NewYearsMsg",
+      "name": "New Years Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "event": [
+          "2025-01-01T17:21:16.000Z"
+        ]
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Sending you warm wishes for a bright year ahead! 🌟❄️🌟❄️ I am grateful to be in touch with you and hope this new year will be a good one, even as the seasons change -Riley"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "VeteransDayMsg",
+      "name": "Veterans Day Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "event": [
+          "2024-11-11T17:25:47.000Z"
+        ]
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Happy Veteran’s Day, {name}. Thank you  for volunteering for service. What you’ve done is greatly appreciated. I know that this time can be difficult, if you need someone please reach out, we’re here for you if you need us.  -Riley"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "ActivityDefinition",
+      "id": "BirthdayMsg",
+      "name": "Birthday Message",
+      "status": "active",
+      "kind": "CommunicationRequest",
+      "timingTiming": {
+        "repeat": {
+          "timeOfDay": [
+            "09:21:16"
+          ]
+        }
+      },
+      "dynamicValue": [
+        {
+          "path": "payload.contentString",
+          "expression": {
+            "language": "text/cql",
+            "expression": "Happy Birthday, {name}!! Here’s to another year 🎁  I hope you will enjoy the day!"
+          }
+        }
+      ]
+    }
+  ]
+}
