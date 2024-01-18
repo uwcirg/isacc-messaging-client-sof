@@ -469,4 +469,9 @@ export default class Patient implements IPatient {
       this.meta.security.push(existingMetaSecurity);
     }
   }
+
+  isActive () {
+    if (typeof this.active === "undefined") return true;
+    return this.active;
+  }
 }

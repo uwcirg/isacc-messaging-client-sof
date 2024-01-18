@@ -488,7 +488,7 @@ export default class ScheduleSetup extends React.Component<
                   }
                 }
               );
-              if (patients.find((o) => o.id !== patient.id)) {
+              if ((patients.find((o:Patient) => o.id !== patient.id && o.isActive()))) {
                 // exclude current patient, workaround for above FIXME
                 reject(
                   `Phone number is already associated with: ${patients

@@ -42,18 +42,23 @@ export default function FhirClientProvider(props: Props): JSX.Element {
     if (!client) return;
     //this is a workaround for when patient id is not embedded within the JWT token
     let queryPatientId = sessionStorage.getItem(queryPatientIdKey);
+    const INACTIVE_ACCOUNT_ERROR_MSG = "Inactive account. No patient data returned.";
     if (queryPatientId) {
       console.log("Using stored patient id ", queryPatientId);
       return getFhirData(client, "/Patient/" + queryPatientId).then(
         (value: any) => {
-          return Patient.from(value);
+          let patient: Patient = Patient.from(value)
+          if (!patient.isActive()) throw new Error(INACTIVE_ACCOUNT_ERROR_MSG);
+          return patient;
         }
       );
     }
     // Get the Patient resource
     return await client.patient.read().then((value: any) => {
-      return Patient.from(value);
-    });
+      let patient: Patient = Patient.from(value)
+      if (!patient.isActive()) throw new Error(INACTIVE_ACCOUNT_ERROR_MSG);
+      return patient;
+});
   }
 
   async function getPractitioner(
@@ -184,7 +189,11 @@ export default function FhirClientProvider(props: Props): JSX.Element {
             (result) => result.value && result.value.resourceType === "Patient"
           );
           if (!hasPatientResult) {
-            setError("No matching patient data returned.");
+            const errorReason =
+              results[1] && results[1].reason
+                ? results[1].reason
+                : "No matching patient data returned.";
+            setError(errorReason);
             setLoaded(true);
           }
           results.forEach((result) => {
