@@ -488,11 +488,13 @@ export default class ScheduleSetup extends React.Component<
                   }
                 }
               );
-              if ((patients.find((o:Patient) => o.id !== patient.id && o.isActive()))) {
+              const arrMatchedPatients = patients.filter(
+                (o: Patient) => o.id !== patient.id && o.isActive()
+              );
+              if (arrMatchedPatients.length) {
                 // exclude current patient, workaround for above FIXME
                 reject(
-                  `Phone number is already associated with: ${patients
-                    .filter((p: Patient) => p.id !== patient.id)
+                  `Phone number is already associated with: ${arrMatchedPatients
                     .map(
                       (p: Patient) => `${p.fullNameDisplay} (${p.reference})`
                     )
