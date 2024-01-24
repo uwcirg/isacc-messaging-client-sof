@@ -78,7 +78,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hi {name}, I just wanted to thank you for participating in this program. It takes a lot of courage to share your story and we appreciate that you did. You are not alone on this journey. I am here to support you, and just want to let you know that my team and I are available Mon to Fri 9-5 PT, so I won’t see messages sent outside of those hours right away.  Please feel welcome (but never pressured) to reply or share anything on your mind. I'm so glad we have this chance to connect!  -Riley"
+            "expression": "Hi {name}, I just wanted to thank you for participating in this program. It takes a lot of courage to share your story and we appreciate that you did. You are not alone on this journey. I am here to support you, and just want to let you know that my team and I are available Mon to Fri 9-5 PT, so I won’t see messages sent outside of those hours right away.  Please feel welcome (but never pressured) to reply or share anything on your mind. I'm so glad we have this chance to connect!  -{username}"
           }
         }
       ]
@@ -130,7 +130,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hey, this is Riley just checking in. I hope you are doing okay! Feel free to let me know how things are going if it helps."
+            "expression": "Hey, this is {username} just checking in. I hope you are doing okay! Feel free to let me know how things are going if it helps."
           }
         }
       ]
@@ -208,7 +208,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hey {name}, sending good thoughts and energy your way! ☀️✨ I care about how you’re doing. If you ever find yourself struggling, feel free to text me -Riley"
+            "expression": "Hey {name}, sending good thoughts and energy your way! ☀️✨ I care about how you’re doing. If you ever find yourself struggling, feel free to text me -{username}"
           }
         }
       ]
@@ -286,7 +286,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Hi {name}, we hope this message finds you in a good place.  Wherever you are today, you are valued, and you are enough. 🙌 If you’d like to chat about how things are going, I’d be happy to hear from you. -Riley"
+            "expression": "Hi {name}, we hope this message finds you in a good place.  Wherever you are today, you are valued, and you are enough. 🙌 If you’d like to chat about how things are going, I’d be happy to hear from you. -{username}"
           }
         }
       ]
@@ -312,7 +312,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Thinking of you, {name} 🙂 I'm not always available but if you need to talk to someone, the National Hotline number is 988 & press 1 and the Veterans Crisis Line number is 838-255. -Riley"
+            "expression": "Thinking of you, {name} 🙂 I'm not always available but if you need to talk to someone, the National Hotline number is 988 & press 1 and the Veterans Crisis Line number is 838-255. -{username}"
           }
         }
       ]
@@ -364,7 +364,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Your final research survey should be headed your way in the next few days - we would appreciate your candid feedback about this program on the survey. -Riley"
+            "expression": "Your final research survey should be headed your way in the next few days - we would appreciate your candid feedback about this program on the survey. -{username}"
           }
         }
       ]
@@ -385,7 +385,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Sending you warm wishes for a bright year ahead! 🌟❄️🌟❄️ I am grateful to be in touch with you and hope this new year will be a good one, even as the seasons change -Riley"
+            "expression": "Sending you warm wishes for a bright year ahead! 🌟❄️🌟❄️ I am grateful to be in touch with you and hope this new year will be a good one, even as the seasons change -{username}"
           }
         }
       ]
@@ -406,7 +406,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Happy Veteran’s Day, {name}. Thank you  for volunteering for service. What you’ve done is greatly appreciated. I know that this time can be difficult, if you need someone please reach out, we’re here for you if you need us.  -Riley"
+            "expression": "Happy Veteran’s Day, {name}. Thank you  for volunteering for service. What you’ve done is greatly appreciated. I know that this time can be difficult, if you need someone please reach out, we’re here for you if you need us.  -{username}"
           }
         }
       ]
