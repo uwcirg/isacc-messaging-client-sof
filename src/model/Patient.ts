@@ -18,6 +18,7 @@ import {
   IPatient_Link,
   IReference,
   IResourceList,
+  IPeriod,
   PatientGenderKind
 } from "@ahryman40k/ts-fhir-types/lib/R4";
 import {ExtensionUrl, RelationshipCategory, SystemURL} from "./CodeSystem";
@@ -44,6 +45,7 @@ export default class Patient implements IPatient {
   gender?: PatientGenderKind;
   generalPractitioner?: IReference[];
   id?: string;
+  period?: IPeriod;
   identifier?: IIdentifier[];
   implicitRules?: string;
   language?: string;
@@ -86,7 +88,12 @@ export default class Patient implements IPatient {
     )[0];
 
     if (!smsContactPoint) {
-      smsContactPoint = { system: ContactPointSystemKind._sms };
+      smsContactPoint = {
+        system: ContactPointSystemKind._sms,
+        period: {
+          start: new Date().toISOString().slice(0, 19) + 'Z'
+        }
+      };
       this.telecom.push(smsContactPoint);
     }
 
