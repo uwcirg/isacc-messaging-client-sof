@@ -87,16 +87,15 @@ export default class Patient implements IPatient {
     )[0];
 
     if (!smsContactPoint) {
-      const smsPeriod: IPeriod = {
-        start: new Date().toISOString(),
-      };
       smsContactPoint = {
-        system: ContactPointSystemKind._sms,
-        period: smsPeriod,
+        system: ContactPointSystemKind._sms
       };
       this.telecom.push(smsContactPoint);
     }
-
+    const smsPeriod: IPeriod = {
+      start: new Date().toISOString(),
+    };
+    smsContactPoint.period = smsPeriod;
     smsContactPoint.value = phone;
   }
 
