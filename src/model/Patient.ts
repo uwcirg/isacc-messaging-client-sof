@@ -87,17 +87,17 @@ export default class Patient implements IPatient {
       (t: IContactPoint) => t.system === ContactPointSystemKind._sms
     )[0];
 
+    let currentPeriod: IPeriod = {
+      start: new Date().toISOString().slice(0, 19) + 'Z'
+    };
+
     if (!smsContactPoint) {
-      smsContactPoint = {
-        system: ContactPointSystemKind._sms,
-        period: {
-          start: new Date().toISOString().slice(0, 19) + 'Z'
-        }
-      };
+      smsContactPoint = { system: ContactPointSystemKind._sms };
       this.telecom.push(smsContactPoint);
     }
 
     smsContactPoint.value = phone;
+    smsContactPoint.period = currentPeriod;
   }
 
   get userID(): string {
