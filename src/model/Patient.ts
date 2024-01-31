@@ -16,6 +16,7 @@ import {
   IPatient_Communication,
   IPatient_Contact,
   IPatient_Link,
+  IPeriod,
   IReference,
   IResourceList,
   PatientGenderKind
@@ -86,7 +87,13 @@ export default class Patient implements IPatient {
     )[0];
 
     if (!smsContactPoint) {
-      smsContactPoint = { system: ContactPointSystemKind._sms };
+      const smsPeriod: IPeriod = {
+        start: new Date().toISOString(),
+      };
+      smsContactPoint = {
+        system: ContactPointSystemKind._sms,
+        period: smsPeriod,
+      };
       this.telecom.push(smsContactPoint);
     }
 
