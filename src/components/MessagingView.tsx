@@ -327,7 +327,7 @@ export default class MessagingView extends React.Component<
         if (bundle.type === "searchset") {
           if (bundle.entry) {
             failedCommunicationRequests = bundle.entry.map((e: IBundle_Entry) => {
-              if (e.resource.resourceType !== "CommunicationRequest" || e.resource.status == "active") {
+              if (e.resource.resourceType !== "CommunicationRequest" || e.resource.status == "active" || e.resource.status == "completed") {
                 return null;
               } else {
                 console.log("CommunicationRequests loaded:", e);
@@ -337,8 +337,10 @@ export default class MessagingView extends React.Component<
             // Iterate overall all failed CRs, initializing them as communications
             // and appending them to list of failed communications
             failedCommunicationRequests.forEach((failedCommunicationRequest) => {
+              console.log("resulting CR status:", failedCommunicationRequest.status);
               let failedCommunication = Communication.from(failedCommunicationRequest);
               failedCommunication.status = failedCommunicationRequest.status === "on-hold" ? "on-hold" : "not-done";
+              console.log("resulting Communication status:", failedCommunication.status);
               this.state.communications.unshift(failedCommunication);
           });
           }
@@ -1161,6 +1163,8 @@ export default class MessagingView extends React.Component<
       nonSMSSent: "non-SMS sent outside communication",
       pending: "pending message",
       system: "sent by system",
+      unsubscribed: "not delievered because user unsubscribed",
+      error: "not delievered because of an error",
       smsByAuthor: "sent by user",
       comment: "comment",
     };
@@ -1412,11 +1416,11 @@ export default class MessagingView extends React.Component<
     let delivered = true;
     let unsubscribed = false;
     let error = false;
-    if (isNonSmsMessage && message.status == "on-hold")
+    if (!isNonSmsMessage && message.status == "on-hold")
     {
       // Message failed due to being unsubscribed
       unsubscribed = true;
-    } else if (isNonSmsMessage && message.status == "not-done"){
+    } else if (!isNonSmsMessage && message.status == "not-done"){
       // Message failed due to unaccounted for error
       error = true;
     }
@@ -1472,6 +1476,11 @@ export default class MessagingView extends React.Component<
                 : note
                 ? note
                 : "response (from author)"
+              : ""
+          }`,
+          `${
+            (message.status == "not-done" || message.status == "on-hold")
+              ? "message failed to deliver"
               : ""
           }`,
         ]
