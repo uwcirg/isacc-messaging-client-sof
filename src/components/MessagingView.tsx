@@ -155,7 +155,30 @@ export default class MessagingView extends React.Component<
     this.setState({ messagesLoading: true });
 
     const carePlanIds = context.allCarePlans?.map((item) => item.id);
-    this.loadFailedCommunications();
+    this.getFailedCommunications()
+    .then(
+      (result: Communication[]) => {
+        const uniqueFailedResults = (result ?? []).filter((item) => {
+          const currentSet = this.state.communications ?? [];
+          return !currentSet.find((o) => o.id === item.id);
+        });
+        const allResults = [
+          ...(this.state.communications ?? []),
+          ...uniqueFailedResults,
+        ];
+        this.setState({
+          communications: allResults,
+          messagesLoading: false,
+        });
+      },
+      (reason: any) =>
+        this.setState({ error: reason, messagesLoading: false })
+    )
+    .catch((e) => {
+      console.log("Error fetching Failed Communications", e);
+      this.setState({ error: e, messagesLoading: false });
+    });
+
     this.getCommunications(context.client, carePlanIds, url)
       .then(
         (result: Communication[]) => {
@@ -296,7 +319,7 @@ export default class MessagingView extends React.Component<
     );
   }
 
-  loadFailedCommunications() {
+  async getFailedCommunications(): Promise<Communication[]> {
     // @ts-ignore
     let client: Client = this.context.client;
     //@ts-ignore
@@ -321,12 +344,12 @@ export default class MessagingView extends React.Component<
       _count: "100",
     }).toString();
     const requestURL = `/CommunicationRequest?${params}`;
-    let failedCommunicationRequests: CommunicationRequest[] = [];
-    getFhirData(client, requestURL).then(
+    return await getFhirData(client, requestURL, signal).then(
       (bundle: Bundle) => {
+        let failedCommunications: Communication[] = [];
         if (bundle.type === "searchset") {
           if (bundle.entry) {
-            failedCommunicationRequests = bundle.entry.map((e: IBundle_Entry) => {
+            let failedCommunicationRequests = bundle.entry.map((e: IBundle_Entry) => {
               if (e.resource.resourceType !== "CommunicationRequest" || e.resource.status == "active" || e.resource.status == "completed") {
                 return null;
               } else {
@@ -341,9 +364,14 @@ export default class MessagingView extends React.Component<
               let failedCommunication = Communication.from(failedCommunicationRequest);
               failedCommunication.status = failedCommunicationRequest.status === "on-hold" ? "on-hold" : "not-done";
               console.log("resulting Communication status:", failedCommunication.status);
-              this.state.communications.unshift(failedCommunication);
+              failedCommunications.unshift(failedCommunication);
+
+            return failedCommunication;
           });
           }
+        } else {
+          this.setState({ error: "Unexpected bundle type returned" });
+          return null;
         }
       },
       (reason: any) => {
