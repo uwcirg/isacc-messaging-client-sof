@@ -1170,12 +1170,12 @@ export default class MessagingView extends React.Component<
     };
     const legendIconStyle = (key: string) => ({
       backgroundColor:
-        key === "pending" ? "#FFF" : MessagingView.colorsByType[key],
+        (key === "pending" || key === "error") ? "#FFF" : MessagingView.colorsByType[key],
       width: 16,
       height: 16,
       borderRadius: "100vmax",
       border:
-        key === "pending"
+        key === "pending" || key === "error" 
           ? `1px dashed ${MessagingView.colorsByType[key]}`
           : "none",
     });
@@ -1671,8 +1671,8 @@ export default class MessagingView extends React.Component<
     pending: grey[700],
     nonSMSReceived: teal[50],
     nonSMSSent: "#c9e4f7",
-    unsubscribed: "#D4D4D4",
-    error: "#FFFFFF",
+    unsubscribed: "#544c4a",
+    error: "#EE4B2B",
     comment: grey[300],
   };
 
@@ -1696,19 +1696,17 @@ export default class MessagingView extends React.Component<
       };
     if (unsubscribed)
       return {
+        borderStyle: "dashed",
         backgroundColor: MessagingView.colorsByType["unsubscribed"],
-        borderRadius: 0,
-        color: "#000",
-        boxShadow: `1px 1px 2px orange`,
-        borderBottomRightRadius: "72px 4px",
+        borderWidth: "1px",
+        color: "#FF0000",
       };
     if (error)
       return {
+        borderStyle: "dashed",
         backgroundColor: MessagingView.colorsByType["error"],
-        borderRadius: 0,
-        color: "#000",
-        boxShadow: `1px 1px 2px red`,
-        borderBottomRightRadius: "72px 4px",
+        borderWidth: "1px",
+        color: "#FF0000",
       };
     if (nonSMSReceived)
       return {
