@@ -155,7 +155,7 @@ export default class MessagingView extends React.Component<
     this.setState({ messagesLoading: true });
 
     const carePlanIds = context.allCarePlans?.map((item) => item.id);
-
+    this.loadFailedCommunications();
     this.getCommunications(context.client, carePlanIds, url)
       .then(
         (result: Communication[]) => {
@@ -292,6 +292,63 @@ export default class MessagingView extends React.Component<
       (reason: any) => {
         this.setState({ error: reason.toString() });
         return null;
+      }
+    );
+  }
+
+  loadFailedCommunications() {
+    // @ts-ignore
+    let client: Client = this.context.client;
+    //@ts-ignore
+    let existingCarePlan: CarePlan = this.context.currentCarePlan;
+    //@ts-ignore
+    let patient: Patient = this.context.patient;
+
+    const today = new Date();
+    const todayDateString = [
+      today.toLocaleString("default", { year: "numeric" }),
+      today.toLocaleString("default", { month: "2-digit" }),
+      today.toLocaleString("default", { day: "2-digit" }),
+    ].join("-");
+
+    // Search only for manually sent messages
+    let params = new URLSearchParams({
+      recipient: `Patient/${patient.id}`,
+      category: IsaccMessageCategory.isaccManuallySentMessage.code,
+      "based-on": existingCarePlan.reference,
+      _sort: "occurrence",
+      occurrence: `ge${todayDateString}`,
+      _count: "100",
+    }).toString();
+    const requestURL = `/CommunicationRequest?${params}`;
+    let failedCommunicationRequests: CommunicationRequest[] = [];
+    getFhirData(client, requestURL).then(
+      (bundle: Bundle) => {
+        if (bundle.type === "searchset") {
+          if (bundle.entry) {
+            failedCommunicationRequests = bundle.entry.map((e: IBundle_Entry) => {
+              if (e.resource.resourceType !== "CommunicationRequest" || e.resource.status == "active") {
+                return null;
+              } else {
+                console.log("CommunicationRequests loaded:", e);
+                return CommunicationRequest.from(e.resource);
+              }
+            });
+            // Iterate overall all failed CRs, initializing them as communications
+            // and appending them to list of failed communications
+            failedCommunicationRequests.forEach((failedCommunicationRequest) => {
+              let failedCommunication = Communication.from(failedCommunicationRequest);
+              failedCommunication.status = failedCommunicationRequest.status === "on-hold" ? "on-hold" : "not-done";
+              this.state.communications.unshift(failedCommunication);
+          });
+          }
+        }
+      },
+      (reason: any) => {
+        console.log(
+          "Unable to load failed Communication resources for the patient. ",
+          reason
+        );
       }
     );
   }
@@ -1353,7 +1410,16 @@ export default class MessagingView extends React.Component<
 
     let timestamp = null;
     let delivered = true;
-
+    let unsubscribed = false;
+    let error = false;
+    if (isNonSmsMessage && message.status == "on-hold")
+    {
+      // Message failed due to being unsubscribed
+      unsubscribed = true;
+    } else if (isNonSmsMessage && message.status == "not-done"){
+      // Message failed due to unaccounted for error
+      error = true;
+    }
     if (!isNonSmsMessage && message.sent) {
       timestamp = MessagingView.displayDateTime(message.sent);
     } else {
@@ -1378,6 +1444,8 @@ export default class MessagingView extends React.Component<
       delivered,
       isNonSmsMessage && incoming,
       isNonSmsMessage && !incoming,
+      unsubscribed,
+      error,
       isComment
     );
     let priority = message.priority;
@@ -1594,6 +1662,8 @@ export default class MessagingView extends React.Component<
     pending: grey[700],
     nonSMSReceived: teal[50],
     nonSMSSent: "#c9e4f7",
+    unsubscribed: "#D4D4D4",
+    error: "#FFFFFF",
     comment: grey[300],
   };
 
@@ -1603,6 +1673,8 @@ export default class MessagingView extends React.Component<
     delivered: boolean,
     nonSMSReceived: boolean,
     nonSMSSent: boolean,
+    unsubscribed: boolean,
+    error: boolean,
     comment: boolean
   ): object {
     if (comment)
@@ -1611,6 +1683,22 @@ export default class MessagingView extends React.Component<
         borderRadius: 0,
         color: "#000",
         boxShadow: `1px 1px 2px ${grey[700]}`,
+        borderBottomRightRadius: "72px 4px",
+      };
+    if (unsubscribed)
+      return {
+        backgroundColor: MessagingView.colorsByType["unsubscribed"],
+        borderRadius: 0,
+        color: "#000",
+        boxShadow: `1px 1px 2px orange`,
+        borderBottomRightRadius: "72px 4px",
+      };
+    if (error)
+      return {
+        backgroundColor: MessagingView.colorsByType["error"],
+        borderRadius: 0,
+        color: "#000",
+        boxShadow: `1px 1px 2px red`,
         borderBottomRightRadius: "72px 4px",
       };
     if (nonSMSReceived)

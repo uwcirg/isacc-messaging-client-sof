@@ -105,12 +105,12 @@ export default class CarePlan implements ICarePlan {
 
     getActiveCommunicationRequests() {
         return this.communicationRequests?.filter(
-            (message: CommunicationRequest) => message.status !== "revoked"
+            (message: CommunicationRequest) => message.status == "active"
         )
     }
 
     private updateActivityAttr() {
-        this.activity = this.communicationRequests.filter((req: CommunicationRequest) => req.status !== 'revoked').map((req: CommunicationRequest) => CarePlanActivity.withReference(req.reference));
+        this.activity = this.communicationRequests.filter((req: CommunicationRequest) => req.status == 'active').map((req: CommunicationRequest) => CarePlanActivity.withReference(req.reference));
     }
 
     addCommunicationRequest(communicationRequest: CommunicationRequest) {
