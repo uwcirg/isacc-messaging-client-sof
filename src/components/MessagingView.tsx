@@ -1557,7 +1557,8 @@ export default class MessagingView extends React.Component<
       themes,
       itemLabel,
       isEditable,
-      message
+      message,
+      !!(error || unsubscribed)
     );
   }
 
@@ -1571,7 +1572,8 @@ export default class MessagingView extends React.Component<
     themes: string[],
     comment: string,
     editable: boolean,
-    message: Communication
+    message: Communication,
+    error: boolean
   ) {
     let priorityIndicator = null;
     if (getEnv("REACT_APP_SHOW_PRIORITY_INDICATOR")?.toLowerCase() === "true") {
@@ -1646,6 +1648,7 @@ export default class MessagingView extends React.Component<
                 sx={{
                   whiteSpace: "pre", // preserve line break character
                   textAlign: incoming ? "left" : "right",
+                  color: error ? red[900] : "#0009"
                 }}
               >
                 {comment}
@@ -1739,7 +1742,7 @@ export default class MessagingView extends React.Component<
         borderStyle: "dashed",
         backgroundColor: MessagingView.colorsByType["unsubscribed"],
         borderWidth: "1px",
-        color: red[900],
+        color: "#000",
         borderColor: red[900]
       };
     if (error)
@@ -1747,7 +1750,7 @@ export default class MessagingView extends React.Component<
         borderStyle: "dashed",
         backgroundColor: "#FFF",
         borderWidth: "1px",
-        color: MessagingView.colorsByType["error"],
+        color: "#000",
         borderColor: red[900]
       };
     if (nonSMSReceived)
