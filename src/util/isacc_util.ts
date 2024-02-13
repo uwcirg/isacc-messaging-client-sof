@@ -32,7 +32,9 @@ export function getClientAppURL(clientId: ClientType, patientId: string) {
 }
 
 export function getUserName(client: Client) {
+    if (!client || !client.state || !client.state.tokenResponse) return null;
     let access_token = client.state.tokenResponse.access_token;
+    if (!access_token) return null;
     let token = jwtDecode<any>(access_token)
     if (token['given_name']) return token['given_name'];
     return token['preferred_username'];

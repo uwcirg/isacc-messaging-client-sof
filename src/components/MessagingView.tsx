@@ -122,8 +122,21 @@ export default class MessagingView extends React.Component<
     };
   }
 
+  handleUnmount() {
+    clearInterval(this.interval);
+    clearTimeout(this.getNextPageInterval);
+    abortController.abort(); // abort any pending HTTP request
+  }
+
   componentDidMount() {
-    if (!this.state) return;
+    // @ts-ignore
+    let context: FhirClientContextType = this.context;
+
+    if (context.error || !context.client || !this.state) {
+      this.handleUnmount();
+      return;
+    }
+
     if (!this.state.communications) {
       this.loadCommunications();
     }
@@ -144,9 +157,7 @@ export default class MessagingView extends React.Component<
     });
   }
   componentWillUnmount() {
-    clearInterval(this.interval);
-    clearTimeout(this.getNextPageInterval);
-    abortController.abort(); // abort any pending HTTP request
+    this.handleUnmount();
   }
 
   loadCommunications(url: string = null) {
@@ -170,14 +181,18 @@ export default class MessagingView extends React.Component<
       //   { status: 'rejected', reason: 'failed reason'}
       // ]
       console.log("Promise communication results: ", values);
+      console.log("Error results from loading communications: ", errorResults);
 
+      let errorString = "";
       if (errorResults && errorResults.length) {
         const errorReasons = errorResults
           .map((result: any) => result?.reason ?? "")
           .join(" ");
+        errorString = `Error loading communications ${errorReasons}`;
         this.setState({
-          error: `Error loading communications ${errorReasons}`,
           messagesLoading: false,
+          error: errorString,
+          communications: []
         });
         return;
       }
@@ -185,7 +200,7 @@ export default class MessagingView extends React.Component<
       validReturnedResults?.forEach((result: any) => {
         if (result.value && result.value.length) {
           const uniqueResults = result.value.filter((c:Communication) => {
-            return !allResults.find(o => o.id === c.id);
+            return !allResults?.find(o => o.id === c.id);
           });
           allResults = [...allResults, ...uniqueResults];
         }
@@ -204,6 +219,7 @@ export default class MessagingView extends React.Component<
         communications: allResults,
         messagesLoading: false,
         temporaryCommunications: temporaryCommunications,
+        error: errorString,
       });
     });
   }
@@ -211,6 +227,7 @@ export default class MessagingView extends React.Component<
   loadNextScheduledCommunicationRequests() {
     // @ts-ignore
     let client: Client = this.context.client;
+    if (!client) return;
     //@ts-ignore
     let existingCarePlan: CarePlan = this.context.currentCarePlan;
     //@ts-ignore
@@ -266,7 +283,7 @@ export default class MessagingView extends React.Component<
     carePlanIds: string[],
     url: string
   ): Promise<Communication[]> {
-    if (!client) return;
+    if (!client) return Promise.reject("No valid client specified.");
     // Communication?part-of=CarePlan/${id1}[,CarePlan/${id2}]
     // get communications for all care plans for the patient
     let params = new URLSearchParams({
@@ -304,12 +321,11 @@ export default class MessagingView extends React.Component<
           return communications;
         } else {
           this.setState({ error: "Unexpected bundle type returned" });
-          return null;
+          return Promise.reject("Unexpected bundle type returned");
         }
       },
       (reason: any) => {
-        this.setState({ error: reason.toString() });
-        return null;
+        return Promise.reject(reason.toString());
       }
     );
   }
@@ -317,6 +333,7 @@ export default class MessagingView extends React.Component<
   async getFailedCommunications(): Promise<Communication[]> {
     // @ts-ignore
     let client: Client = this.context.client;
+    if (!client) return Promise.reject("Invalid client");
     //@ts-ignore
     let existingCarePlan: CarePlan = this.context.currentCarePlan;
     //@ts-ignore
@@ -388,14 +405,12 @@ export default class MessagingView extends React.Component<
           "Unable to load failed CommunicationRequest resources for the patient. ",
           reason
         );
-        this.setState({ error: reason.toString()});
-        return null;
+        return Promise.reject(reason.toString());
       }
     );
   }
 
   render(): React.ReactNode {
-    if (!this.state) return <CircularProgress />;
 
     // @ts-ignore
     let context: FhirClientContextType = this.context;
@@ -403,6 +418,8 @@ export default class MessagingView extends React.Component<
     if (context.error) {
       return <Alert severity="error">{context.error}</Alert>;
     }
+
+    if (!this.state) return <CircularProgress />;
 
     if (!context.currentCarePlan || !this.state.communications) {
       return <CircularProgress />;
@@ -514,6 +531,14 @@ export default class MessagingView extends React.Component<
 
           {messages}
 
+          {this.state.error && (
+            <Alert severity="error" sx={{ marginTop: 2 }}>
+              {typeof this.state.error === "string"
+                ? this.state.error
+                : "Error occurred.  See console for detail."}
+            </Alert>
+          )}
+
           {this._buildMessageTypeSelector()}
 
           <Box
@@ -540,13 +565,6 @@ export default class MessagingView extends React.Component<
           </Box>
           {this._buildUnrespondedMessageDisplay()}
           {this._buildNextScheduledMessageDisplay()}
-          {this.state.error && (
-            <Alert severity="error" sx={{ marginTop: 2 }}>
-              {typeof this.state.error === "string"
-                ? this.state.error
-                : "Error occurred.  See console for detail."}
-            </Alert>
-          )}
         </Grid>
         {this._buildInfoDialog()}
       </>
@@ -1097,6 +1115,7 @@ export default class MessagingView extends React.Component<
             onClick={() => {
               // @ts-ignore
               const client = this.context.client;
+              if (!client) return;
               client
                 .update(targetEntry)
                 .then(() => {
@@ -1405,6 +1424,7 @@ export default class MessagingView extends React.Component<
     let context: FhirClientContextType = this.context;
     console.log("Attempting to save new message:", newMessage);
     this.setState({ showSaveFeedback: false });
+    if (!context || !context.client) return;
     context.client
       .create(newMessage)
       .then(
@@ -1430,6 +1450,9 @@ export default class MessagingView extends React.Component<
     index: number
   ): React.ReactNode {
     let incoming = true;
+    // @ts-ignore
+    const client = this.context.client;
+    if (!client) return null;
     const isNonSmsMessage = !!message.category?.find((c: ICodeableConcept) =>
       c.coding.find(
         (coding: ICoding) =>
