@@ -281,18 +281,19 @@ export default class MessagingView extends React.Component<
           }
           let communications: Communication[] = bundle.entry.map(
             (e: IBundle_Entry) => {
-              if (e.resource.resourceType !== "Communication") {
-                this.setState({ error: "Unexpected resource type returned" });
-                return null;
-              } else {
-                if (e.resource.status !== "in-progress"){
-                  console.log("Communication loaded:", e);
-                  return Communication.from(e.resource);
+                if (e.resource.resourceType !== "Communication") {
+                    this.setState({ error: "Unexpected resource type returned" });
+                    return null;
+                } else {
+                    if (e.resource.status !== "in-progress") {
+                        console.log("Communication loaded:", e);
+                        return Communication.from(e.resource);
+                    }
+                    return null;
                 }
-              }
             }
-          );
-          if (nextPageURL !== this.state.nextPageURL) {
+        ).filter((communication: Communication | null) => communication !== null);
+        if (nextPageURL !== this.state.nextPageURL) {
             this.setState({
               nextPageURL: nextPageURL,
             });
