@@ -1122,7 +1122,6 @@ export default class MessagingView extends React.Component<
       nonSMSSent: "non-SMS sent outside communication",
       pending: "pending message",
       system: "sent by system",
-      unsubscribed: "not delievered because recipient unsubscribed",
       error: "not delievered because of an error",
       smsByAuthor: "sent by user",
       comment: "comment",
@@ -1134,7 +1133,7 @@ export default class MessagingView extends React.Component<
       height: 16,
       borderRadius: "100vmax",
       border:
-        key === "pending" || key === "error" 
+        key === "pending" || key === "error"
           ? `1px dashed ${MessagingView.colorsByType[key]}`
           : "none",
     });
@@ -1637,7 +1636,6 @@ export default class MessagingView extends React.Component<
     pending: grey[700],
     nonSMSReceived: teal[50],
     nonSMSSent: "#c9e4f7",
-    unsubscribed: "#dbd6d6",
     error: red[900],
     comment: grey[300],
   };
@@ -1660,15 +1658,7 @@ export default class MessagingView extends React.Component<
         boxShadow: `1px 1px 2px ${grey[700]}`,
         borderBottomRightRadius: "72px 4px",
       };
-    if (unsubscribed)
-      return {
-        borderStyle: "dashed",
-        backgroundColor: MessagingView.colorsByType["unsubscribed"],
-        borderWidth: "1px",
-        color: "#000",
-        borderColor: red[900]
-      };
-    if (error)
+    if (error || unsubscribed)
       return {
         borderStyle: "dashed",
         backgroundColor: "#FFF",
