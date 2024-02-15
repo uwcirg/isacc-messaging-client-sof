@@ -283,6 +283,7 @@ export default class MessagingView extends React.Component<
             (e: IBundle_Entry) => {
               if (e.resource.resourceType !== "Communication" || e.resource.status === "in-progress") {
                 this.setState({ error: "Unexpected resource type returned" });
+                console.log("not proper Communication loaded:", e);
                 return null;
               } else {
                 console.log("Communication loaded:", e);
