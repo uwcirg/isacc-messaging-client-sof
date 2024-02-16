@@ -260,7 +260,12 @@ export default class MessagingView extends React.Component<
     carePlanIds: string[],
     url: string
   ): Promise<Communication[]> {
-    if (!client) return Promise.reject("No valid client specified.");
+    if (!client) {
+      this.setState({
+        error: "No valid client specified."
+      });
+      return null;
+    }
     // Communication?part-of=CarePlan/${id1}[,CarePlan/${id2}]
     // get communications for all care plans for the patient
     let params = new URLSearchParams({
@@ -301,11 +306,12 @@ export default class MessagingView extends React.Component<
           return communications;
         } else {
           this.setState({ error: "Unexpected bundle type returned" });
-          return Promise.reject("Unexpected bundle type returned");
+          return null;
         }
       },
       (reason: any) => {
-        return Promise.reject(reason.toString());
+        this.setState({ error: reason.toString() });
+        return null;
       }
     );
   }
