@@ -1378,11 +1378,11 @@ export default class MessagingView extends React.Component<
     let delivered = true;
     let unsubscribed = false;
     let error = false;
-    if (!isNonSmsMessage && message.status === "not-done")
+    if (!isNonSmsMessage && message.status === "stopped")
     {
       // Message failed due to being unsubscribed
       unsubscribed = true;
-    } else if (!isNonSmsMessage && message.status === "entered-in-error"){
+    } else if (!isNonSmsMessage && message.status === "unknown"){
       // Message failed due to unaccounted for error
       error = true;
     }
