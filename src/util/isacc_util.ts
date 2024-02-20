@@ -31,16 +31,23 @@ export function getClientAppURL(clientId: ClientType, patientId: string) {
   return getDashboardURL() + `/target?sof_client_id=${clientId}&patient=${patientId}`;
 }
 
+export function getAccessToken(client: Client) {
+  if (!client || !client.state || !client.state.tokenResponse) return null;
+  let access_token = client.state.tokenResponse.access_token;
+  if (!access_token) return null;
+  return jwtDecode<any>(access_token);
+}
+
 export function getUserName(client: Client) {
-    let access_token = client.state.tokenResponse.access_token;
-    let token = jwtDecode<any>(access_token)
+    const token = getAccessToken(client);
+    if (!token) return null;
     if (token['given_name']) return token['given_name'];
     return token['preferred_username'];
 }
 
 export function getUserEmail(client: Client) {
-    let access_token = client.state.tokenResponse.access_token;
-    let token = jwtDecode<any>(access_token)
+    const token = getAccessToken(client);
+    if (!token) return null;
     if (token['email']) return token['email'];
     return null;
 }

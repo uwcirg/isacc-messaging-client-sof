@@ -46,7 +46,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import * as moment from "moment";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { DateTimeValidationError } from "@mui/x-date-pickers/models";
-import { grey, lightBlue, teal, deepPurple } from "@mui/material/colors";
+import { grey, lightBlue, teal, deepPurple, red } from "@mui/material/colors";
 import { IsaccMessageCategory } from "../model/CodeSystem";
 import { Error, Refresh, Warning } from "@mui/icons-material";
 import Client from "fhirclient/lib/Client";
@@ -122,8 +122,21 @@ export default class MessagingView extends React.Component<
     };
   }
 
+  handleUnmount() {
+    clearInterval(this.interval);
+    clearTimeout(this.getNextPageInterval);
+    abortController.abort(); // abort any pending HTTP request
+  }
+
   componentDidMount() {
-    if (!this.state) return;
+    // @ts-ignore
+    let context: FhirClientContextType = this.context;
+
+    if (context.error || !context.client || !this.state) {
+      this.handleUnmount();
+      return;
+    }
+
     if (!this.state.communications) {
       this.loadCommunications();
     }
@@ -144,55 +157,54 @@ export default class MessagingView extends React.Component<
     });
   }
   componentWillUnmount() {
-    clearInterval(this.interval);
-    clearTimeout(this.getNextPageInterval);
-    abortController.abort(); // abort any pending HTTP request
+    this.handleUnmount();
   }
 
   loadCommunications(url: string = null) {
-    // @ts-ignore
-    let context: FhirClientContextType = this.context;
-    this.setState({ messagesLoading: true });
+  // @ts-ignore
+  let context: FhirClientContextType = this.context;
+  this.setState({ messagesLoading: true });
 
-    const carePlanIds = context.allCarePlans?.map((item) => item.id);
+  const carePlanIds = context.allCarePlans?.map((item) => item.id);
 
-    this.getCommunications(context.client, carePlanIds, url)
-      .then(
-        (result: Communication[]) => {
-          const uniqueResults = (result ?? []).filter((item) => {
-            const currentSet = this.state.communications ?? [];
-            return !currentSet.find((o) => o.id === item.id);
-          });
-          const allResults = [
-            ...(this.state.communications ?? []),
-            ...uniqueResults,
-          ];
-          let temporaryCommunications =
-            this.state.temporaryCommunications.filter((tc: Communication) => {
-              return !allResults?.find((c: Communication) => {
-                return c.basedOn?.find((b: IReference) => {
-                  return b.reference?.split("/")[1] === tc.id;
-                });
+  this.getCommunications(context.client, carePlanIds, url)
+    .then(
+      (result: Communication[]) => {
+        const uniqueResults = (result ?? []).filter((item) => {
+          const currentSet = this.state.communications ?? [];
+          return !currentSet.find((o) => o.id === item.id);
+        });
+        const allResults = [
+          ...(this.state.communications ?? []),
+          ...uniqueResults,
+        ];
+        let temporaryCommunications =
+          this.state.temporaryCommunications.filter((tc: Communication) => {
+            return !allResults?.find((c: Communication) => {
+              return c.basedOn?.find((b: IReference) => {
+                return b.reference?.split("/")[1] === tc.id;
               });
             });
-          this.setState({
-            communications: allResults,
-            messagesLoading: false,
-            temporaryCommunications: temporaryCommunications,
           });
-        },
-        (reason: any) =>
-          this.setState({ error: reason, messagesLoading: false })
-      )
-      .catch((e) => {
-        console.log("Error fetching Communications", e);
-        this.setState({ error: e, messagesLoading: false });
-      });
+        this.setState({
+          communications: allResults,
+          messagesLoading: false,
+          temporaryCommunications: temporaryCommunications,
+        });
+      },
+      (reason: any) =>
+        this.setState({ error: reason, messagesLoading: false })
+    )
+    .catch((e) => {
+      console.log("Error fetching Communications", e);
+      this.setState({ error: e, messagesLoading: false });
+    });
   }
 
   loadNextScheduledCommunicationRequests() {
     // @ts-ignore
     let client: Client = this.context.client;
+    if (!client) return;
     //@ts-ignore
     let existingCarePlan: CarePlan = this.context.currentCarePlan;
     //@ts-ignore
@@ -248,7 +260,12 @@ export default class MessagingView extends React.Component<
     carePlanIds: string[],
     url: string
   ): Promise<Communication[]> {
-    if (!client) return;
+    if (!client) {
+      this.setState({
+        error: "No valid client specified."
+      });
+      return null;
+    }
     // Communication?part-of=CarePlan/${id1}[,CarePlan/${id2}]
     // get communications for all care plans for the patient
     let params = new URLSearchParams({
@@ -269,16 +286,19 @@ export default class MessagingView extends React.Component<
           }
           let communications: Communication[] = bundle.entry.map(
             (e: IBundle_Entry) => {
-              if (e.resource.resourceType !== "Communication") {
-                this.setState({ error: "Unexpected resource type returned" });
-                return null;
-              } else {
-                console.log("Communication loaded:", e);
-                return Communication.from(e.resource);
-              }
+                if (e.resource.resourceType !== "Communication") {
+                    this.setState({ error: "Unexpected resource type returned" });
+                    return null;
+                } else {
+                    if (e.resource.status !== "in-progress") {
+                        console.log("Communication loaded:", e);
+                        return Communication.from(e.resource);
+                    }
+                    return null;
+                }
             }
-          );
-          if (nextPageURL !== this.state.nextPageURL) {
+        ).filter((communication: Communication | null) => communication !== null);
+        if (nextPageURL !== this.state.nextPageURL) {
             this.setState({
               nextPageURL: nextPageURL,
             });
@@ -297,7 +317,6 @@ export default class MessagingView extends React.Component<
   }
 
   render(): React.ReactNode {
-    if (!this.state) return <CircularProgress />;
 
     // @ts-ignore
     let context: FhirClientContextType = this.context;
@@ -305,6 +324,8 @@ export default class MessagingView extends React.Component<
     if (context.error) {
       return <Alert severity="error">{context.error}</Alert>;
     }
+
+    if (!this.state) return <CircularProgress />;
 
     if (!context.currentCarePlan || !this.state.communications) {
       return <CircularProgress />;
@@ -342,9 +363,10 @@ export default class MessagingView extends React.Component<
       let communications = [];
       communications.push(...this.state.communications);
       communications.push(...this.state.temporaryCommunications);
+      console.log("communications to be sorted ", communications);
       communications.sort((a, b) => {
-        let d1 = a.sent ? a.sent : a.received ?? a.meta.lastUpdated;
-        let d2 = b.sent ? b.sent : b.received ?? b.meta.lastUpdated;
+        let d1 = a.sent ? a.sent : a.received ?? a.meta?.lastUpdated;
+        let d2 = b.sent ? b.sent : b.received ?? b.meta?.lastUpdated;
         const t1 = d1 ? new Date(d1).getTime() : 0;
         const t2 = d2 ? new Date(d2).getTime() : 0;
         return t1 < t2 ? 1 : -1;
@@ -415,6 +437,14 @@ export default class MessagingView extends React.Component<
 
           {messages}
 
+          {this.state.error && (
+            <Alert severity="error" sx={{ marginTop: 2 }}>
+              {typeof this.state.error === "string"
+                ? this.state.error
+                : "Error occurred.  See console for detail."}
+            </Alert>
+          )}
+
           {this._buildMessageTypeSelector()}
 
           <Box
@@ -441,13 +471,6 @@ export default class MessagingView extends React.Component<
           </Box>
           {this._buildUnrespondedMessageDisplay()}
           {this._buildNextScheduledMessageDisplay()}
-          {this.state.error && (
-            <Alert severity="error" sx={{ marginTop: 2 }}>
-              {typeof this.state.error === "string"
-                ? this.state.error
-                : "Error occurred.  See console for detail."}
-            </Alert>
-          )}
         </Grid>
         {this._buildInfoDialog()}
       </>
@@ -998,6 +1021,7 @@ export default class MessagingView extends React.Component<
             onClick={() => {
               // @ts-ignore
               const client = this.context.client;
+              if (!client) return;
               client
                 .update(targetEntry)
                 .then(() => {
@@ -1104,17 +1128,18 @@ export default class MessagingView extends React.Component<
       nonSMSSent: "non-SMS sent outside communication",
       pending: "pending message",
       system: "sent by system",
+      error: "not delievered because of an error",
       smsByAuthor: "sent by user",
       comment: "comment",
     };
     const legendIconStyle = (key: string) => ({
       backgroundColor:
-        key === "pending" ? "#FFF" : MessagingView.colorsByType[key],
+        (key === "pending" || key === "error") ? "#FFF" : MessagingView.colorsByType[key],
       width: 16,
       height: 16,
       borderRadius: "100vmax",
       border:
-        key === "pending"
+        key === "pending" || key === "error"
           ? `1px dashed ${MessagingView.colorsByType[key]}`
           : "none",
     });
@@ -1304,6 +1329,7 @@ export default class MessagingView extends React.Component<
     let context: FhirClientContextType = this.context;
     console.log("Attempting to save new message:", newMessage);
     this.setState({ showSaveFeedback: false });
+    if (!context || !context.client) return;
     context.client
       .create(newMessage)
       .then(
@@ -1329,6 +1355,9 @@ export default class MessagingView extends React.Component<
     index: number
   ): React.ReactNode {
     let incoming = true;
+    // @ts-ignore
+    const client = this.context.client;
+    if (!client) return null;
     const isNonSmsMessage = !!message.category?.find((c: ICodeableConcept) =>
       c.coding.find(
         (coding: ICoding) =>
@@ -1353,7 +1382,16 @@ export default class MessagingView extends React.Component<
 
     let timestamp = null;
     let delivered = true;
-
+    let unsubscribed = false;
+    let error = false;
+    if (!isNonSmsMessage && message.status === "stopped")
+    {
+      // Message failed due to being unsubscribed
+      unsubscribed = true;
+    } else if (!isNonSmsMessage && message.status === "unknown"){
+      // Message failed due to unaccounted for error
+      error = true;
+    }
     if (!isNonSmsMessage && message.sent) {
       timestamp = MessagingView.displayDateTime(message.sent);
     } else {
@@ -1378,6 +1416,8 @@ export default class MessagingView extends React.Component<
       delivered,
       isNonSmsMessage && incoming,
       isNonSmsMessage && !incoming,
+      unsubscribed,
+      error,
       isComment
     );
     let priority = message.priority;
@@ -1405,6 +1445,11 @@ export default class MessagingView extends React.Component<
                 ? note
                 : "response (from author)"
               : ""
+          }`,
+          `${
+            error
+              ? "message failed to deliver"
+              : (unsubscribed ? "messaged failed to deliver because recipient unsubscribed": "")
           }`,
         ]
           .join("\n")
@@ -1440,7 +1485,8 @@ export default class MessagingView extends React.Component<
       themes,
       itemLabel,
       isEditable,
-      message
+      message,
+      !!(error || unsubscribed)
     );
   }
 
@@ -1454,7 +1500,8 @@ export default class MessagingView extends React.Component<
     themes: string[],
     comment: string,
     editable: boolean,
-    message: Communication
+    message: Communication,
+    error: boolean
   ) {
     let priorityIndicator = null;
     if (getEnv("REACT_APP_SHOW_PRIORITY_INDICATOR")?.toLowerCase() === "true") {
@@ -1529,6 +1576,7 @@ export default class MessagingView extends React.Component<
                 sx={{
                   whiteSpace: "pre", // preserve line break character
                   textAlign: incoming ? "left" : "right",
+                  color: error ? red[900] : "#0009"
                 }}
               >
                 {comment}
@@ -1594,6 +1642,7 @@ export default class MessagingView extends React.Component<
     pending: grey[700],
     nonSMSReceived: teal[50],
     nonSMSSent: "#c9e4f7",
+    error: red[900],
     comment: grey[300],
   };
 
@@ -1603,6 +1652,8 @@ export default class MessagingView extends React.Component<
     delivered: boolean,
     nonSMSReceived: boolean,
     nonSMSSent: boolean,
+    unsubscribed: boolean,
+    error: boolean,
     comment: boolean
   ): object {
     if (comment)
@@ -1612,6 +1663,14 @@ export default class MessagingView extends React.Component<
         color: "#000",
         boxShadow: `1px 1px 2px ${grey[700]}`,
         borderBottomRightRadius: "72px 4px",
+      };
+    if (error || unsubscribed)
+      return {
+        borderStyle: "dashed",
+        backgroundColor: "#FFF",
+        borderWidth: "1px",
+        color: "#000",
+        borderColor: red[900]
       };
     if (nonSMSReceived)
       return {
