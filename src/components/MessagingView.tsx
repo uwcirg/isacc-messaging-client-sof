@@ -1548,7 +1548,15 @@ export default class MessagingView extends React.Component<
     let messageGroup = (
       <Grid item xs={11} md={10} lg={8}>
         <Stack direction={"column"} alignItems={align} paddingBottom={0.5}>
-          <Stack direction={"row"} alignItems={"center"} spacing={1}>
+          <Stack
+            direction={"row"}
+            alignItems={"center"}
+            spacing={1}
+            sx={{
+              whiteSpace: "normal",
+              wordBreak: "break-word",
+            }}
+          >
             {bubbleAndPriorityRow}
           </Stack>
           {themes.length > 0 && (
@@ -1576,7 +1584,7 @@ export default class MessagingView extends React.Component<
                 sx={{
                   whiteSpace: "pre", // preserve line break character
                   textAlign: incoming ? "left" : "right",
-                  color: error ? red[900] : "#0009"
+                  color: error ? red[900] : "#0009",
                 }}
               >
                 {comment}
