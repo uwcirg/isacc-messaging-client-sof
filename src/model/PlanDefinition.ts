@@ -114,7 +114,6 @@ export default class PlanDefinition implements IPlanDefinition {
 
         //TODO: Add holidays
         messages = messages.sort((a, b) => a.scheduledDateTime < b.scheduledDateTime ? -1 : 1);
-        console.log("before meessages ", messages)
         return makeCommunicationRequests(patient, messages);
     }
 }
