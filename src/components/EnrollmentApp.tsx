@@ -261,7 +261,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
         aria-describedby="careplan-date-dialog-description"
       >
         <DialogTitle id="careplan-date-dialog-title">
-          {"Please Specify the CarePlan Start Date"}
+          {"Please specify the CarePlan start date"}
         </DialogTitle>
         <DialogContent sx={{ padding: (theme) => theme.spacing(2.5, 3, 2) }}>
           <Box
@@ -270,7 +270,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
           >
             <LocalizationProvider dateAdapter={AdapterMoment}>
               <DateTimePicker
-                label="Start Date & Time"
+                label="Start date & time"
                 // @ts-ignore
                 value={selectedValue ?? moment()}
                 format="ddd, MM/DD/YYYY hh:mm A" // example output display: Thu, 03/09/2023 09:34 AM
