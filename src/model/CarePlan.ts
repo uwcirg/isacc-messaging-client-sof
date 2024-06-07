@@ -71,8 +71,8 @@ export default class CarePlan implements ICarePlan {
 
   static createIsaccCarePlan(
     subject?: Patient,
-    instantiates?: IResourceList,
-    communicationRequests?: CommunicationRequest[]
+    communicationRequests?: CommunicationRequest[],
+    date: Date | null = null
   ): CarePlan {
     let carePlan = new CarePlan();
 
@@ -89,7 +89,11 @@ export default class CarePlan implements ICarePlan {
       carePlan.subject = { reference: subject.reference };
     }
     carePlan.category = [{ coding: [IsaccCarePlanCategory.isaccMessagePlan] }];
-    carePlan.created = new Date().toISOString();
+    const today = new Date().toISOString();
+    carePlan.created = today;
+    carePlan.period = {
+      start: date ? date.toISOString() : today
+    }
 
     return carePlan;
   }

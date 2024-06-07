@@ -168,14 +168,22 @@ export default class ScheduleSetup extends React.Component<
 
     let editing = this.state.carePlan.id != null;
 
+    const carePlanStartDate = this.state.carePlan.period?.start;
+    const carePlanCreatedDate = this.state.carePlan.created;
+
     return (
       <Container maxWidth={"lg"}>
         {editing ? (
           <Alert severity={"info"}>
             <AlertTitle>You are editing an existing CarePlan.</AlertTitle>
-            {`CarePlan/${this.state.carePlan.id}, created on ${new Date(
-              this.state.carePlan.created
-            ).toLocaleString()}`}
+            {`CarePlan/${this.state.carePlan.id} ${
+              carePlanStartDate && carePlanStartDate !== carePlanCreatedDate
+                ? " starting on " + new Date(carePlanStartDate).toLocaleString()
+                : ""
+            }`}
+            {` ( created on ${new Date(
+              carePlanCreatedDate
+            ).toLocaleString()} )`}
           </Alert>
         ) : null}
         <Grid container spacing={2} className="main-grid-container">
@@ -199,10 +207,10 @@ export default class ScheduleSetup extends React.Component<
               {editing ? (
                 <PatientNotes
                   onChange={() => {
-                    this.handleUnsaveChanges("careplan")
+                    this.handleUnsaveChanges("careplan");
                   }}
                   onSave={() => {
-                    this.handleUnsaveChanges("careplan", false)
+                    this.handleUnsaveChanges("careplan", false);
                   }}
                 />
               ) : (
@@ -233,10 +241,10 @@ export default class ScheduleSetup extends React.Component<
                 fieldsOnly={!editing}
                 editable={editing}
                 onChange={() => {
-                  this.handleUnsaveChanges("pro")
+                  this.handleUnsaveChanges("pro");
                 }}
                 onSave={() => {
-                  this.handleUnsaveChanges("pro", false)
+                  this.handleUnsaveChanges("pro", false);
                 }}
               ></PatientPROs>
             </Item>

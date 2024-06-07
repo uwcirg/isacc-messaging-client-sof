@@ -49,7 +49,7 @@ export default class PlanDefinition implements IPlanDefinition {
         return `${this.resourceType}/${this.id}`;
     }
 
-    createMessageList(patient: Patient, replacements: object): CommunicationRequest[] {
+    createMessageList(patient: Patient, replacements: object, startDate: Date|null = null): CommunicationRequest[] {
         // regular messages
         let messages: MessageDraft[] = this.activityDefinitions.map(
             (activityDef: ActivityDefinition) => {
@@ -60,12 +60,12 @@ export default class PlanDefinition implements IPlanDefinition {
                             contentString = contentString.replace(key, value);
                         }
                     }
-                    let date = activityDef.occurrenceTimeFromNow();
+                    let convertedDate = activityDef.occurrenceTimeFromNow(startDate);
                     // check if hard-coded date is in the past
-                    if (activityDef?.timingTiming?.event && (new Date(date)).getTime() < (new Date()).getTime()) return null;
+                    if (activityDef?.timingTiming?.event && (new Date(convertedDate)).getTime() < (new Date()).getTime()) return null;
                     return {
                         text: contentString,
-                        scheduledDateTime: date
+                        scheduledDateTime: convertedDate
                     } as MessageDraft;
                 }
                 return null;
@@ -133,7 +133,7 @@ export class ActivityDefinition implements IActivityDefinition {
         return Object.assign(new ActivityDefinition(), raw);
     }
 
-    occurrenceTimeFromNow(): Date {
+    occurrenceTimeFromNow(startDate: Date|null): Date {
         if (!(this.timingTiming.event || this.timingTiming?.repeat)) {
             throw Error("No event, timing or repeat specified in ActivityDefinition")
         }
@@ -144,8 +144,8 @@ export class ActivityDefinition implements IActivityDefinition {
         ) {
           throw Error("Unhandled time unit in timingTiming");
         }
-
-        let date = new Date();
+        const dateToUse = startDate ? new Date(startDate.getTime()) : new Date();
+        let date = dateToUse;
         if (this.timingTiming.event && Array.isArray(this.timingTiming.event)) {
             date = new Date(this.timingTiming.event[0]);
         } else if (this.timingTiming.repeat.periodUnit === 'wk') {

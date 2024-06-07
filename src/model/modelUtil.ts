@@ -1,4 +1,4 @@
-import PlanDefinition from "./PlanDefinition";
+//import PlanDefinition from "./PlanDefinition";
 import CarePlan from "./CarePlan";
 
 import { CommunicationRequest } from "./CommunicationRequest";
@@ -23,14 +23,14 @@ export function makeCommunicationRequests(
 }
 
 export function makeCarePlan(
-  planDefinition: PlanDefinition,
   patient: Patient,
-  communicationRequests: CommunicationRequest[]
+  communicationRequests: CommunicationRequest[],
+  carePlanDate: Date | null
 ): CarePlan {
   return CarePlan.createIsaccCarePlan(
     patient,
-    planDefinition,
-    communicationRequests
+    communicationRequests,
+    carePlanDate
   );
 }
 
