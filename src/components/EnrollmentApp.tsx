@@ -21,7 +21,7 @@ import {
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import moment from "moment";
-import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
+import {DatePicker} from "@mui/x-date-pickers/DatePicker";
 import CarePlan from "../model/CarePlan";
 import {IsaccMessageCategory} from "../model/CodeSystem";
 import {IBundle_Entry, ICommunicationRequest} from "@ahryman40k/ts-fhir-types/lib/R4";
@@ -269,11 +269,11 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
             sx={{ padding: (theme) => theme.spacing(1, 0, 0) }}
           >
             <LocalizationProvider dateAdapter={AdapterMoment}>
-              <DateTimePicker
-                label="Start date & time"
+              <DatePicker
+                label="Start date"
                 // @ts-ignore
-                value={selectedValue ?? moment()}
-                format="ddd, MM/DD/YYYY hh:mm A" // example output display: Thu, 03/09/2023 09:34 AM
+                value={selectedValue}
+                format="ddd, MM/DD/YYYY" // example output display: Thu, 03/09/2023
                 onChange={(newValue: moment.Moment | null) => {
                   this.setState({
                     selectedCarePlanStartDate: newValue.toDate(),
