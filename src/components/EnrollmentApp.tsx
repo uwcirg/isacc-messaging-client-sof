@@ -36,6 +36,7 @@ type EnrollmenAppState = {
     carePlanStartDate: Date | null;
     selectedCarePlanStartDate: Date | null;
     startDateModalOpen: boolean;
+    loaded: boolean;
 }
 
 export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState> {
@@ -50,6 +51,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
       carePlanStartDate: null,
       selectedCarePlanStartDate: null,
       startDateModalOpen: true,
+      loaded: false
     };
   }
 
@@ -174,6 +176,15 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
         : existingCarePlan.created;
       this.setState({
         carePlanStartDate: new Date(startDate),
+      }, () => {
+        // make sure care plan date is set before presenting the view
+        this.setState({
+          loaded: true
+        });
+      });
+    } else {
+      this.setState({
+        loaded: true
       });
     }
   }
@@ -364,9 +375,10 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
     );
   }
   render(): React.ReactNode {
-    if (!this.state || !this.context) return <CircularProgress />;
+    if (!this.state || !this.context || !this.state.loaded) return <CircularProgress />;
 
     let view = <CircularProgress />;
+    
     if (!this.state.carePlanStartDate) {
       view = this.getCarePlanStartDateModalView();
     } else if (this.state.activeCarePlan != null) {
