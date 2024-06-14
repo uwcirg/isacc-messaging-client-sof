@@ -270,6 +270,7 @@ export default class EnrollmentApp extends React.Component<{}, EnrollmenAppState
         onClose={handleClose}
         aria-labelledby="careplan-date-dialog-title"
         aria-describedby="careplan-date-dialog-description"
+        sx={{zIndex: 10}}
       >
         <DialogTitle id="careplan-date-dialog-title">
           {"Please specify the CarePlan start date"}
