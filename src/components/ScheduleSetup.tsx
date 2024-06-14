@@ -737,7 +737,8 @@ export default class ScheduleSetup extends React.Component<
                       .filter(
                         (ucr: CommunicationRequest) =>
                           ucr.status === "active" &&
-                          CommunicationRequest.isScheduledOutgoingMessage(ucr)
+                          CommunicationRequest.isScheduledOutgoingMessage(ucr) &&
+                          !dateInPast(ucr.occurrenceDateTime)
                       )
                       .sort((a, b) => {
                         let d1 = a.occurrenceDateTime;
