@@ -363,7 +363,6 @@ export default class MessagingView extends React.Component<
       let communications = [];
       communications.push(...this.state.communications);
       communications.push(...this.state.temporaryCommunications);
-      console.log("communications to be sorted ", communications);
       communications.sort((a, b) => {
         let d1 = a.sent ? a.sent : a.received ?? a.meta?.lastUpdated;
         let d2 = b.sent ? b.sent : b.received ?? b.meta?.lastUpdated;
