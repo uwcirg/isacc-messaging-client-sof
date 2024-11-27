@@ -54,7 +54,7 @@ import { Bundle } from "../model/Bundle";
 import { getEnv, getTimeAgoDisplay, isFutureDate } from "../util/util";
 import { getClientAppURL, getFhirData, getUserName } from "../util/isacc_util";
 
-type MessageType = "sms" | "outside communication" | "comment";
+type MessageType = "sms" | "outside communication" | "comment" | "marked as read";
 type MessageStatus = "sent" | "received";
 
 interface Message {
@@ -540,6 +540,22 @@ export default class MessagingView extends React.Component<
     );
   }
 
+  handleMarkedAsResolve() {
+    this.setState({
+      activeMessage: {
+        ...this.state.activeMessage,
+        date: new Date().toISOString(),
+        content: "Marked as read",
+        status: "sent",
+        type: "marked as read"
+      },
+    }, () => {
+      this.unsetLastUnfollowedDateTime();
+      this.saveNonSMSMessage();
+    });
+    
+  }
+
   private _buildUnrespondedMessageDisplay(): React.ReactNode {
     // @ts-ignore
     const context: FhirClientContextType = this.context;
@@ -587,7 +603,7 @@ export default class MessagingView extends React.Component<
             </Box>
             <Button
               size="small"
-              onClick={() => this.unsetLastUnfollowedDateTime()}
+              onClick={() => this.handleMarkedAsResolve()}
               variant="outlined"
             >
               Mark message as read/resolved
@@ -1255,20 +1271,26 @@ export default class MessagingView extends React.Component<
       ? `entered by ${userName}`
       : "staff-entered";
     const noteAboutCommunication = `${messageType}, ${enteredByText}`;
+    const isMarkedAsResolved = messageType === "marked as read";
     // new communication
     // TODO implement sender, requires Practitioner resource set for the user
-    const newCommunication = Communication.create(
+    let newCommunication = Communication.create(
       this.state.activeMessage.content,
       context.patient,
       context.currentCarePlan,
       sentDate,
       receivedDate,
-      messageType === "comment"
+      isMarkedAsResolved ? IsaccMessageCategory.isaccMarkedAsResolved : (
+        messageType === "comment"
         ? IsaccMessageCategory.isaccComment
-        : IsaccMessageCategory.isaccNonSMSMessage,
+        : IsaccMessageCategory.isaccNonSMSMessage
+      ),
       noteAboutCommunication,
       currentPractitioner
     );
+    if (isMarkedAsResolved) {
+      newCommunication.status = "completed";
+    }
     this._save(newCommunication, (savedResult: IResource) => {
       console.log("Saved new communication:", savedResult);
       this.handleLastUnfollowedDateTimeByCommunication(newCommunication);
@@ -1361,7 +1383,8 @@ export default class MessagingView extends React.Component<
       c.coding.find(
         (coding: ICoding) =>
           IsaccMessageCategory.isaccNonSMSMessage.equals(coding) ||
-          IsaccMessageCategory.isaccComment.equals(coding)
+          IsaccMessageCategory.isaccComment.equals(coding) ||
+          IsaccMessageCategory.isaccMarkedAsResolved.equals(coding)
       )
     );
     const isComment = !!message.category?.find((c: ICodeableConcept) =>

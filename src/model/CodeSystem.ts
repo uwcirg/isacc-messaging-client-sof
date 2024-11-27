@@ -76,6 +76,10 @@ export const IsaccMessageCategory = {
   isaccComment: Coding.make(
     "https://isacc.app/CodeSystem/communication-type",
     "isacc-comment"
+  ),
+  isaccMarkedAsResolved: Coding.make(
+    "https://isacc.app/CodeSystem/communication-type",
+    "isacc-message-resolved-no-send"
   )
 };
 
