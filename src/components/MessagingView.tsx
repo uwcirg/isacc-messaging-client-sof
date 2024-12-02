@@ -588,7 +588,7 @@ export default class MessagingView extends React.Component<
           >
             <Box>
               <Typography variant="subtitle2" component="div">
-                Last time since reply:{" "}
+                Time since last reply:{" "}
                 {getTimeAgoDisplay(
                   new Date(patient.lastUnfollowedMessageDateTime)
                 )}
