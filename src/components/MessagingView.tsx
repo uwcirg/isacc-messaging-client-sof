@@ -545,7 +545,7 @@ export default class MessagingView extends React.Component<
       activeMessage: {
         ...this.state.activeMessage,
         date: new Date().toISOString(),
-        content: "Marked as read",
+        content: "Prior message(s) marked as read",
         status: "sent",
         type: "marked as read"
       },
@@ -579,7 +579,7 @@ export default class MessagingView extends React.Component<
             },
           }}
         >
-          <AlertTitle>Un-responded message</AlertTitle>
+          <AlertTitle>Un-responded message(s)</AlertTitle>
           <Stack
             spacing={1}
             direction={"column"}
@@ -588,7 +588,7 @@ export default class MessagingView extends React.Component<
           >
             <Box>
               <Typography variant="subtitle2" component="div">
-                Time since reply:{" "}
+                Last time since reply:{" "}
                 {getTimeAgoDisplay(
                   new Date(patient.lastUnfollowedMessageDateTime)
                 )}
@@ -606,7 +606,7 @@ export default class MessagingView extends React.Component<
               onClick={() => this.handleMarkedAsResolve()}
               variant="outlined"
             >
-              Mark message as read/resolved
+              Mark message(s) as read/resolved
             </Button>
           </Stack>
         </Alert>
