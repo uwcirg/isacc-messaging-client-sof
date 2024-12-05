@@ -1297,7 +1297,9 @@ export default class MessagingView extends React.Component<
       this.setState({
         activeMessage: {
           ...defaultMessage,
-          type: messageType,
+          // this will allow the ISACC manual tab to be selected after marking a message as resolved
+          // otherwise no tab will be selected, which is confusing on the UI
+          type: isMarkedAsResolved ? "sms" : messageType,
         },
         error: null,
       });
