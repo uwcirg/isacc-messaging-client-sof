@@ -406,7 +406,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Happy Veteran’s Day, {name}. Thank you  for volunteering for service. What you’ve done is greatly appreciated. I know that this time can be difficult, if you need someone please reach out, we’re here for you if you need us.  -{username}"
+            "expression": "Hi {name}, I just wanted to send you a Happy Veteran's Day message before I'm out of the office tomorrow. Thank you for volunteering for service. What you’ve done is greatly appreciated. I know that this time can be difficult, if you need someone please reach out, we’re here for you if you need us.  -{username}"
           }
         }
       ]
