@@ -312,7 +312,7 @@
           "path": "payload.contentString",
           "expression": {
             "language": "text/cql",
-            "expression": "Thinking of you, {name} 🙂 I'm not always available but if you need to talk to someone, the National Hotline number is 988 & press 1 and the Veterans Crisis Line number is 838-255. -{username}"
+            "expression": "Thinking of you, {name} 🙂 I'm not always available but if you need to talk to someone, you can try Vets4Warriors or ObjectiveZero for peer chat/support/advice for veterans (and their families/loved ones). Here are their links: https://vets4warriors.com/talk-to-us/ and https://www.objectivezero.org/veterans. For immediate help, the National Hotline number is 988 & press 1 and the Veterans Crisis Line text number is 838-255. -{username}"
           }
         }
       ]
